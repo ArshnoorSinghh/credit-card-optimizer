@@ -1,0 +1,13 @@
+// Empty schema for now — models come later once the domain is settled.
+// Vercel Postgres exposes POSTGRES_PRISMA_URL (pooled, for queries) and
+// POSTGRES_URL_NON_POOLING (direct, for migrations).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}

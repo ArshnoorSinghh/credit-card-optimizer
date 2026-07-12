@@ -1,0 +1,10 @@
+{
+  "name": "fils",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "test": "pnpm --filter @fils/engine test",
+    "typecheck": "pnpm -r typecheck"
+  }
+}
