@@ -26,3 +26,27 @@ export type {
   RateRange,
   RateContext,
 } from "./normalize-rate";
+
+// Valuation model: reward currency -> AED/unit, with per-entry confidence.
+export {
+  DEFAULT_VALUATIONS,
+  withValuations,
+  resolveValuation,
+} from "./valuations";
+export type {
+  ValuationEntry,
+  ValuationTable,
+  ValuationConfidence,
+} from "./valuations";
+
+// Card scorer: net expected annual value of a card for a spending profile.
+export { scoreCard, AED_PER_USD } from "./score-card";
+export type {
+  CardScore,
+  CategoryEarning,
+  FeeBreakdown,
+  ScoreFlag,
+  SpendCategory,
+  SpendingProfile,
+  AedRange,
+} from "./score-card";
