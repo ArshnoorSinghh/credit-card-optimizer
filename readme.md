@@ -12,10 +12,12 @@ by net expected value (rewards earned − fees) with reward caps and eligibility
 rules, and explicit uncertainty modeling — ambiguous reward rates propagate as
 ranges rather than silent point estimates.
 
-> **Status:** early engine foundations. The monorepo skeleton is wired end to end
-> (the web app renders a placeholder `hello()` from the engine package). Inside the
-> engine, two building blocks are built and tested: the **card domain model** and
-> the **rate normalizer**. The optimizers themselves are not built yet.
+> **Status:** engine foundations coming together. The monorepo skeleton is wired
+> end to end (the web app renders a placeholder `hello()` from the engine package).
+> Inside the engine, four building blocks are built and tested: the **card domain
+> model**, the **rate normalizer**, the **valuation model**, and the per-card
+> **scorer**. Next up is the portfolio optimizer (1–3 card subset search); it is
+> not built yet.
 
 ## Structure
 
@@ -66,7 +68,8 @@ invented, and no unrecognized string is silently defaulted to a number.
 
 ## Engine progress
 
-Two pieces of the engine are built and tested (`packages/engine/src`). Both are
+Four pieces of the engine are built and tested (`packages/engine/src`). They form
+a chain — raw card → normalized rates → AED valuation → per-card score. All are
 pure and deterministic, with the math commented inline — this package is
 human-owned, so it's meant to be read and explained, not just run.
 
@@ -97,6 +100,42 @@ Running it over all 55 cards (150 rate strings) today: **144 tier-1, 2 tier-2,
 4 tier-3**. The two tier-2 and four tier-3 strings are listed by a sweep test,
 and their counts are locked so a new card with a novel string breaks the build
 instead of being silently reclassified.
+
+### 3. Valuation model — `valuations.ts`
+
+`DEFAULT_VALUATIONS` maps every reward currency in `cards.json` to an AED-per-unit
+value with a per-entry confidence (`high` / `medium` / `low`) — e.g. 1 Skywards
+Mile ≈ 0.035 AED (high), 1 FAB Reward ≈ 0.007 AED (medium). Cashback (`AED`) is
+1.0 by definition. It's plain data plus pure lookups; `withValuations(overrides)`
+lets a caller adjust one currency without restating the rest (the path to
+user-editable valuations later).
+
+A test cross-checks the table against the data and **fails the build if any
+currency lacks an entry**, so a new card with a new currency can't score against a
+missing value. Currencies outside the researched set (`AED (Nol points)`,
+`ThankYou Points`, `Multiple programs (customizable)`) are shipped as **flagged
+placeholders**, not invented values.
+
+### 4. Card scorer — `score-card.ts`
+
+`scoreCard(spending, card, valuations?)` → `CardScore`: the "show the math"
+receipt for one card against a monthly spending profile. It:
+
+1. matches spend categories to the card's reward categories via an explicit table;
+2. applies each normalized rate respecting its unit (percent → AED directly;
+   points/miles-per-AED → multiply spend; per-USD → convert at **3.6725 AED/USD**
+   first);
+3. enforces monthly then annual caps in reward-currency units;
+4. routes unmatched spend to the base rate;
+5. converts earnings to AED via the valuation table, annualizes, and subtracts the
+   annual fee (exposing **year-1 vs ongoing** value for fee waivers).
+
+The result carries a full per-category breakdown, reward-currency amounts before
+conversion (e.g. "120,000 FAB Rewards"), the valuation used, and every inherited
+low/unknown-confidence flag. Unresolved (tier-3) rates score as a **min/max range**
+rather than a fabricated point value. Tests hand-compute three cards on a fixed
+profile — a cashback card with a binding cap, a miles card with USD conversion, and
+a free-for-life points card — and assert the engine matches the hand math exactly.
 
 ## Key decisions
 
@@ -133,6 +172,26 @@ Decisions worth knowing before extending the engine:
 - **The card model mirrors the raw JSON exactly** (snake_case field names,
   nullable fields kept nullable) so the data type-checks against it directly, with
   no lossy remapping. It is the *input* to the normalizer, not a normalized model.
+
+- **Valuations are researched defaults, overridable, and honest about gaps.** Every
+  currency carries a confidence, and the three currencies with no researched value
+  are flagged placeholders (conservative `0.0075`) rather than invented numbers —
+  any card using them is marked uncertain. `AED (<store> credit)` currencies are
+  valued as restricted credit (0.0075), not face-value cash; only pure `AED` is 1.0.
+
+- **Scoring is conservative and flags its assumptions.** Spend routes to the
+  highest-yield matching category; over-cap spend earns nothing more (never
+  overstated), and reached caps are flagged. Merchant-locked bonuses (e.g. an
+  Emirates co-brand's airline rate) are credited but flagged as an optimistic
+  assumption, since a generic profile can't confirm the spend is at that merchant.
+  `user_chosen_category` isn't credited at all (we can't know the user's pick) —
+  a deliberate under-count, flagged, and an open modeling question.
+
+- **Ranges propagate; unbounded upside is never invented.** Tier-3 rates score as a
+  min/max band. A bounded ceiling (`"Up to 4%"`) yields a real `0..max`; an
+  unbounded rate (`"Variable"`) collapses to its min with an "upside not scored"
+  flag rather than a fabricated ceiling. The single ranking number is the range
+  midpoint, with the full range exposed alongside it.
 
 ## Open questions
 
