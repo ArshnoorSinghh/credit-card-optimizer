@@ -1,0 +1,2969 @@
+[
+  {
+    "id": "fab_cashback",
+    "name": "FAB Cashback Credit Card",
+    "bank": "First Abu Dhabi Bank",
+    "network": "Visa",
+    "tier": "Platinum",
+    "eligibility": {
+      "min_monthly_salary_aed": 5000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 300,
+      "waiver_conditions": "First year free; subsequent years AED 300",
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "cashback",
+      "currency": "AED",
+      "base_rate": "1% on all spend",
+      "categories": [
+        {
+          "category": "groceries_education_utilities",
+          "rate": "5%",
+          "monthly_cap": 200,
+          "annual_cap": 2400
+        },
+        {
+          "category": "dining_international",
+          "rate": "3%",
+          "monthly_cap": 200,
+          "annual_cap": 2400
+        },
+        {
+          "category": "all_other_spend",
+          "rate": "1%",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "AED cashback",
+      "primary_uses": [
+        "statement credit",
+        "auto-redemption"
+      ],
+      "redemption_url": "https://www.bankfab.com/en-ae/personal/credit-cards"
+    },
+    "benefits": [
+      "Airport lounge access (limited)",
+      "Cinema offers",
+      "Travel benefits",
+      "Buy 1 Get 1 offers via FAB rewards"
+    ],
+    "source_url": "https://www.bankfab.com/en-ae/personal/credit-cards/cashback-card"
+  },
+  {
+    "id": "fab_rewards_indulge",
+    "name": "FAB Rewards Indulge Credit Card",
+    "bank": "First Abu Dhabi Bank",
+    "network": "Visa",
+    "tier": "Signature",
+    "eligibility": {
+      "min_monthly_salary_aed": 5000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 0,
+      "waiver_conditions": "Free for life",
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "points",
+      "currency": "FAB Rewards",
+      "base_rate": "1 point per AED 1",
+      "categories": [
+        {
+          "category": "dining",
+          "rate": "5 points per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "international_spend",
+          "rate": "3 points per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "FAB Rewards Points",
+      "primary_uses": [
+        "statement credit",
+        "vouchers",
+        "flights",
+        "hotels"
+      ],
+      "redemption_url": "https://www.bankfab.com/en-ae/personal/cards/credit-card-rewards"
+    },
+    "benefits": [
+      "Airport lounge access",
+      "Cinema offers",
+      "Travel benefits",
+      "Cashback options",
+      "Discounts and vouchers"
+    ],
+    "source_url": "https://www.bankfab.com/en-ae/personal/credit-cards/rewards-indulge"
+  },
+  {
+    "id": "fab_etihad_guest_elite",
+    "name": "FAB Etihad Guest Elite Credit Card",
+    "bank": "First Abu Dhabi Bank",
+    "network": "Visa",
+    "tier": "Infinite",
+    "eligibility": {
+      "min_monthly_salary_aed": 30000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 1500,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "miles",
+      "currency": "Etihad Guest Miles",
+      "base_rate": "1.5 miles per USD 1",
+      "categories": [
+        {
+          "category": "etihad_purchases",
+          "rate": "5 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "international_spend",
+          "rate": "2 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "Etihad Guest Miles",
+      "primary_uses": [
+        "Etihad flights",
+        "flight upgrades",
+        "partner hotels"
+      ],
+      "redemption_url": "https://www.etihadguest.com/"
+    },
+    "benefits": [
+      "Etihad Guest Silver tier status",
+      "Complimentary airport lounge access (unlimited)",
+      "Travel insurance",
+      "Concierge service",
+      "Golf benefits",
+      "Welcome bonus miles"
+    ],
+    "source_url": "https://www.bankfab.com/en-ae/personal/credit-cards/etihad-guest-elite"
+  },
+  {
+    "id": "enbd_skywards_signature",
+    "name": "Emirates NBD Skywards Signature Credit Card",
+    "bank": "Emirates NBD",
+    "network": "Visa",
+    "tier": "Signature",
+    "eligibility": {
+      "min_monthly_salary_aed": 15000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": true,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 735,
+      "waiver_conditions": "First year free; AED 735 from second year",
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "miles",
+      "currency": "Skywards Miles",
+      "base_rate": "1 mile per USD 1 (approx AED 3.67)",
+      "categories": [
+        {
+          "category": "emirates_purchases",
+          "rate": "2 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "international_spend",
+          "rate": "1.5 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "Skywards Miles",
+      "primary_uses": [
+        "Emirates flights",
+        "flight upgrades",
+        "Skywards partner hotels"
+      ],
+      "redemption_url": "https://www.emirates.com/skywards/"
+    },
+    "benefits": [
+      "Skywards Silver tier status",
+      "Airport lounge access via Marhaba",
+      "Travel insurance",
+      "Concierge service",
+      "Welcome bonus miles"
+    ],
+    "source_url": "https://www.emiratesnbd.com/en/cards/credit-cards/skywards-signature"
+  },
+  {
+    "id": "enbd_skywards_infinite",
+    "name": "Emirates NBD Skywards Infinite Credit Card",
+    "bank": "Emirates NBD",
+    "network": "Visa",
+    "tier": "Infinite",
+    "eligibility": {
+      "min_monthly_salary_aed": 36750,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": true,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 1575,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "miles",
+      "currency": "Skywards Miles",
+      "base_rate": "1.5 miles per USD 1",
+      "categories": [
+        {
+          "category": "emirates_purchases",
+          "rate": "3 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "international_spend",
+          "rate": "2 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "Skywards Miles",
+      "primary_uses": [
+        "Emirates flights",
+        "flight upgrades",
+        "premium cabin upgrades"
+      ],
+      "redemption_url": "https://www.emirates.com/skywards/"
+    },
+    "benefits": [
+      "Skywards Gold tier status",
+      "Unlimited airport lounge access (LoungeKey)",
+      "Comprehensive travel insurance",
+      "Concierge service",
+      "Golf benefits",
+      "Buy 1 Get 1 cinema offers",
+      "Hotel discounts"
+    ],
+    "source_url": "https://www.emiratesnbd.com/en/cards/credit-cards/skywards-infinite"
+  },
+  {
+    "id": "enbd_lulu_platinum",
+    "name": "Emirates NBD LuLu 24/7 Platinum Mastercard",
+    "bank": "Emirates NBD",
+    "network": "Mastercard",
+    "tier": "Platinum",
+    "eligibility": {
+      "min_monthly_salary_aed": 5000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 262,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "points",
+      "currency": "LuLu Points",
+      "base_rate": "1 point per AED 1",
+      "categories": [
+        {
+          "category": "lulu_supermarket",
+          "rate": "10 points per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "groceries_other",
+          "rate": "3 points per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "LuLu Points",
+      "primary_uses": [
+        "LuLu supermarket purchases",
+        "vouchers"
+      ],
+      "redemption_url": "https://www.luluhypermarket.com/"
+    },
+    "benefits": [
+      "Cinema offers",
+      "Discounts and vouchers",
+      "LuLu hypermarket discounts"
+    ],
+    "source_url": "https://www.emiratesnbd.com/en/cards/credit-cards/lulu-platinum"
+  },
+  {
+    "id": "enbd_uemaar_signature",
+    "name": "Emirates NBD U By Emaar Signature Credit Card",
+    "bank": "Emirates NBD",
+    "network": "Visa",
+    "tier": "Signature",
+    "eligibility": {
+      "min_monthly_salary_aed": 15000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 262,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "points",
+      "currency": "U By Emaar Points",
+      "base_rate": "10% on Emaar purchases",
+      "categories": [
+        {
+          "category": "emaar_properties",
+          "rate": "10 points per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "all_other_spend",
+          "rate": "1 point per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "U By Emaar Points",
+      "primary_uses": [
+        "Emaar malls",
+        "Emaar hospitality",
+        "Dubai Mall",
+        "Address Hotels"
+      ],
+      "redemption_url": "https://www.ubyemaar.com/"
+    },
+    "benefits": [
+      "Discounts at Emaar properties",
+      "Cinema offers (Reel Cinemas)",
+      "Dining offers"
+    ],
+    "source_url": "https://www.emiratesnbd.com/en/cards/credit-cards/u-by-emaar-signature"
+  },
+  {
+    "id": "enbd_dnata_world",
+    "name": "Emirates NBD dnata World Credit Card",
+    "bank": "Emirates NBD",
+    "network": "Mastercard",
+    "tier": "World",
+    "eligibility": {
+      "min_monthly_salary_aed": 25000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 1048,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "points",
+      "currency": "dnata Points",
+      "base_rate": "5% on dnata travel",
+      "categories": [
+        {
+          "category": "dnata_travel",
+          "rate": "5%",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "international_spend",
+          "rate": "2%",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "dnata Points",
+      "primary_uses": [
+        "dnata travel bookings",
+        "flights",
+        "hotels"
+      ],
+      "redemption_url": "https://www.dnatatravel.com/"
+    },
+    "benefits": [
+      "Golf benefits",
+      "Travel benefits",
+      "Concierge service",
+      "Valet parking",
+      "Welcome offers"
+    ],
+    "source_url": "https://www.emiratesnbd.com/en/cards/credit-cards/dnata-world"
+  },
+  {
+    "id": "enbd_marriott_bonvoy",
+    "name": "Emirates NBD Marriott Bonvoy World Mastercard",
+    "bank": "Emirates NBD",
+    "network": "Mastercard",
+    "tier": "World",
+    "eligibility": {
+      "min_monthly_salary_aed": 25000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 1575,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "points",
+      "currency": "Marriott Bonvoy Points",
+      "base_rate": "2 points per AED 1",
+      "categories": [
+        {
+          "category": "marriott_hotels",
+          "rate": "6 points per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "international_spend",
+          "rate": "3 points per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "Marriott Bonvoy Points",
+      "primary_uses": [
+        "Marriott hotel stays",
+        "flights",
+        "experiences"
+      ],
+      "redemption_url": "https://www.marriott.com/loyalty.mi"
+    },
+    "benefits": [
+      "Marriott Silver Elite tier status",
+      "15 elite night credits",
+      "Free night certificate annually",
+      "Airport lounge access",
+      "Golf benefits",
+      "Concierge service"
+    ],
+    "source_url": "https://www.emiratesnbd.com/en/cards/credit-cards/marriott-bonvoy"
+  },
+  {
+    "id": "enbd_diners_duo",
+    "name": "Emirates NBD Diners Club duo Credit Card",
+    "bank": "Emirates NBD",
+    "network": "Diners Club + Mastercard",
+    "tier": "Premium",
+    "eligibility": {
+      "min_monthly_salary_aed": 10000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 0,
+      "waiver_conditions": "Free for life",
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "points",
+      "currency": "Diners Club Reward Points",
+      "base_rate": "1 point per AED 1",
+      "categories": [
+        {
+          "category": "international_spend",
+          "rate": "2 points per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "Diners Club Points",
+      "primary_uses": [
+        "statement credit",
+        "vouchers",
+        "flights"
+      ],
+      "redemption_url": "https://www.dinersclub.ae/"
+    },
+    "benefits": [
+      "Airport lounge access (1000+ lounges via Diners Club)",
+      "Cinema offers",
+      "Valet parking",
+      "Travel benefits"
+    ],
+    "source_url": "https://www.emiratesnbd.com/en/cards/credit-cards/diners-duo"
+  },
+  {
+    "id": "enbd_visa_flexi",
+    "name": "Emirates NBD Visa Flexi Credit Card",
+    "bank": "Emirates NBD",
+    "network": "Visa",
+    "tier": "Signature",
+    "eligibility": {
+      "min_monthly_salary_aed": 15000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 735,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "cashback",
+      "currency": "AED",
+      "base_rate": "Customizable based on chosen category",
+      "categories": [
+        {
+          "category": "user_chosen_category",
+          "rate": "Up to 5%",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "AED cashback",
+      "primary_uses": [
+        "statement credit"
+      ],
+      "redemption_url": "https://www.emiratesnbd.com/"
+    },
+    "benefits": [
+      "Airport lounge access",
+      "Cinema offers",
+      "Concierge service",
+      "Discounts and vouchers"
+    ],
+    "source_url": "https://www.emiratesnbd.com/en/cards/credit-cards/visa-flexi"
+  },
+  {
+    "id": "enbd_titanium",
+    "name": "Emirates NBD Titanium Credit Card",
+    "bank": "Emirates NBD",
+    "network": "Visa",
+    "tier": "Titanium",
+    "eligibility": {
+      "min_monthly_salary_aed": 5000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 0,
+      "waiver_conditions": "Free for life",
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "cashback",
+      "currency": "AED",
+      "base_rate": "1% on all spend",
+      "categories": [
+        {
+          "category": "all_spend",
+          "rate": "1%",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "AED cashback",
+      "primary_uses": [
+        "statement credit"
+      ],
+      "redemption_url": "https://www.emiratesnbd.com/"
+    },
+    "benefits": [
+      "Airport lounge access",
+      "Golf benefits",
+      "Balance transfer"
+    ],
+    "source_url": "https://www.emiratesnbd.com/en/cards/credit-cards/titanium"
+  },
+  {
+    "id": "enbd_etihad_guest_inspire",
+    "name": "Emirates NBD Etihad Guest Visa Inspire Credit Card",
+    "bank": "Emirates NBD",
+    "network": "Visa",
+    "tier": "Signature",
+    "eligibility": {
+      "min_monthly_salary_aed": 15000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 735,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "miles",
+      "currency": "Etihad Guest Miles",
+      "base_rate": "1 mile per USD 1",
+      "categories": [
+        {
+          "category": "etihad_purchases",
+          "rate": "2 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "Etihad Guest Miles",
+      "primary_uses": [
+        "Etihad flights",
+        "flight upgrades"
+      ],
+      "redemption_url": "https://www.etihadguest.com/"
+    },
+    "benefits": [
+      "Airport lounge access",
+      "Cinema offers",
+      "Golf benefits",
+      "Travel benefits",
+      "Valet parking",
+      "Concierge service"
+    ],
+    "source_url": "https://www.emiratesnbd.com/en/cards/credit-cards/etihad-guest-visa-inspire"
+  },
+  {
+    "id": "enbd_go4it_platinum",
+    "name": "Emirates NBD Go4it Platinum Credit Card",
+    "bank": "Emirates NBD",
+    "network": "Visa",
+    "tier": "Platinum",
+    "eligibility": {
+      "min_monthly_salary_aed": 12000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": true,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 0,
+      "waiver_conditions": "Free for life",
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "cashback",
+      "currency": "AED",
+      "base_rate": "1% on all spend",
+      "categories": [
+        {
+          "category": "all_spend",
+          "rate": "1%",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "AED cashback",
+      "primary_uses": [
+        "statement credit"
+      ],
+      "redemption_url": "https://www.emiratesnbd.com/"
+    },
+    "benefits": [
+      "Cinema offers",
+      "Travel benefits",
+      "Balance transfer",
+      "Discounts and vouchers"
+    ],
+    "source_url": "https://www.emiratesnbd.com/en/cards/credit-cards/go4it-platinum"
+  },
+  {
+    "id": "adcb_traveller",
+    "name": "ADCB Traveller Credit Card",
+    "bank": "Abu Dhabi Commercial Bank",
+    "network": "Visa",
+    "tier": "Signature",
+    "eligibility": {
+      "min_monthly_salary_aed": 20000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 1575,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "miles",
+      "currency": "TouchPoints (convertible to miles)",
+      "base_rate": "1 TouchPoint per AED 1",
+      "categories": [
+        {
+          "category": "international_spend",
+          "rate": "2 TouchPoints per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "travel_spend",
+          "rate": "3 TouchPoints per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "ADCB TouchPoints",
+      "primary_uses": [
+        "miles transfer to airline programs",
+        "flights",
+        "hotels",
+        "vouchers"
+      ],
+      "redemption_url": "https://www.adcb.com/en/personal/cards/touchpoints"
+    },
+    "benefits": [
+      "Airport lounge access",
+      "Cinema offers",
+      "Golf benefits",
+      "Travel insurance",
+      "Hotel discounts",
+      "Talabat discounts",
+      "Concierge service"
+    ],
+    "source_url": "https://www.adcb.com/en/personal/cards/credit-cards/traveller"
+  },
+  {
+    "id": "adcb_lulu_platinum",
+    "name": "ADCB LuLu Platinum Credit Card",
+    "bank": "Abu Dhabi Commercial Bank",
+    "network": "Visa",
+    "tier": "Platinum",
+    "eligibility": {
+      "min_monthly_salary_aed": 5000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 750,
+      "waiver_conditions": "Spend AED 36,000+ per year",
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "points",
+      "currency": "LuLu Points",
+      "base_rate": "1 point per AED 1",
+      "categories": [
+        {
+          "category": "lulu_purchases",
+          "rate": "5 points per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "LuLu Points",
+      "primary_uses": [
+        "LuLu supermarket purchases"
+      ],
+      "redemption_url": "https://www.luluhypermarket.com/"
+    },
+    "benefits": [
+      "LuLu supermarket discounts",
+      "Cinema offers",
+      "Discounts and vouchers"
+    ],
+    "source_url": "https://www.adcb.com/en/personal/cards/credit-cards/lulu-platinum"
+  },
+  {
+    "id": "adcb_simplylife_cashback",
+    "name": "ADCB SimplyLife Cashback Credit Card",
+    "bank": "Abu Dhabi Commercial Bank",
+    "network": "Visa",
+    "tier": "Platinum",
+    "eligibility": {
+      "min_monthly_salary_aed": 5000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 0,
+      "waiver_conditions": "Free for life",
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "cashback",
+      "currency": "AED",
+      "base_rate": "1% on all spend",
+      "categories": [
+        {
+          "category": "groceries_dining",
+          "rate": "5%",
+          "monthly_cap": 200,
+          "annual_cap": 2400
+        },
+        {
+          "category": "fuel_utilities",
+          "rate": "2%",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "all_other_spend",
+          "rate": "1%",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 3000
+    },
+    "redemption": {
+      "currency": "AED cashback",
+      "primary_uses": [
+        "automatic statement credit"
+      ],
+      "redemption_url": "https://simplylife.ae/"
+    },
+    "benefits": [
+      "Free for life",
+      "No minimum spend for cashback",
+      "Cinema offers"
+    ],
+    "source_url": "https://simplylife.ae/credit-cards"
+  },
+  {
+    "id": "adcb_etihad_guest_above",
+    "name": "ADCB Etihad Guest Above Credit Card",
+    "bank": "Abu Dhabi Commercial Bank",
+    "network": "Visa",
+    "tier": "Infinite",
+    "eligibility": {
+      "min_monthly_salary_aed": 30000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 1500,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "miles",
+      "currency": "Etihad Guest Miles",
+      "base_rate": "1.5 miles per USD 1",
+      "categories": [
+        {
+          "category": "etihad_purchases",
+          "rate": "5 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "international_spend",
+          "rate": "2 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "Etihad Guest Miles",
+      "primary_uses": [
+        "Etihad flights",
+        "flight upgrades",
+        "partner hotels"
+      ],
+      "redemption_url": "https://www.etihadguest.com/"
+    },
+    "benefits": [
+      "Etihad Guest Silver tier status",
+      "Welcome bonus miles",
+      "Unlimited airport lounge access",
+      "Travel insurance",
+      "Concierge service",
+      "Golf benefits"
+    ],
+    "source_url": "https://www.adcb.com/en/personal/cards/credit-cards/etihad-guest-above"
+  },
+  {
+    "id": "mashreq_smart_saver",
+    "name": "Mashreq Smart Saver Credit Card",
+    "bank": "Mashreq Bank",
+    "network": "Visa",
+    "tier": "Platinum",
+    "eligibility": {
+      "min_monthly_salary_aed": 5000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 0,
+      "waiver_conditions": "Free for life",
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "cashback",
+      "currency": "AED (Salaam Points convertible)",
+      "base_rate": "1% on all spend",
+      "categories": [
+        {
+          "category": "groceries",
+          "rate": "5%",
+          "monthly_cap": 200,
+          "annual_cap": 2400
+        },
+        {
+          "category": "dining",
+          "rate": "3%",
+          "monthly_cap": 200,
+          "annual_cap": 2400
+        },
+        {
+          "category": "all_other_spend",
+          "rate": "1%",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "Salaam Points / AED cashback",
+      "primary_uses": [
+        "statement credit",
+        "vouchers",
+        "flights"
+      ],
+      "redemption_url": "https://www.mashreq.com/en/uae/personal/cards/salaam-points/"
+    },
+    "benefits": [
+      "Free for life",
+      "Buy 1 Get 1 cinema offers",
+      "Discounts and vouchers"
+    ],
+    "source_url": "https://www.mashreq.com/en/uae/personal/cards/credit-cards/smart-saver/"
+  },
+  {
+    "id": "mashreq_solitaire_amex",
+    "name": "Mashreq Solitaire Amex Credit Card",
+    "bank": "Mashreq Bank",
+    "network": "American Express",
+    "tier": "Premium",
+    "eligibility": {
+      "min_monthly_salary_aed": 50000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 1500,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "points",
+      "currency": "Salaam Points",
+      "base_rate": "2 points per AED 1",
+      "categories": [
+        {
+          "category": "international_spend",
+          "rate": "4 points per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "dining",
+          "rate": "3 points per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "Salaam Points",
+      "primary_uses": [
+        "statement credit",
+        "vouchers",
+        "flights",
+        "hotels"
+      ],
+      "redemption_url": "https://www.mashreq.com/en/uae/personal/cards/salaam-points/"
+    },
+    "benefits": [
+      "Unlimited airport lounge access (Priority Pass)",
+      "Comprehensive travel insurance",
+      "Concierge service",
+      "Golf benefits",
+      "Hotel discounts",
+      "Premium dining offers"
+    ],
+    "source_url": "https://www.mashreq.com/en/uae/personal/cards/credit-cards/solitaire/"
+  },
+  {
+    "id": "mashreq_cashback",
+    "name": "Mashreq Cashback Credit Card",
+    "bank": "Mashreq Bank",
+    "network": "Visa",
+    "tier": "Platinum",
+    "eligibility": {
+      "min_monthly_salary_aed": 8000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 367,
+      "waiver_conditions": "First year free",
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "cashback",
+      "currency": "AED",
+      "base_rate": "1% on all spend",
+      "categories": [
+        {
+          "category": "supermarket",
+          "rate": "5%",
+          "monthly_cap": 200,
+          "annual_cap": 2400
+        },
+        {
+          "category": "dining_entertainment",
+          "rate": "3%",
+          "monthly_cap": 200,
+          "annual_cap": 2400
+        },
+        {
+          "category": "all_other_spend",
+          "rate": "1%",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "AED cashback",
+      "primary_uses": [
+        "automatic statement credit"
+      ],
+      "redemption_url": "https://www.mashreq.com/"
+    },
+    "benefits": [
+      "Airport lounge access",
+      "Cinema offers",
+      "Travel benefits",
+      "Discounts and vouchers"
+    ],
+    "source_url": "https://www.mashreq.com/en/uae/personal/cards/credit-cards/cashback/"
+  },
+  {
+    "id": "hsbc_liveplus",
+    "name": "HSBC Live+ Credit Card",
+    "bank": "HSBC UAE",
+    "network": "Visa",
+    "tier": "Signature",
+    "eligibility": {
+      "min_monthly_salary_aed": 12500,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 313.95,
+      "waiver_conditions": "First year free",
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "cashback",
+      "currency": "AED",
+      "base_rate": "1% on all spend",
+      "categories": [
+        {
+          "category": "dining_entertainment_groceries",
+          "rate": "5%",
+          "monthly_cap": 400,
+          "annual_cap": 4800
+        },
+        {
+          "category": "all_other_spend",
+          "rate": "1%",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "AED cashback",
+      "primary_uses": [
+        "automatic statement credit"
+      ],
+      "redemption_url": "https://www.hsbc.ae/"
+    },
+    "benefits": [
+      "Airport lounge access",
+      "Cinema offers",
+      "Travel benefits",
+      "Zomato Gold membership",
+      "Careem Plus membership"
+    ],
+    "source_url": "https://www.hsbc.ae/credit-cards/products/live-plus/"
+  },
+  {
+    "id": "hsbc_cashplus",
+    "name": "HSBC Cash+ Credit Card",
+    "bank": "HSBC UAE",
+    "network": "Visa",
+    "tier": "Signature",
+    "eligibility": {
+      "min_monthly_salary_aed": 30000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 1050,
+      "waiver_conditions": "First year free",
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "cashback",
+      "currency": "AED",
+      "base_rate": "1% on all spend",
+      "categories": [
+        {
+          "category": "international_spend",
+          "rate": "3%",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "all_other_spend",
+          "rate": "1%",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "AED cashback",
+      "primary_uses": [
+        "automatic statement credit"
+      ],
+      "redemption_url": "https://www.hsbc.ae/"
+    },
+    "benefits": [
+      "Airport lounge access",
+      "Cinema offers",
+      "Travel insurance",
+      "Vouchers and offers",
+      "Careem Plus membership"
+    ],
+    "source_url": "https://www.hsbc.ae/credit-cards/products/cash-plus/"
+  },
+  {
+    "id": "hsbc_skywards_signature",
+    "name": "HSBC Emirates Skywards Signature Credit Card",
+    "bank": "HSBC UAE",
+    "network": "Visa",
+    "tier": "Signature",
+    "eligibility": {
+      "min_monthly_salary_aed": 12500,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 1050,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "miles",
+      "currency": "Skywards Miles",
+      "base_rate": "1 mile per USD 1",
+      "categories": [
+        {
+          "category": "emirates_purchases",
+          "rate": "1.5 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "international_spend",
+          "rate": "1.25 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "Skywards Miles",
+      "primary_uses": [
+        "Emirates flights",
+        "flight upgrades"
+      ],
+      "redemption_url": "https://www.emirates.com/skywards/"
+    },
+    "benefits": [
+      "Airport lounge access",
+      "Cinema offers",
+      "Travel benefits",
+      "Travel insurance",
+      "Hotel discounts",
+      "Priority check-in",
+      "Zomato Gold membership",
+      "Careem Plus membership"
+    ],
+    "source_url": "https://www.hsbc.ae/credit-cards/products/skywards-signature/"
+  },
+  {
+    "id": "hsbc_skywards_infinite",
+    "name": "HSBC Emirates Skywards Infinite Credit Card",
+    "bank": "HSBC UAE",
+    "network": "Visa",
+    "tier": "Infinite",
+    "eligibility": {
+      "min_monthly_salary_aed": 30000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 2625,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "miles",
+      "currency": "Skywards Miles",
+      "base_rate": "1.5 miles per USD 1",
+      "categories": [
+        {
+          "category": "emirates_purchases",
+          "rate": "2.5 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "international_spend",
+          "rate": "1.75 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "Skywards Miles",
+      "primary_uses": [
+        "Emirates flights",
+        "flight upgrades",
+        "premium cabin upgrades"
+      ],
+      "redemption_url": "https://www.emirates.com/skywards/"
+    },
+    "benefits": [
+      "Skywards Silver tier status",
+      "Unlimited airport lounge access",
+      "Comprehensive travel insurance",
+      "Cinema offers",
+      "Hotel discounts",
+      "Priority check-in",
+      "Zomato Gold membership",
+      "Careem Plus membership"
+    ],
+    "source_url": "https://www.hsbc.ae/credit-cards/products/skywards-infinite/"
+  },
+  {
+    "id": "hsbc_max_rewards",
+    "name": "HSBC Max Rewards Credit Card",
+    "bank": "HSBC UAE",
+    "network": "Visa",
+    "tier": "Signature",
+    "eligibility": {
+      "min_monthly_salary_aed": 12500,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 630,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "points",
+      "currency": "HSBC Reward Points",
+      "base_rate": "2 points per AED 1",
+      "categories": [
+        {
+          "category": "international_spend",
+          "rate": "4 points per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "dining",
+          "rate": "3 points per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "HSBC Reward Points",
+      "primary_uses": [
+        "air miles",
+        "vouchers",
+        "statement credit"
+      ],
+      "redemption_url": "https://www.hsbc.ae/rewards/"
+    },
+    "benefits": [
+      "Airport lounge access",
+      "Cinema offers",
+      "Travel benefits",
+      "Travel insurance",
+      "Hotel discounts",
+      "Zomato Gold membership",
+      "Careem Plus membership"
+    ],
+    "source_url": "https://www.hsbc.ae/credit-cards/products/max-rewards/"
+  },
+  {
+    "id": "ei_cashback",
+    "name": "Emirates Islamic Cashback Credit Card",
+    "bank": "Emirates Islamic",
+    "network": "Visa",
+    "tier": "Platinum",
+    "eligibility": {
+      "min_monthly_salary_aed": 5000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 367,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "cashback",
+      "currency": "AED",
+      "base_rate": "1% on all spend",
+      "categories": [
+        {
+          "category": "groceries_dining",
+          "rate": "5%",
+          "monthly_cap": 200,
+          "annual_cap": 2400
+        },
+        {
+          "category": "all_other_spend",
+          "rate": "1%",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "AED cashback",
+      "primary_uses": [
+        "automatic statement credit"
+      ],
+      "redemption_url": "https://www.emiratesislamic.ae/"
+    },
+    "benefits": [
+      "Sharia compliant",
+      "Golf benefits",
+      "Free supplementary cards",
+      "Balance transfer"
+    ],
+    "source_url": "https://www.emiratesislamic.ae/en/personal-banking/cards/credit-cards/cashback-card"
+  },
+  {
+    "id": "ei_skywards_signature",
+    "name": "Emirates Islamic Skywards Signature Credit Card",
+    "bank": "Emirates Islamic",
+    "network": "Visa",
+    "tier": "Signature",
+    "eligibility": {
+      "min_monthly_salary_aed": 12000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 735,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "miles",
+      "currency": "Skywards Miles",
+      "base_rate": "1 mile per USD 1",
+      "categories": [
+        {
+          "category": "emirates_purchases",
+          "rate": "2 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "international_spend",
+          "rate": "1.5 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "Skywards Miles",
+      "primary_uses": [
+        "Emirates flights",
+        "flight upgrades"
+      ],
+      "redemption_url": "https://www.emirates.com/skywards/"
+    },
+    "benefits": [
+      "Sharia compliant",
+      "Airport lounge access",
+      "Travel benefits",
+      "Golf benefits",
+      "Valet parking"
+    ],
+    "source_url": "https://www.emiratesislamic.ae/en/personal-banking/cards/credit-cards/skywards-signature"
+  },
+  {
+    "id": "ei_skywards_black",
+    "name": "Emirates Islamic Skywards Black Credit Card",
+    "bank": "Emirates Islamic",
+    "network": "Visa",
+    "tier": "Infinite",
+    "eligibility": {
+      "min_monthly_salary_aed": 35000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 4200,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "miles",
+      "currency": "Skywards Miles",
+      "base_rate": "2 miles per USD 1",
+      "categories": [
+        {
+          "category": "emirates_purchases",
+          "rate": "4 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "international_spend",
+          "rate": "2.5 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "Skywards Miles",
+      "primary_uses": [
+        "Emirates flights",
+        "flight upgrades",
+        "premium cabin upgrades"
+      ],
+      "redemption_url": "https://www.emirates.com/skywards/"
+    },
+    "benefits": [
+      "Sharia compliant",
+      "Skywards Gold tier status",
+      "Unlimited airport lounge access",
+      "Cinema offers",
+      "Golf benefits",
+      "Free supplementary cards",
+      "Travel benefits",
+      "Concierge service"
+    ],
+    "source_url": "https://www.emiratesislamic.ae/en/personal-banking/cards/credit-cards/skywards-black"
+  },
+  {
+    "id": "ei_flex_elite",
+    "name": "Emirates Islamic Flex Elite Credit Card",
+    "bank": "Emirates Islamic",
+    "network": "Visa",
+    "tier": "Signature",
+    "eligibility": {
+      "min_monthly_salary_aed": 15000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 735,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "miles",
+      "currency": "Multiple programs (customizable)",
+      "base_rate": "Variable based on chosen program",
+      "categories": [
+        {
+          "category": "international_spend",
+          "rate": "Variable",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "Multiple programs",
+      "primary_uses": [
+        "air miles transfer",
+        "flights",
+        "hotels"
+      ],
+      "redemption_url": "https://www.emiratesislamic.ae/"
+    },
+    "benefits": [
+      "Sharia compliant",
+      "Airport lounge access",
+      "Golf benefits",
+      "Travel benefits",
+      "Free bank account",
+      "E-statement"
+    ],
+    "source_url": "https://www.emiratesislamic.ae/en/personal-banking/cards/credit-cards/flex-elite"
+  },
+  {
+    "id": "ei_rta",
+    "name": "Emirates Islamic RTA Credit Card",
+    "bank": "Emirates Islamic",
+    "network": "Visa",
+    "tier": "Platinum",
+    "eligibility": {
+      "min_monthly_salary_aed": 5000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 0,
+      "waiver_conditions": "Free for life",
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "cashback",
+      "currency": "AED (Nol points)",
+      "base_rate": "1% on all spend",
+      "categories": [
+        {
+          "category": "rta_transport",
+          "rate": "5%",
+          "monthly_cap": 100,
+          "annual_cap": 1200
+        },
+        {
+          "category": "fuel",
+          "rate": "3%",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "all_other_spend",
+          "rate": "1%",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "AED cashback",
+      "primary_uses": [
+        "RTA top-up",
+        "statement credit"
+      ],
+      "redemption_url": "https://www.emiratesislamic.ae/"
+    },
+    "benefits": [
+      "Sharia compliant",
+      "Free for life",
+      "Discounts and vouchers",
+      "Balance transfer"
+    ],
+    "source_url": "https://www.emiratesislamic.ae/en/personal-banking/cards/credit-cards/rta-card"
+  },
+  {
+    "id": "dib_consumer_reward",
+    "name": "Dubai Islamic Bank Consumer Reward Credit Card",
+    "bank": "Dubai Islamic Bank",
+    "network": "Visa",
+    "tier": "Classic",
+    "eligibility": {
+      "min_monthly_salary_aed": 5000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 157,
+      "waiver_conditions": "First year free",
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "cashback",
+      "currency": "AED",
+      "base_rate": "1% on all spend",
+      "categories": [
+        {
+          "category": "all_spend",
+          "rate": "1%",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "AED cashback",
+      "primary_uses": [
+        "statement credit"
+      ],
+      "redemption_url": "https://www.dib.ae/"
+    },
+    "benefits": [
+      "Sharia compliant",
+      "Islamic finance"
+    ],
+    "source_url": "https://www.dib.ae/personal/cards/credit-cards/consumer-reward-card"
+  },
+  {
+    "id": "dib_skywards_dib_signature",
+    "name": "Dubai Islamic Bank Emirates Skywards DIB Signature Credit Card",
+    "bank": "Dubai Islamic Bank",
+    "network": "Visa",
+    "tier": "Signature",
+    "eligibility": {
+      "min_monthly_salary_aed": 15000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 1575,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "miles",
+      "currency": "Skywards Miles",
+      "base_rate": "1 mile per USD 1",
+      "categories": [
+        {
+          "category": "emirates_purchases",
+          "rate": "2 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "Skywards Miles",
+      "primary_uses": [
+        "Emirates flights",
+        "flight upgrades"
+      ],
+      "redemption_url": "https://www.emirates.com/skywards/"
+    },
+    "benefits": [
+      "Sharia compliant",
+      "Airport lounge access",
+      "Balance transfer"
+    ],
+    "source_url": "https://www.dib.ae/personal/cards/credit-cards/skywards-dib-signature"
+  },
+  {
+    "id": "dib_skywards_dib_infinite",
+    "name": "Dubai Islamic Bank Emirates Skywards DIB Infinite Credit Card",
+    "bank": "Dubai Islamic Bank",
+    "network": "Visa",
+    "tier": "Infinite",
+    "eligibility": {
+      "min_monthly_salary_aed": 35000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 2625,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "miles",
+      "currency": "Skywards Miles",
+      "base_rate": "1.5 miles per USD 1",
+      "categories": [
+        {
+          "category": "emirates_purchases",
+          "rate": "3 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "international_spend",
+          "rate": "2 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "Skywards Miles",
+      "primary_uses": [
+        "Emirates flights",
+        "flight upgrades",
+        "premium cabin upgrades"
+      ],
+      "redemption_url": "https://www.emirates.com/skywards/"
+    },
+    "benefits": [
+      "Sharia compliant",
+      "Skywards Silver tier status",
+      "Unlimited airport lounge access",
+      "Travel insurance",
+      "Travel benefits",
+      "Balance transfer"
+    ],
+    "source_url": "https://www.dib.ae/personal/cards/credit-cards/skywards-dib-infinite"
+  },
+  {
+    "id": "dib_prime_classic",
+    "name": "Dubai Islamic Bank Prime Classic Credit Card",
+    "bank": "Dubai Islamic Bank",
+    "network": "Visa",
+    "tier": "Classic",
+    "eligibility": {
+      "min_monthly_salary_aed": 5000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 0,
+      "waiver_conditions": "Free for life",
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "points",
+      "currency": "DIB Points",
+      "base_rate": "1 point per AED 1",
+      "categories": [
+        {
+          "category": "all_spend",
+          "rate": "1 point per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "DIB Points",
+      "primary_uses": [
+        "vouchers",
+        "statement credit"
+      ],
+      "redemption_url": "https://www.dib.ae/"
+    },
+    "benefits": [
+      "Sharia compliant",
+      "Free supplementary cards",
+      "Travel benefits",
+      "Roadside assistance",
+      "Balance transfer"
+    ],
+    "source_url": "https://www.dib.ae/personal/cards/credit-cards/prime-classic"
+  },
+  {
+    "id": "dib_al_islami_gold",
+    "name": "Dubai Islamic Bank Al Islami Gold Credit Card",
+    "bank": "Dubai Islamic Bank",
+    "network": "Visa",
+    "tier": "Gold",
+    "eligibility": {
+      "min_monthly_salary_aed": 5000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 0,
+      "waiver_conditions": "Free for life",
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "points",
+      "currency": "DIB Points",
+      "base_rate": "1 point per AED 1",
+      "categories": [
+        {
+          "category": "all_spend",
+          "rate": "1 point per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "DIB Points",
+      "primary_uses": [
+        "vouchers",
+        "statement credit"
+      ],
+      "redemption_url": "https://www.dib.ae/"
+    },
+    "benefits": [
+      "Sharia compliant",
+      "Roadside assistance",
+      "Islamic finance"
+    ],
+    "source_url": "https://www.dib.ae/personal/cards/credit-cards/al-islami-gold"
+  },
+  {
+    "id": "adib_value_plus",
+    "name": "ADIB Value+ Credit Card",
+    "bank": "Abu Dhabi Islamic Bank",
+    "network": "Visa",
+    "tier": "Platinum",
+    "eligibility": {
+      "min_monthly_salary_aed": 5000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 0,
+      "waiver_conditions": "Free for life",
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "miles",
+      "currency": "Etihad Guest Miles",
+      "base_rate": "1 mile per AED 1",
+      "categories": [
+        {
+          "category": "all_spend",
+          "rate": "1 mile per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "Etihad Guest Miles",
+      "primary_uses": [
+        "Etihad flights",
+        "flight upgrades"
+      ],
+      "redemption_url": "https://www.etihadguest.com/"
+    },
+    "benefits": [
+      "Sharia compliant",
+      "Islamic finance",
+      "Airport lounge access",
+      "Discounts and vouchers"
+    ],
+    "source_url": "https://www.adib.ae/en/personal/cards/credit-cards/value-plus"
+  },
+  {
+    "id": "adib_smiles_signature",
+    "name": "ADIB Smiles Visa Signature Credit Card",
+    "bank": "Abu Dhabi Islamic Bank",
+    "network": "Visa",
+    "tier": "Signature",
+    "eligibility": {
+      "min_monthly_salary_aed": 20000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 1199,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "points",
+      "currency": "Smiles Points",
+      "base_rate": "1 point per AED 1",
+      "categories": [
+        {
+          "category": "smiles_partners",
+          "rate": "5 points per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "Smiles Points",
+      "primary_uses": [
+        "Smiles partners (Etisalat)",
+        "vouchers"
+      ],
+      "redemption_url": "https://smiles.etisalat.ae/"
+    },
+    "benefits": [
+      "Sharia compliant",
+      "Airport lounge access",
+      "Travel benefits"
+    ],
+    "source_url": "https://www.adib.ae/en/personal/cards/credit-cards/smiles-signature"
+  },
+  {
+    "id": "adib_booking_signature",
+    "name": "ADIB Booking.com Signature Credit Card",
+    "bank": "Abu Dhabi Islamic Bank",
+    "network": "Visa",
+    "tier": "Signature",
+    "eligibility": {
+      "min_monthly_salary_aed": 15000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 299,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "cashback",
+      "currency": "AED (Booking.com credit)",
+      "base_rate": "2% on all spend",
+      "categories": [
+        {
+          "category": "booking_com",
+          "rate": "10%",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "all_other_spend",
+          "rate": "2%",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "Booking.com credits",
+      "primary_uses": [
+        "Booking.com hotel bookings"
+      ],
+      "redemption_url": "https://www.booking.com/"
+    },
+    "benefits": [
+      "Sharia compliant",
+      "Airport lounge access",
+      "Travel benefits"
+    ],
+    "source_url": "https://www.adib.ae/en/personal/cards/credit-cards/booking-signature"
+  },
+  {
+    "id": "adib_visa_cashback",
+    "name": "ADIB Visa Cashback Credit Card",
+    "bank": "Abu Dhabi Islamic Bank",
+    "network": "Visa",
+    "tier": "Platinum",
+    "eligibility": {
+      "min_monthly_salary_aed": 0,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 500,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "cashback",
+      "currency": "AED",
+      "base_rate": "1% on all spend",
+      "categories": [
+        {
+          "category": "all_spend",
+          "rate": "1%",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "AED cashback",
+      "primary_uses": [
+        "statement credit"
+      ],
+      "redemption_url": "https://www.adib.ae/"
+    },
+    "benefits": [
+      "Sharia compliant"
+    ],
+    "source_url": "https://www.adib.ae/en/personal/cards/credit-cards/visa-cashback"
+  },
+  {
+    "id": "rakbank_titanium_cashback",
+    "name": "RAKBANK RAKMore Titanium Cashback Credit Card",
+    "bank": "RAKBANK",
+    "network": "Mastercard",
+    "tier": "Titanium",
+    "eligibility": {
+      "min_monthly_salary_aed": 5000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 0,
+      "waiver_conditions": "Free for life",
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "cashback",
+      "currency": "AED",
+      "base_rate": "1% on all spend",
+      "categories": [
+        {
+          "category": "groceries_dining_fuel",
+          "rate": "5%",
+          "monthly_cap": 200,
+          "annual_cap": 2400
+        },
+        {
+          "category": "all_other_spend",
+          "rate": "1%",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "AED cashback",
+      "primary_uses": [
+        "automatic statement credit"
+      ],
+      "redemption_url": "https://www.rakbank.ae/"
+    },
+    "benefits": [
+      "Free for life",
+      "Cinema offers",
+      "Discounts and vouchers"
+    ],
+    "source_url": "https://www.rakbank.ae/personal/credit-cards/rakmore-titanium-cashback"
+  },
+  {
+    "id": "rakbank_world",
+    "name": "RAKBANK World Credit Card",
+    "bank": "RAKBANK",
+    "network": "Mastercard",
+    "tier": "World",
+    "eligibility": {
+      "min_monthly_salary_aed": 25000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 1500,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "points",
+      "currency": "RAKrewards Points",
+      "base_rate": "2 points per AED 1",
+      "categories": [
+        {
+          "category": "international_spend",
+          "rate": "5 points per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "dining",
+          "rate": "3 points per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "RAKrewards Points",
+      "primary_uses": [
+        "statement credit",
+        "vouchers",
+        "miles transfer"
+      ],
+      "redemption_url": "https://www.rakbank.ae/rakrewards/"
+    },
+    "benefits": [
+      "Unlimited airport lounge access",
+      "Cinema offers",
+      "Travel benefits",
+      "Travel insurance",
+      "Concierge service",
+      "Golf benefits"
+    ],
+    "source_url": "https://www.rakbank.ae/personal/credit-cards/world"
+  },
+  {
+    "id": "rakbank_red",
+    "name": "RAKBANK Red Mastercard Credit Card",
+    "bank": "RAKBANK",
+    "network": "Mastercard",
+    "tier": "Standard",
+    "eligibility": {
+      "min_monthly_salary_aed": 5000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 0,
+      "waiver_conditions": "Free for life",
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "cashback",
+      "currency": "AED",
+      "base_rate": "1% on all spend",
+      "categories": [
+        {
+          "category": "all_spend",
+          "rate": "1%",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "AED cashback",
+      "primary_uses": [
+        "statement credit"
+      ],
+      "redemption_url": "https://www.rakbank.ae/"
+    },
+    "benefits": [
+      "Free for life",
+      "Discounts and vouchers"
+    ],
+    "source_url": "https://www.rakbank.ae/personal/credit-cards/red"
+  },
+  {
+    "id": "cbd_titanium",
+    "name": "CBD Titanium Mastercard Credit Card",
+    "bank": "Commercial Bank of Dubai",
+    "network": "Mastercard",
+    "tier": "Titanium",
+    "eligibility": {
+      "min_monthly_salary_aed": 8000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 0,
+      "waiver_conditions": "Free for life",
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "points",
+      "currency": "CBD Reward Points",
+      "base_rate": "1 point per AED 1",
+      "categories": [
+        {
+          "category": "all_spend",
+          "rate": "1 point per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "CBD Reward Points",
+      "primary_uses": [
+        "vouchers",
+        "statement credit"
+      ],
+      "redemption_url": "https://www.cbd.ae/"
+    },
+    "benefits": [
+      "Free for life",
+      "Up to 5 free supplementary credit cards"
+    ],
+    "source_url": "https://www.cbd.ae/personal/cards/credit-cards/titanium"
+  },
+  {
+    "id": "cbd_smiles_signature",
+    "name": "CBD Smiles Signature Credit Card",
+    "bank": "Commercial Bank of Dubai",
+    "network": "Visa",
+    "tier": "Signature",
+    "eligibility": {
+      "min_monthly_salary_aed": 12000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 525,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "points",
+      "currency": "Smiles Points",
+      "base_rate": "1 point per AED 1",
+      "categories": [
+        {
+          "category": "smiles_partners",
+          "rate": "5 points per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "Smiles Points",
+      "primary_uses": [
+        "Smiles partners (Etisalat, partners)",
+        "vouchers"
+      ],
+      "redemption_url": "https://smiles.etisalat.ae/"
+    },
+    "benefits": [
+      "Airport lounge access",
+      "Cinema offers",
+      "Discounts and vouchers"
+    ],
+    "source_url": "https://www.cbd.ae/personal/cards/credit-cards/smiles-signature"
+  },
+  {
+    "id": "cbd_one_plus",
+    "name": "CBD One Plus Credit Card",
+    "bank": "Commercial Bank of Dubai",
+    "network": "Visa",
+    "tier": "Platinum",
+    "eligibility": {
+      "min_monthly_salary_aed": 5000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 0,
+      "waiver_conditions": "Free for life",
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "cashback",
+      "currency": "AED",
+      "base_rate": "1% on all spend",
+      "categories": [
+        {
+          "category": "all_spend",
+          "rate": "1%",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "AED cashback",
+      "primary_uses": [
+        "statement credit"
+      ],
+      "redemption_url": "https://www.cbd.ae/"
+    },
+    "benefits": [
+      "Airport lounge access",
+      "Free for life"
+    ],
+    "source_url": "https://www.cbd.ae/personal/cards/credit-cards/one-plus"
+  },
+  {
+    "id": "sc_visa_signature_x",
+    "name": "Standard Chartered Visa Signature X Credit Card",
+    "bank": "Standard Chartered UAE",
+    "network": "Visa",
+    "tier": "Signature",
+    "eligibility": {
+      "min_monthly_salary_aed": 8000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 525,
+      "waiver_conditions": "First year free",
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "cashback",
+      "currency": "AED",
+      "base_rate": "1% on all spend",
+      "categories": [
+        {
+          "category": "international_spend",
+          "rate": "2%",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "all_other_spend",
+          "rate": "1%",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "AED cashback",
+      "primary_uses": [
+        "statement credit"
+      ],
+      "redemption_url": "https://www.sc.com/ae/"
+    },
+    "benefits": [
+      "Airport lounge access",
+      "Cinema offers",
+      "Travel benefits",
+      "Balance transfer"
+    ],
+    "source_url": "https://www.sc.com/ae/credit-cards/visa-signature-x/"
+  },
+  {
+    "id": "sc_visa_infinite",
+    "name": "Standard Chartered Visa Infinite Credit Card",
+    "bank": "Standard Chartered UAE",
+    "network": "Visa",
+    "tier": "Infinite",
+    "eligibility": {
+      "min_monthly_salary_aed": 30000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 1575,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "cashback",
+      "currency": "AED",
+      "base_rate": "1.5% on all spend",
+      "categories": [
+        {
+          "category": "international_spend",
+          "rate": "3%",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "all_other_spend",
+          "rate": "1.5%",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "AED cashback",
+      "primary_uses": [
+        "statement credit"
+      ],
+      "redemption_url": "https://www.sc.com/ae/"
+    },
+    "benefits": [
+      "Unlimited airport lounge access",
+      "Golf benefits",
+      "Travel insurance",
+      "Concierge service"
+    ],
+    "source_url": "https://www.sc.com/ae/credit-cards/visa-infinite/"
+  },
+  {
+    "id": "sc_cashback",
+    "name": "Standard Chartered Cashback Credit Card",
+    "bank": "Standard Chartered UAE",
+    "network": "Visa",
+    "tier": "Platinum",
+    "eligibility": {
+      "min_monthly_salary_aed": 8000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 525,
+      "waiver_conditions": "First year free",
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "cashback",
+      "currency": "AED",
+      "base_rate": "1% on all spend",
+      "categories": [
+        {
+          "category": "groceries_dining",
+          "rate": "5%",
+          "monthly_cap": 200,
+          "annual_cap": 2400
+        },
+        {
+          "category": "all_other_spend",
+          "rate": "1%",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "AED cashback",
+      "primary_uses": [
+        "automatic statement credit"
+      ],
+      "redemption_url": "https://www.sc.com/ae/"
+    },
+    "benefits": [
+      "Airport lounge access",
+      "Cinema offers"
+    ],
+    "source_url": "https://www.sc.com/ae/credit-cards/cashback/"
+  },
+  {
+    "id": "citi_cashback",
+    "name": "Citibank Citi Cashback Credit Card",
+    "bank": "Citibank UAE",
+    "network": "Visa",
+    "tier": "Platinum",
+    "eligibility": {
+      "min_monthly_salary_aed": 8000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 0,
+      "waiver_conditions": "Free for life",
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "cashback",
+      "currency": "AED",
+      "base_rate": "1% on all spend",
+      "categories": [
+        {
+          "category": "groceries_supermarket",
+          "rate": "3%",
+          "monthly_cap": 100,
+          "annual_cap": 1200
+        },
+        {
+          "category": "international_spend",
+          "rate": "2%",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "all_other_spend",
+          "rate": "1%",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "AED cashback",
+      "primary_uses": [
+        "statement credit"
+      ],
+      "redemption_url": "https://www.citibank.ae/"
+    },
+    "benefits": [
+      "Free for life",
+      "Cinema offers",
+      "Discounts and vouchers"
+    ],
+    "source_url": "https://www.citibank.ae/personal/credit-cards/citi-cashback-card"
+  },
+  {
+    "id": "citi_emirates",
+    "name": "Citibank Emirates-Citibank World Credit Card",
+    "bank": "Citibank UAE",
+    "network": "Visa",
+    "tier": "World",
+    "eligibility": {
+      "min_monthly_salary_aed": 12000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 400,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "miles",
+      "currency": "Skywards Miles",
+      "base_rate": "1 mile per USD 1",
+      "categories": [
+        {
+          "category": "emirates_purchases",
+          "rate": "2 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "international_spend",
+          "rate": "1.5 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "Skywards Miles",
+      "primary_uses": [
+        "Emirates flights",
+        "flight upgrades"
+      ],
+      "redemption_url": "https://www.emirates.com/skywards/"
+    },
+    "benefits": [
+      "Airport lounge access",
+      "Cinema offers",
+      "Free supplementary cards",
+      "Travel insurance",
+      "Discounts and vouchers",
+      "Balance transfer"
+    ],
+    "source_url": "https://www.citibank.ae/personal/credit-cards/emirates-citibank-world-card"
+  },
+  {
+    "id": "citi_prestige",
+    "name": "Citibank Citi Prestige Credit Card",
+    "bank": "Citibank UAE",
+    "network": "Mastercard",
+    "tier": "Prestige",
+    "eligibility": {
+      "min_monthly_salary_aed": 30000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 1500,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "points",
+      "currency": "ThankYou Points",
+      "base_rate": "1.5 points per AED 1",
+      "categories": [
+        {
+          "category": "international_spend",
+          "rate": "3 points per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "dining_travel",
+          "rate": "2 points per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "ThankYou Points",
+      "primary_uses": [
+        "air miles transfer (multiple programs)",
+        "flights",
+        "hotels",
+        "statement credit"
+      ],
+      "redemption_url": "https://www.citibank.ae/rewards/"
+    },
+    "benefits": [
+      "Unlimited airport lounge access (Priority Pass)",
+      "4th night free hotel benefit",
+      "Travel insurance",
+      "Concierge service",
+      "Golf benefits"
+    ],
+    "source_url": "https://www.citibank.ae/personal/credit-cards/citi-prestige"
+  },
+  {
+    "id": "amex_gold",
+    "name": "American Express Gold Credit Card",
+    "bank": "American Express UAE",
+    "network": "American Express",
+    "tier": "Gold",
+    "eligibility": {
+      "min_monthly_salary_aed": 23000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 642,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "points",
+      "currency": "Membership Rewards",
+      "base_rate": "1 point per AED 1",
+      "categories": [
+        {
+          "category": "international_spend",
+          "rate": "2 points per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "Membership Rewards",
+      "primary_uses": [
+        "air miles transfer",
+        "vouchers",
+        "flights",
+        "hotels"
+      ],
+      "redemption_url": "https://www.americanexpress.com/ae/membership-rewards/"
+    },
+    "benefits": [
+      "Airport lounge access",
+      "Travel benefits",
+      "Travel insurance",
+      "Online banking",
+      "Phone banking",
+      "Discounts and vouchers"
+    ],
+    "source_url": "https://www.americanexpress.com/ae/credit-cards/gold-card/"
+  },
+  {
+    "id": "amex_platinum",
+    "name": "American Express The Platinum Card",
+    "bank": "American Express UAE",
+    "network": "American Express",
+    "tier": "Platinum",
+    "eligibility": {
+      "min_monthly_salary_aed": 31500,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 3100,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "points",
+      "currency": "Membership Rewards",
+      "base_rate": "1.25 points per AED 1",
+      "categories": [
+        {
+          "category": "international_spend",
+          "rate": "2 points per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "Membership Rewards",
+      "primary_uses": [
+        "air miles transfer (multiple programs)",
+        "vouchers",
+        "flights",
+        "hotels"
+      ],
+      "redemption_url": "https://www.americanexpress.com/ae/membership-rewards/"
+    },
+    "benefits": [
+      "Unlimited airport lounge access (Centurion + Priority Pass)",
+      "Marriott Gold Elite status",
+      "Hilton Honors Gold status",
+      "Travel insurance",
+      "Concierge service",
+      "Fine Hotels & Resorts benefits",
+      "Discounts and vouchers"
+    ],
+    "source_url": "https://www.americanexpress.com/ae/credit-cards/platinum-card/"
+  },
+  {
+    "id": "amex_ddf",
+    "name": "American Express Dubai Duty Free Credit Card",
+    "bank": "American Express UAE",
+    "network": "American Express",
+    "tier": "Standard",
+    "eligibility": {
+      "min_monthly_salary_aed": 15000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 175,
+      "waiver_conditions": null,
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "points",
+      "currency": "DDF Reward Points",
+      "base_rate": "1 point per AED 1",
+      "categories": [
+        {
+          "category": "dubai_duty_free",
+          "rate": "5 points per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "DDF Reward Points",
+      "primary_uses": [
+        "Dubai Duty Free purchases"
+      ],
+      "redemption_url": "https://www.dubaidutyfree.com/"
+    },
+    "benefits": [
+      "Dubai Duty Free discounts",
+      "Discounts and vouchers"
+    ],
+    "source_url": "https://www.americanexpress.com/ae/credit-cards/dubai-duty-free-card/"
+  }
+]
