@@ -23,14 +23,17 @@ const PROFILE: SpendingProfile = {
 /**
  * Case 1 — CASHBACK with a cap binding (fab_cashback, currency AED @ 1.0).
  *
- * Hand math (percent = AED cashback directly; caps are in AED):
+ * Hand math (percent = AED cashback directly; caps are in AED). Over-cap spend
+ * is NOT dropped — it earns the card's 1% base rate (the unified reroute rule):
  *   groceries 5000  -> groceries_education_utilities 5% = 250/mo, capped to 200/mo
  *                      -> 200*12 = 2400/yr (annual cap 2400, not exceeded)      = 2400 AED
+ *                      productive spend = 200/0.05 = 4000/mo; the 1000/mo overflow
+ *                      reroutes to all_other_spend below.
  *   dining 2000 + international 1500 = 3500 -> dining_international 3% = 105/mo
  *                      -> 105*12 = 1260/yr (under both caps)                    = 1260 AED
- *   fuel 1000 + travel 4000 + other 3000 = 8000 -> all_other_spend 1% (no bonus
- *                      category matches these) = 80/mo -> 960/yr                =  960 AED
- *   Gross = 2400 + 1260 + 960 = 4620. Fee: first year free, then AED 300.
+ *   all_other_spend 1% bucket = fuel 1000 + travel 4000 + other 3000 = 8000
+ *                      + 1000 groceries overflow = 9000/mo -> 90/mo -> 1080/yr  = 1080 AED
+ *   Gross = 2400 + 1260 + 1080 = 4740. Fee: first year free, then AED 300.
  */
 describe("scoreCard — cashback with a binding cap (fab_cashback)", () => {
   const score = scoreCard(PROFILE, byId("fab_cashback"));
@@ -42,17 +45,17 @@ describe("scoreCard — cashback with a binding cap (fab_cashback)", () => {
   });
 
   it("matches the hand-computed net value", () => {
-    // all_other_spend bucket = fuel 1000 + travel 4000 + other 3000 = 8000/mo
-    //   -> 1% = 80/mo -> 960/yr. Gross = 2400 + 1260 + 960 = 4620.
+    // all_other_spend = fuel 1000 + travel 4000 + other 3000 = 8000, PLUS the
+    // 1000/mo groceries overflow past the 5% cap = 9000/mo -> 1% = 90/mo -> 1080/yr.
     const allOther = score.breakdown.find((b) => b.cardCategory === "all_other_spend");
-    expect(allOther?.monthlySpendAed).toBe(8000);
-    expect(allOther?.annualValueAed.min).toBe(960);
+    expect(allOther?.monthlySpendAed).toBe(9000);
+    expect(allOther?.annualValueAed.min).toBe(1080);
 
-    expect(score.grossAnnualValue).toEqual({ min: 4620, max: 4620 });
+    expect(score.grossAnnualValue).toEqual({ min: 4740, max: 4740 });
     // First year free (waiver), AED 300 from year 2.
     expect(score.fees).toMatchObject({ annualFeeAed: 300, year1FeeAed: 0, ongoingFeeAed: 300 });
-    expect(score.netAnnualValue).toBe(4320); // 4620 - 300 ongoing
-    expect(score.netAnnualValueYear1).toBe(4620); // 4620 - 0
+    expect(score.netAnnualValue).toBe(4440); // 4740 - 300 ongoing
+    expect(score.netAnnualValueYear1).toBe(4740); // 4740 - 0
   });
 
   it("is otherwise certain, but flags the reached cap", () => {
