@@ -145,9 +145,10 @@ describe("scoreCard — unresolved rate scores as a range", () => {
   });
 
   it("propagates a BOUNDED tier-3 range (min < max) end to end", () => {
-    // No real card assigns spend to a bounded "up to X%" rate (the only one sits
-    // on an un-scoreable user_chosen_category), so we exercise the mechanism with
-    // a minimal synthetic card: groceries at "Up to 4%", no cap => range 0..4%.
+    // No real card propagates a bounded "up to X%" range: the one "up to X%" card
+    // (enbd_visa_flexi's user_chosen_category) is now collapsed to a POINT estimate,
+    // not a range. So we exercise the range mechanism with a minimal synthetic
+    // card: groceries at "Up to 4%", no cap => range 0..4%.
     const synthetic: Card = {
       id: "synthetic_up_to",
       name: "Synthetic",
@@ -181,6 +182,49 @@ describe("scoreCard — unresolved rate scores as a range", () => {
     expect(score.netAnnualValueRange).toEqual({ min: 0, max: 2400 });
     expect(score.netAnnualValue).toBe(1200); // midpoint
     expect(score.uncertain).toBe(true);
+  });
+});
+
+/**
+ * Flexi user-chosen bonus (enbd_visa_flexi, "Up to 5%" on user_chosen_category).
+ * Scored as a POINT estimate on the holder's largest spend category, with
+ * standard cap-clamping that engages automatically if a cap is added to the data.
+ */
+describe("scoreCard — flexi user-chosen bonus (enbd_visa_flexi)", () => {
+  it("applies the ceiling rate to the single largest spend category, uncapped", () => {
+    const score = scoreCard(PROFILE, byId("enbd_visa_flexi"));
+    // Largest category in PROFILE is groceries (5000/mo). 5% -> 250/mo -> 3000/yr,
+    // as a point estimate (min === max), NOT a 0..5% range.
+    const bonus = score.breakdown.find((b) => b.cardCategory === "user_chosen_category");
+    expect(bonus?.spendCategories).toEqual(["groceries"]);
+    expect(bonus?.annualValueAed).toEqual({ min: 3000, max: 3000 });
+    expect(bonus?.capBound).toBeUndefined(); // no bonus cap in the data today
+    expect(
+      score.flags.some((f) =>
+        /assumes groceries as chosen bonus category; bonus cap not in data — verify/.test(f.message),
+      ),
+    ).toBe(true);
+  });
+
+  it("clamps automatically when a cap is later added to the card data (zero code changes)", () => {
+    // Synthetic: same card, but the flexi category now carries a 100 AED/mo cap.
+    // No engine change — normalizeRate resolves "Up to 5%" to 5% once a cap exists,
+    // and the standard clamp binds it. Proves the cap path is already wired.
+    const base = byId("enbd_visa_flexi");
+    const capped: Card = {
+      ...base,
+      rewards: {
+        ...base.rewards,
+        categories: base.rewards.categories.map((c) =>
+          c.category === "user_chosen_category" ? { ...c, monthly_cap: 100, annual_cap: 1200 } : c,
+        ),
+      },
+    };
+    const score = scoreCard(PROFILE, capped);
+    const bonus = score.breakdown.find((b) => b.cardCategory === "user_chosen_category");
+    // groceries 5000 * 5% = 250/mo, clamped to the new 100/mo cap -> 1200/yr.
+    expect(bonus?.capBound).toBe("monthly");
+    expect(bonus?.annualValueAed).toEqual({ min: 1200, max: 1200 });
   });
 });
 

@@ -159,10 +159,11 @@ Decisions worth knowing before extending the engine:
     `high` confidence; what a point is *worth* is a valuation concern for later,
     not a rate-parsing uncertainty.
 
-- **`"Up to X%"` depends on the card's cap fields.** When a cap models the
-  constraint, it's parsed as `X%` (tier 1); when no cap exists (e.g. a user-chosen
-  category), it becomes a `0..X` range (tier 3). This mirrors the rule that
-  structural caps — not a discounted headline rate — express the real limit.
+- **`"Up to X%"` depends on the card's cap fields.** In the normalizer, when a cap
+  models the constraint it's parsed as `X%` (tier 1); when no cap exists it becomes
+  a `0..X` range (tier 3). This mirrors the rule that structural caps — not a
+  discounted headline rate — express the real limit. (The scorer resolves this
+  range to a point estimate for flexi `user_chosen_category` cards — see below.)
 
 - **Merchant-scoped base rates are flagged, not trusted.** A `base_rate` like
   `"5% on dnata travel"` parses to `0.05` but is marked `low`, because no
@@ -187,8 +188,12 @@ Decisions worth knowing before extending the engine:
   overstated), and reached caps are flagged. Merchant-locked bonuses (e.g. an
   Emirates co-brand's airline rate) are credited but flagged as an optimistic
   assumption, since a generic profile can't confirm the spend is at that merchant.
-  `user_chosen_category` isn't credited at all (we can't know the user's pick) —
-  a deliberate under-count, flagged, and an open modeling question.
+  `user_chosen_category` (flexi cards) is credited on the **rational-user
+  assumption**: the bonus applies to the holder's single largest spend category,
+  at the rate's ceiling as a point estimate (not a `0..X` range). It's flagged
+  (`assumes <category> as chosen bonus category`) and, since no bonus cap is in the
+  data today, the standard cap clamp is dormant but wired — add a cap to the card
+  and it engages with zero code changes.
 
 - **Ranges propagate; unbounded upside is never invented.** Tier-3 rates score as a
   min/max band. A bounded ceiling (`"Up to 4%"`) yields a real `0..max`; an
