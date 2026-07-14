@@ -586,17 +586,10 @@
       "joining_fee_aed": 0
     },
     "rewards": {
-      "type": "cashback",
-      "currency": "AED",
-      "base_rate": "Customizable based on chosen category",
-      "categories": [
-        {
-          "category": "user_chosen_category",
-          "rate": "Up to 5%",
-          "monthly_cap": null,
-          "annual_cap": null
-        }
-      ],
+      "type": "points",
+      "currency": "Plus Points",
+      "base_rate": "1 point per AED 1",
+      "categories": [],
       "overall_cap": null,
       "min_monthly_spend_required_aed": 0
     },
@@ -613,7 +606,8 @@
       "Concierge service",
       "Discounts and vouchers"
     ],
-    "source_url": "https://www.emiratesnbd.com/en/cards/credit-cards/visa-flexi"
+    "source_url": "https://www.emiratesnbd.com/en/cards/credit-cards/visa-flexi",
+    "notes": "rewards structure verified against issuer site 2026-07; salary requirement disputed across sources (12k vs 15k) — pending cofounder verification"
   },
   {
     "id": "enbd_titanium",
@@ -1673,7 +1667,9 @@
       "Free bank account",
       "E-statement"
     ],
-    "source_url": "https://www.emiratesislamic.ae/en/personal-banking/cards/credit-cards/flex-elite"
+    "source_url": "https://www.emiratesislamic.ae/en/personal-banking/cards/credit-cards/flex-elite",
+    "notes": "suspected same data-entry defect as enbd_visa_flexi — \"flex\" likely refers to customizable lifestyle perks, not variable reward rates. True reward structure cannot be determined from current data; NOT guessed. Excluded from scoring pending issuer verification.",
+    "excluded_from_scoring": true
   },
   {
     "id": "ei_rta",

@@ -49,6 +49,9 @@ export const DEFAULT_VALUATIONS: ValuationTable = {
   // Points with a defensible but softer estimate.
   "Membership Rewards": { aedPerUnit: 0.07, confidence: "medium" },
   "FAB Rewards": { aedPerUnit: 0.007, confidence: "medium" },
+  // ENBD Plus Points: issuer states up to ~1.5% of spend redeemable as cashback;
+  // 0.01 is the conservative end of that band (1 pt/AED earning -> ~1% back).
+  "Plus Points": { aedPerUnit: 0.01, confidence: "medium" },
   "TouchPoints (convertible to miles)": { aedPerUnit: 0.01, confidence: "medium", note: "ADCB TouchPoints" },
   "Marriott Bonvoy Points": { aedPerUnit: 0.03, confidence: "medium" },
 

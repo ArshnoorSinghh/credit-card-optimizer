@@ -55,15 +55,11 @@ export type SpendingProfile = Partial<Record<SpendCategory, number>>;
  *    can't see in a generic profile) — it lowers confidence rather than being
  *    dropped, so the card isn't unfairly zeroed.
  *  - `catchall`: eligible for ANY spend as a fallback (all_spend / all_other_spend).
- *  - `user_chosen`: a "flexi" bonus the holder points at ONE category of their
- *    choosing. We model the rational choice — their single largest spend category
- *    — and apply the rate as a point estimate (see resolveChosenBonusRate).
  *  - `unmatched`: cannot be scored from a generic profile; earns nothing, flagged.
  */
 type MatchRule =
   | { kind: "categories"; categories: SpendCategory[]; merchant?: string }
   | { kind: "catchall" }
-  | { kind: "user_chosen" }
   | { kind: "unmatched"; reason: string };
 
 // why an explicit table (not fuzzy string parsing): the 30 category names are a
@@ -105,12 +101,10 @@ const MATCH_TABLE: Record<string, MatchRule> = {
   dubai_duty_free: { kind: "categories", categories: ["other"], merchant: "Dubai Duty Free" },
   rta_transport: { kind: "categories", categories: ["transport"], merchant: "RTA" },
   smiles_partners: { kind: "categories", categories: ["other"], merchant: "Smiles partners" },
-  // Flexi bonus: holder chooses which category earns it. Modeled as applying to
-  // their single largest spend category (rational-user assumption), at the rate's
-  // ceiling as a point estimate. why not "unmatched": a rational holder always
-  // picks a category they actually spend on, so scoring it at 0 understated these
-  // cards. See resolveChosenBonusRate + largestSpendCategory.
-  user_chosen_category: { kind: "user_chosen" },
+  // (No card currently uses a "user-chosen category". enbd_visa_flexi, which once
+  // appeared to, was a data-entry error — it's a flat-rate points card; its "flexi"
+  // is customizable *perks*, not reward rates. If such a category reappears it will
+  // route to "unmatched" and be flagged, rather than being silently modeled.)
 };
 
 /** A pair of AED values bounding an uncertain quantity (min===max when certain). */
@@ -172,6 +166,12 @@ export interface CardScore {
   flags: ScoreFlag[];
   /** True if anything (range rate, low/unknown confidence) makes this estimate soft. */
   uncertain: boolean;
+  /**
+   * True when the card is excluded from scoring pending data verification (see
+   * Card.excluded_from_scoring). Benched cards return a zeroed score with an
+   * explanatory flag — they are visible but must not be ranked.
+   */
+  benched: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -242,49 +242,6 @@ interface EarnOption {
   rule: MatchRule;
 }
 
-/**
- * Resolve a flexi "user-chosen" bonus rate to a single point estimate.
- *
- * why: a rational holder points the bonus at a category they use and earns its
- * headline rate, so "Up to 5%" is modeled as 5% — NOT a 0..5% range. Confidence
- * drops to low because which category they chose is an assumption on our side.
- *
- * why this needs no special-casing when a cap is added: with a cap present,
- * normalizeRate already returns "Up to X%" as a resolved high-confidence X%
- * (rate.value set), so the first branch returns it untouched and the standard
- * cap clamp in scoreCard takes over — zero code changes.
- */
-function resolveChosenBonusRate(rate: NormalizedRate): NormalizedRate {
-  if (rate.value !== null) return rate; // already resolved (e.g. cap-modeled "up to X%")
-  const ceiling = rate.range?.max;
-  if (ceiling == null) return rate; // no ceiling stated — genuinely unbounded, don't invent one
-  return {
-    raw: rate.raw,
-    value: ceiling,
-    unit: rate.unit ?? "percent",
-    confidence: "low",
-    note: "Flexi bonus modeled at its ceiling for the holder's chosen category",
-  };
-}
-
-/**
- * The category a rational holder would point a flexi bonus at: their single
- * largest monthly spend. Ties break on object key order (deterministic); null
- * when the profile has no positive spend.
- */
-function largestSpendCategory(spending: SpendingProfile): SpendCategory | null {
-  let best: SpendCategory | null = null;
-  let bestSpend = 0;
-  for (const key of Object.keys(spending) as SpendCategory[]) {
-    const monthly = spending[key] ?? 0;
-    if (monthly > bestSpend) {
-      best = key;
-      bestSpend = monthly;
-    }
-  }
-  return best;
-}
-
 /** Build the list of ways this card can earn, incl. a virtual base-rate fallback. */
 function buildEarnOptions(card: Card): { options: EarnOption[]; flags: ScoreFlag[] } {
   const flags: ScoreFlag[] = [];
@@ -296,10 +253,9 @@ function buildEarnOptions(card: Card): { options: EarnOption[]; flags: ScoreFlag
     if (!MATCH_TABLE[cat.category]) {
       flags.push({ level: "unknown", message: `Unrecognized reward category "${cat.category}"` });
     }
-    const rawRate = normalizeRate(cat.rate, { monthlyCap: cat.monthly_cap, annualCap: cat.annual_cap });
     return {
       cardCategory: cat.category,
-      rate: rule.kind === "user_chosen" ? resolveChosenBonusRate(rawRate) : rawRate,
+      rate: normalizeRate(cat.rate, { monthlyCap: cat.monthly_cap, annualCap: cat.annual_cap }),
       monthlyCap: cat.monthly_cap,
       annualCap: cat.annual_cap,
       rule,
@@ -323,20 +279,11 @@ function buildEarnOptions(card: Card): { options: EarnOption[]; flags: ScoreFlag
   return { options, flags };
 }
 
-/**
- * Candidate earn-options for a given spend category. `chosen` is the holder's
- * flexi-bonus category (their largest spend); a user_chosen option only competes
- * for that one category.
- */
-function candidatesFor(
-  cat: SpendCategory,
-  options: EarnOption[],
-  chosen: SpendCategory | null,
-): EarnOption[] {
+/** Candidate earn-options for a given spend category. */
+function candidatesFor(cat: SpendCategory, options: EarnOption[]): EarnOption[] {
   return options.filter((o) => {
     if (o.rule.kind === "categories") return o.rule.categories.includes(cat);
     if (o.rule.kind === "catchall") return true;
-    if (o.rule.kind === "user_chosen") return cat === chosen;
     return false; // unmatched never claims spend
   });
 }
@@ -351,9 +298,33 @@ export function scoreCard(
   valuations: ValuationTable = DEFAULT_VALUATIONS,
 ): CardScore {
   const valuation = resolveValuation(card.rewards.currency, valuations);
+
+  // --- Benched cards: excluded from scoring pending data verification. We return
+  // a zeroed, clearly-flagged score rather than guessing a reward structure or
+  // dropping the card, so it stays visible but is never ranked. ---
+  if (card.excluded_from_scoring) {
+    return {
+      cardId: card.id,
+      rewardCurrency: card.rewards.currency,
+      valuation,
+      netAnnualValue: 0,
+      netAnnualValueRange: { min: 0, max: 0 },
+      netAnnualValueYear1: 0,
+      grossAnnualValue: { min: 0, max: 0 },
+      fees: computeFees(card),
+      breakdown: [],
+      flags: [
+        {
+          level: "unknown",
+          message: `Excluded from scoring — pending data verification${card.notes ? ` (${card.notes})` : ""}`,
+        },
+      ],
+      uncertain: true,
+      benched: true,
+    };
+  }
+
   const { options, flags } = buildEarnOptions(card);
-  // The category a flexi "user-chosen" bonus is assumed to target (largest spend).
-  const chosen = largestSpendCategory(spending);
 
   // --- Step 1+2 (assignment): route each spend category to its best-yielding
   // option. We pick by UNCAPPED yield-per-AED — the category a rational user
@@ -364,7 +335,7 @@ export function scoreCard(
   for (const key of Object.keys(spending) as SpendCategory[]) {
     const monthly = spending[key] ?? 0;
     if (monthly <= 0) continue;
-    const candidates = candidatesFor(key, options, chosen);
+    const candidates = candidatesFor(key, options);
     if (candidates.length === 0) continue; // no way to earn (shouldn't happen: base is catch-all)
 
     let best = candidates[0]!;
@@ -462,20 +433,6 @@ export function scoreCard(
         message: `${option.cardCategory}: assumes ${cats.join("/")} spend occurs at ${merchant}`,
       });
     }
-    if (option.rule.kind === "user_chosen") {
-      uncertain = true;
-      // why the cap clause is conditional: it must stay truthful if a bonus cap
-      // is later added to the data (see resolveChosenBonusRate) — we don't want a
-      // "cap not in data" flag firing once a cap exists.
-      const capClause =
-        option.monthlyCap === null && option.annualCap === null
-          ? "bonus cap not in data — verify"
-          : "verify chosen category matches actual usage";
-      flags.push({
-        level: "low",
-        message: `${option.cardCategory}: assumes ${cats.join("/")} as chosen bonus category; ${capClause}`,
-      });
-    }
   }
 
   // Report unmatched (un-scoreable) categories once, as a flag.
@@ -517,5 +474,6 @@ export function scoreCard(
     breakdown,
     flags,
     uncertain,
+    benched: false,
   };
 }

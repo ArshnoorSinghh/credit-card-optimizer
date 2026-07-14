@@ -37,9 +37,11 @@ describe("cards.json conforms to the Card type", () => {
     }
   });
 
-  it("gives every card 1-3 reward categories", () => {
+  it("gives every card 0-3 reward categories", () => {
+    // Lower bound was 1, relaxed to 0 by the 2026-07 enbd_visa_flexi fix: a flat-
+    // rate card legitimately has NO bonus categories and earns via base_rate only.
     for (const card of cards) {
-      expect(card.rewards.categories.length).toBeGreaterThanOrEqual(1);
+      expect(card.rewards.categories.length).toBeGreaterThanOrEqual(0);
       expect(card.rewards.categories.length).toBeLessThanOrEqual(3);
     }
   });

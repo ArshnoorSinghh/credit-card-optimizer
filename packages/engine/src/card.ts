@@ -91,4 +91,12 @@ export interface Card {
   redemption: Redemption;
   benefits: string[];
   source_url: string;
+  // why optional: JSON has no comments, so data-provenance / verification caveats
+  // live in this free-text field. Absent on cards with nothing to note.
+  notes?: string;
+  // why: some cards have a data-entry defect we can't yet correct from a source
+  // (e.g. "customizable" perks mislabeled as variable reward rates). Rather than
+  // guess a reward structure or silently delete the card, we mark it excluded so
+  // the scorer benches it visibly — pending verification. Absent/false = scored.
+  excluded_from_scoring?: boolean;
 }
