@@ -137,18 +137,44 @@ describe("scoreCard — free-for-life points card (fab_rewards_indulge)", () => 
 /** Range scoring: a card with an unresolved (tier-3) rate must produce a range. */
 describe("scoreCard — unresolved rate scores as a range", () => {
   it("does not fabricate a point value for an unbounded variable-rate card", () => {
-    // ei_flex_elite has "Variable" category rates (tier 3, no ceiling) — the upside
-    // can't be bounded, so we flag it and don't invent a max.
-    const score = scoreCard(PROFILE, byId("ei_flex_elite"));
+    // The only real "Variable" card (ei_flex_elite) is now benched, so we exercise
+    // the unbounded path with a synthetic card: groceries at "Variable" (tier 3, no
+    // ceiling) — the upside can't be bounded, so we flag it and don't invent a max.
+    const synthetic: Card = {
+      id: "synthetic_variable",
+      name: "Synthetic Variable",
+      bank: "",
+      network: "",
+      tier: "",
+      eligibility: {
+        min_monthly_salary_aed: 0,
+        uae_resident_required: false,
+        min_age: 0,
+        salary_transfer_required: false,
+        employer_restrictions: null,
+      },
+      fees: { annual_fee_aed: 0, waiver_conditions: null, joining_fee_aed: 0 },
+      rewards: {
+        type: "cashback",
+        currency: "AED",
+        base_rate: "0% on all spend",
+        categories: [{ category: "groceries", rate: "Variable", monthly_cap: null, annual_cap: null }],
+        overall_cap: null,
+        min_monthly_spend_required_aed: 0,
+      },
+      redemption: { currency: "AED", primary_uses: [], redemption_url: "" },
+      benefits: [],
+      source_url: "",
+    };
+    const score = scoreCard(PROFILE, synthetic);
     expect(score.uncertain).toBe(true);
-    expect(score.flags.some((f) => f.level === "unknown")).toBe(true);
+    expect(score.flags.some((f) => /unbounded variable rate/.test(f.message))).toBe(true);
   });
 
   it("propagates a BOUNDED tier-3 range (min < max) end to end", () => {
-    // No real card propagates a bounded "up to X%" range: the one "up to X%" card
-    // (enbd_visa_flexi's user_chosen_category) is now collapsed to a POINT estimate,
-    // not a range. So we exercise the range mechanism with a minimal synthetic
-    // card: groceries at "Up to 4%", no cap => range 0..4%.
+    // No real card propagates a bounded "up to X%" range anymore, so we exercise
+    // the range mechanism with a minimal synthetic card: groceries at "Up to 4%",
+    // no cap => range 0..4%.
     const synthetic: Card = {
       id: "synthetic_up_to",
       name: "Synthetic",
@@ -186,45 +212,49 @@ describe("scoreCard — unresolved rate scores as a range", () => {
 });
 
 /**
- * Flexi user-chosen bonus (enbd_visa_flexi, "Up to 5%" on user_chosen_category).
- * Scored as a POINT estimate on the holder's largest spend category, with
- * standard cap-clamping that engages automatically if a cap is added to the data.
+ * enbd_visa_flexi, after the 2026-07 data correction: a flat-rate points card
+ * (1 Plus Point per AED, uncapped), NOT a user-chosen cashback card. Its "flexi"
+ * refers to customizable lifestyle perks, not reward rates.
  */
-describe("scoreCard — flexi user-chosen bonus (enbd_visa_flexi)", () => {
-  it("applies the ceiling rate to the single largest spend category, uncapped", () => {
-    const score = scoreCard(PROFILE, byId("enbd_visa_flexi"));
-    // Largest category in PROFILE is groceries (5000/mo). 5% -> 250/mo -> 3000/yr,
-    // as a point estimate (min === max), NOT a 0..5% range.
-    const bonus = score.breakdown.find((b) => b.cardCategory === "user_chosen_category");
-    expect(bonus?.spendCategories).toEqual(["groceries"]);
-    expect(bonus?.annualValueAed).toEqual({ min: 3000, max: 3000 });
-    expect(bonus?.capBound).toBeUndefined(); // no bonus cap in the data today
-    expect(
-      score.flags.some((f) =>
-        /assumes groceries as chosen bonus category; bonus cap not in data — verify/.test(f.message),
-      ),
-    ).toBe(true);
+describe("scoreCard — flat-rate points card (enbd_visa_flexi)", () => {
+  const score = scoreCard(PROFILE, byId("enbd_visa_flexi"));
+
+  it("earns the flat base rate on all spend, with no bonus categories", () => {
+    // Whole profile = 16500 AED/mo -> 1 pt/AED -> 198000 pts/yr -> *0.01 = 1980 AED.
+    const base = score.breakdown.find((b) => b.cardCategory === "base_rate");
+    expect(base?.monthlySpendAed).toBe(16500);
+    expect(base?.annualUnits.min).toBe(198000); // 16500 * 1 * 12
+    expect(score.breakdown).toHaveLength(1); // only the base rate; no bonus categories
+    expect(score.grossAnnualValue).toEqual({ min: 1980, max: 1980 });
+    // Fee AED 735, no waiver -> net 1980 - 735 = 1245.
+    expect(score.netAnnualValue).toBe(1245);
   });
 
-  it("clamps automatically when a cap is later added to the card data (zero code changes)", () => {
-    // Synthetic: same card, but the flexi category now carries a 100 AED/mo cap.
-    // No engine change — normalizeRate resolves "Up to 5%" to 5% once a cap exists,
-    // and the standard clamp binds it. Proves the cap path is already wired.
-    const base = byId("enbd_visa_flexi");
-    const capped: Card = {
-      ...base,
-      rewards: {
-        ...base.rewards,
-        categories: base.rewards.categories.map((c) =>
-          c.category === "user_chosen_category" ? { ...c, monthly_cap: 100, annual_cap: 1200 } : c,
-        ),
-      },
-    };
-    const score = scoreCard(PROFILE, capped);
-    const bonus = score.breakdown.find((b) => b.cardCategory === "user_chosen_category");
-    // groceries 5000 * 5% = 250/mo, clamped to the new 100/mo cap -> 1200/yr.
-    expect(bonus?.capBound).toBe("monthly");
-    expect(bonus?.annualValueAed).toEqual({ min: 1200, max: 1200 });
+  it("no longer references a user-chosen category", () => {
+    expect(score.breakdown.some((b) => b.cardCategory === "user_chosen_category")).toBe(false);
+    expect(score.flags.some((f) => /chosen bonus category/.test(f.message))).toBe(false);
+  });
+});
+
+/**
+ * Benching: ei_flex_elite carries the same "customizable" data defect and its true
+ * reward structure can't be determined from the data, so it's excluded from
+ * scoring (visibly, not deleted) pending verification.
+ */
+describe("scoreCard — benched card (ei_flex_elite)", () => {
+  const score = scoreCard(PROFILE, byId("ei_flex_elite"));
+
+  it("is benched: zeroed, flagged, and marked excluded", () => {
+    expect(score.benched).toBe(true);
+    expect(score.netAnnualValue).toBe(0);
+    expect(score.grossAnnualValue).toEqual({ min: 0, max: 0 });
+    expect(score.breakdown).toHaveLength(0);
+    expect(score.uncertain).toBe(true);
+    expect(score.flags.some((f) => /Excluded from scoring — pending data verification/.test(f.message))).toBe(true);
+  });
+
+  it("leaves every other card scored normally", () => {
+    expect(scoreCard(PROFILE, byId("fab_cashback")).benched).toBe(false);
   });
 });
 

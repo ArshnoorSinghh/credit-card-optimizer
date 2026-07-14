@@ -162,8 +162,7 @@ Decisions worth knowing before extending the engine:
 - **`"Up to X%"` depends on the card's cap fields.** In the normalizer, when a cap
   models the constraint it's parsed as `X%` (tier 1); when no cap exists it becomes
   a `0..X` range (tier 3). This mirrors the rule that structural caps — not a
-  discounted headline rate — express the real limit. (The scorer resolves this
-  range to a point estimate for flexi `user_chosen_category` cards — see below.)
+  discounted headline rate — express the real limit.
 
 - **Merchant-scoped base rates are flagged, not trusted.** A `base_rate` like
   `"5% on dnata travel"` parses to `0.05` but is marked `low`, because no
@@ -188,12 +187,13 @@ Decisions worth knowing before extending the engine:
   overstated), and reached caps are flagged. Merchant-locked bonuses (e.g. an
   Emirates co-brand's airline rate) are credited but flagged as an optimistic
   assumption, since a generic profile can't confirm the spend is at that merchant.
-  `user_chosen_category` (flexi cards) is credited on the **rational-user
-  assumption**: the bonus applies to the holder's single largest spend category,
-  at the rate's ceiling as a point estimate (not a `0..X` range). It's flagged
-  (`assumes <category> as chosen bonus category`) and, since no bonus cap is in the
-  data today, the standard cap clamp is dormant but wired — add a cap to the card
-  and it engages with zero code changes.
+
+- **Un-verifiable cards are benched, not guessed.** When a card's data carries a
+  defect we can't correct from a source (e.g. `ei_flex_elite`, whose "customizable"
+  perks were mislabeled as variable reward rates), it's marked
+  `excluded_from_scoring` in the data. `scoreCard` returns a zeroed,
+  clearly-flagged score with `benched: true` — the card stays visible but is never
+  ranked, pending verification. We never invent a reward structure to fill the gap.
 
 - **Ranges propagate; unbounded upside is never invented.** Tier-3 rates score as a
   min/max band. A bounded ceiling (`"Up to 4%"`) yields a real `0..max`; an

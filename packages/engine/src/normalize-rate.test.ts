@@ -168,7 +168,9 @@ describe("normalizeRate — cards.json sweep", () => {
     // Locked to the manual review of the 2026-07 dataset. Update deliberately if
     // the data changes — a diff here means a rate string changed tier.
     expect(byTier(2).length).toBe(2); // "10% on Emaar purchases", "5% on dnata travel"
-    expect(byTier(3).length).toBe(4); // Up to 5%, Customizable, Variable x2
+    // was 4; enbd_visa_flexi's "Up to 5%" + "Customizable..." were removed by the
+    // 2026-07 data fix (flat-rate points card). Remaining: ei_flex_elite "Variable" x2.
+    expect(byTier(3).length).toBe(2);
   });
 
   it("never assigns a numeric value to a tier-3 rate", () => {
