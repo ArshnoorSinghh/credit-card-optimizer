@@ -17,9 +17,30 @@ describe("DEFAULT_VALUATIONS", () => {
   });
 
   it("flags the currencies that aren't in the researched set", () => {
-    for (const cur of ["AED (Nol points)", "ThankYou Points", "Multiple programs (customizable)"]) {
-      expect(DEFAULT_VALUATIONS[cur]?.note).toContain("NOT researched");
-    }
+    // Only the user-customizable multi-program currency remains genuinely
+    // unresearched; Nol and ThankYou have since been given researched values.
+    expect(DEFAULT_VALUATIONS["Multiple programs (customizable)"]?.note).toContain("NOT researched");
+  });
+
+  it("values Nol fare credit at face value (medium confidence)", () => {
+    expect(DEFAULT_VALUATIONS["AED (Nol points)"]).toMatchObject({ aedPerUnit: 1.0, confidence: "medium" });
+  });
+
+  it("prices ThankYou Points at the realistic mid-range floor (medium confidence)", () => {
+    expect(DEFAULT_VALUATIONS["ThankYou Points"]).toMatchObject({ aedPerUnit: 0.05, confidence: "medium" });
+  });
+
+  it("treats the Salaam-convertible cashback currency at face value", () => {
+    // Functionally cashback (type cashback, percent rates, AED caps), unlike the
+    // pure-points "Salaam Points" currency which stays at its low placeholder.
+    expect(DEFAULT_VALUATIONS["AED (Salaam Points convertible)"]).toMatchObject({ aedPerUnit: 1.0 });
+    expect(DEFAULT_VALUATIONS["Salaam Points"]).toMatchObject({ aedPerUnit: 0.0075 });
+  });
+
+  it("keeps Booking.com credit as a flagged 0.85 placeholder pending re-verification", () => {
+    const booking = DEFAULT_VALUATIONS["AED (Booking.com credit)"];
+    expect(booking).toMatchObject({ aedPerUnit: 0.85, confidence: "low" });
+    expect(booking?.note).toContain("re-verification");
   });
 });
 
