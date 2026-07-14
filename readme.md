@@ -12,12 +12,13 @@ by net expected value (rewards earned − fees) with reward caps and eligibility
 rules, and explicit uncertainty modeling — ambiguous reward rates propagate as
 ranges rather than silent point estimates.
 
-> **Status:** engine foundations coming together. The monorepo skeleton is wired
+> **Status:** the Card Optimizer engine is complete. The monorepo skeleton is wired
 > end to end (the web app renders a placeholder `hello()` from the engine package).
-> Inside the engine, four building blocks are built and tested: the **card domain
-> model**, the **rate normalizer**, the **valuation model**, and the per-card
-> **scorer**. Next up is the portfolio optimizer (1–3 card subset search); it is
-> not built yet.
+> Inside the engine, five building blocks are built and tested: the **card domain
+> model**, the **rate normalizer**, the **valuation model**, the per-card
+> **scorer**, and the **portfolio optimizer** (exact 1–3 card subset search). Still
+> to come: the Points & Redemption Optimizer, and wiring the engine into the web
+> app's API routes and UI.
 
 ## Structure
 
@@ -68,10 +69,10 @@ invented, and no unrecognized string is silently defaulted to a number.
 
 ## Engine progress
 
-Four pieces of the engine are built and tested (`packages/engine/src`). They form
-a chain — raw card → normalized rates → AED valuation → per-card score. All are
-pure and deterministic, with the math commented inline — this package is
-human-owned, so it's meant to be read and explained, not just run.
+Five pieces of the engine are built and tested (`packages/engine/src`). They form
+a chain — raw card → normalized rates → AED valuation → per-card score → best
+portfolio. All are pure and deterministic, with the math commented inline — this
+package is human-owned, so it's meant to be read and explained, not just run.
 
 ### 1. Card domain model — `card.ts`
 
@@ -137,6 +138,38 @@ rather than a fabricated point value. Tests hand-compute three cards on a fixed
 profile — a cashback card with a binding cap, a miles card with USD conversion, and
 a free-for-life points card — and assert the engine matches the hand math exactly.
 
+`scoreCard` is a thin shell over the shared earning core (`earnAcrossCards`): it is
+literally a **1-card portfolio**, the same computation the optimizer runs on each
+subset. So there's one source of truth for how a card earns — see the optimizer below.
+
+### 5. Portfolio optimizer — `optimize-portfolio.ts`
+
+`optimizePortfolio(spending, userProfile, cards, valuations?, options?)` →
+`PortfolioResult`: the best 1-, 2-, and 3-card portfolios for a spending +
+eligibility profile, plus the single portfolio to recommend across sizes. Each
+carries net annual value (year-1 and ongoing), a per-category **"swipe THIS card"**
+assignment, each card's individual contribution, total fees, and inherited
+uncertainty flags — the scorer's receipt, portfolio edition.
+
+- **Eligibility first.** Cards whose salary/residency requirements the user fails
+  are dropped and benched cards are set aside (both counts reported). At most one
+  salary-transfer-required card per portfolio — a salary routes to a single bank —
+  enforced during enumeration.
+- **Exhaustive subset search.** Every 1/2/3-card subset is scored — ~27k at 55
+  cards, trivially fast. Portfolio value is non-additive across cards (two cards can
+  be complementary or redundant), so only exhaustive search is provably correct, and
+  at this scale it's free. No approximations.
+- **Exact spend assignment via min-cost max-flow.** Splitting a portfolio's spend
+  across its cards is a transportation problem: each AED of spend flows from its
+  category to a card's earn-option, option capacities encode reward caps, edge costs
+  encode (negated) yield. Naive per-category greedy is *wrong* under caps — filling a
+  shared capped bonus with one category can starve another that had no other good
+  home — so the assignment is solved to optimality. An adversarial test constructs a
+  case where greedy loses and asserts the engine returns the hand-computed optimum.
+- **Tie-break:** higher net → fewer cards → lower total fees → deterministic. This
+  is where "fewer cards" bites: a 3rd card whose fee eats its own rewards isn't
+  recommended just because it ties.
+
 ## Key decisions
 
 Decisions worth knowing before extending the engine:
@@ -182,10 +215,14 @@ Decisions worth knowing before extending the engine:
   redeem at face value (`1.0`), `AED (Booking.com credit)` is a flagged `0.85`
   pending card re-verification, and pure `AED` is `1.0`.
 
-- **Scoring is conservative and flags its assumptions.** Spend routes to the
-  highest-yield matching category; over-cap spend earns nothing more (never
-  overstated), and reached caps are flagged. Merchant-locked bonuses (e.g. an
-  Emirates co-brand's airline rate) are credited but flagged as an optimistic
+- **One earning rule everywhere; over-cap spend reroutes, never vanishes.** A bonus
+  cap means "no more *bonus*," not "no more earning" — spend past a cap flows to the
+  next-best option: another card in a portfolio, or the card's own base rate for a
+  lone card. Because `scoreCard(card)` and the best 1-card portfolio are the *same*
+  computation (both call `earnAcrossCards`), a card scored on its own and as a 1-card
+  portfolio return identical numbers — a property proven across all 55 cards in
+  `reconcile.test.ts`. Reached caps are still flagged; merchant-locked bonuses (e.g.
+  an Emirates co-brand's airline rate) are credited but flagged as an optimistic
   assumption, since a generic profile can't confirm the spend is at that merchant.
 
 - **Un-verifiable cards are benched, not guessed.** When a card's data carries a
