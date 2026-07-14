@@ -814,103 +814,82 @@ export function scoreCard(
     };
   }
 
-  const { options, flags } = buildEarnOptions(card);
+  // --- Assign + earn via the SHARED core. scoreCard(card) is exactly a 1-card
+  // portfolio, so it delegates to earnAcrossCards([card]) — the same computation
+  // the optimizer runs. This is what makes scoreCard and best-1-card agree. ---
+  const cd = precomputeCardData(card, valuations);
+  const result = earnAcrossCards(spending, [cd]);
 
-  // --- Step 1+2 (assignment): route each spend category to its best-yielding
-  // option. We pick by UNCAPPED yield-per-AED — the category a rational user
-  // would put this spend on. (Caps are applied after, on the aggregate.) ---
-  const assignedSpend = new Map<EarnOption, number>();
-  const assignedCats = new Map<EarnOption, SpendCategory[]>();
-
-  for (const key of Object.keys(spending) as SpendCategory[]) {
-    const monthly = spending[key] ?? 0;
-    if (monthly <= 0) continue;
-    const candidates = candidatesFor(key, options);
-    if (candidates.length === 0) continue; // no way to earn (shouldn't happen: base is catch-all)
-
-    let best = candidates[0]!;
-    let bestYield = yieldPerAed(best.rate, valuation.aedPerUnit);
-    for (const c of candidates.slice(1)) {
-      const y = yieldPerAed(c.rate, valuation.aedPerUnit);
-      if (y > bestYield) {
-        best = c;
-        bestYield = y;
-      }
-    }
-    assignedSpend.set(best, (assignedSpend.get(best) ?? 0) + monthly);
-    assignedCats.set(best, [...(assignedCats.get(best) ?? []), key]);
-  }
-
-  // --- Steps 3-5: earn, cap, convert, per option. ---
-  const breakdown: CategoryEarning[] = [];
-  let grossMin = 0;
-  let grossMax = 0;
+  const flags: ScoreFlag[] = [...cd.buildFlags]; // structural (e.g. unknown-category) flags first
   let uncertain = false;
 
-  for (const [option, monthlySpend] of assignedSpend) {
-    const cats = assignedCats.get(option) ?? [];
-    const rate = option.rate;
-    const merchant = option.rule.kind === "categories" ? option.rule.merchant : undefined;
-
-    // Delegate the earn + cap math to the shared helper (one source of truth).
-    const earned = earnOnOption(option, monthlySpend, valuation.aedPerUnit);
-    const unbounded = earned.unbounded;
-
+  // --- Build the per-option receipt + inherit flags from each earning option. ---
+  const breakdown: CategoryEarning[] = [];
+  for (const o of result.optionOutcomes) {
+    const rate = o.option.rate;
     breakdown.push({
-      cardCategory: option.cardCategory,
-      spendCategories: cats,
-      monthlySpendAed: monthlySpend,
+      cardCategory: o.option.cardCategory,
+      spendCategories: o.spendCategories,
+      monthlySpendAed: o.monthlySpendAed,
       rate,
-      annualUnits: earned.annualUnits,
-      annualValueAed: earned.annualValueAed,
-      capBound: earned.capBound,
-      merchantAssumption: merchant,
+      annualUnits: o.earning.annualUnits,
+      annualValueAed: o.earning.annualValueAed,
+      capBound: o.capBound,
+      merchantAssumption: o.merchantAssumption,
     });
 
-    grossMin += earned.annualValueAed.min;
-    grossMax += earned.annualValueAed.max;
-
-    // Inherit flags for the receipt.
     if (rate.confidence === "unknown") {
       uncertain = true;
       flags.push({
         level: "unknown",
-        message: `Unresolved rate on ${option.cardCategory} ("${rate.raw}") — scored as a range`,
+        message: `Unresolved rate on ${o.option.cardCategory} ("${rate.raw}") — scored as a range`,
       });
     } else if (rate.confidence === "low") {
       uncertain = true;
-      flags.push({ level: "low", message: `Low-confidence rate on ${option.cardCategory} ("${rate.raw}")` });
+      flags.push({ level: "low", message: `Low-confidence rate on ${o.option.cardCategory} ("${rate.raw}")` });
     }
-    if (unbounded) {
+    if (o.earning.unbounded) {
       flags.push({
         level: "unknown",
-        message: `${option.cardCategory} has an unbounded variable rate — upside not scored`,
+        message: `${o.option.cardCategory} has an unbounded variable rate — upside not scored`,
       });
     }
-    if (earned.capBound) {
+    if (o.capBound) {
+      // why the message changed from "not modeled": over-cap spend is no longer
+      // dropped — it earns the card's base rate (the unified reroute rule).
       flags.push({
         level: "low",
-        message: `${earned.capBound} cap reached on ${option.cardCategory} — over-cap spend not modeled`,
+        message: `${o.capBound} cap reached on ${o.option.cardCategory} — over-cap spend earns the base rate`,
       });
     }
-    if (merchant) {
+    if (o.merchantAssumption) {
       uncertain = true;
       flags.push({
         level: "low",
-        message: `${option.cardCategory}: assumes ${cats.join("/")} spend occurs at ${merchant}`,
+        message: `${o.option.cardCategory}: assumes ${o.spendCategories.join("/")} spend occurs at ${o.merchantAssumption}`,
       });
     }
   }
 
   // Report unmatched (un-scoreable) categories once, as a flag.
-  for (const o of options) {
+  for (const o of cd.options) {
     if (o.rule.kind === "unmatched") {
       flags.push({ level: "low", message: `${o.cardCategory}: ${o.rule.reason}` });
     }
   }
+  // Spend that couldn't earn anywhere (every option's cap full) — rare for one card.
+  if (result.unearnedMonthlyAed > EPS) {
+    flags.push({
+      level: "low",
+      message: `${result.unearnedMonthlyAed.toFixed(0)} AED/mo of spend exceeds this card's caps and earns nothing`,
+    });
+  }
 
-  // --- Step 6: fees + valuation-confidence flag. ---
-  const fees = computeFees(card);
+  const grossMin = result.grossAnnualValue.min;
+  const grossMax = result.grossAnnualValue.max;
+
+  // --- Fees + valuation-confidence flag. ---
+  const fees = cd.fees;
   if (valuation.confidence !== "high") {
     uncertain = true;
     flags.push({
