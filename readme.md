@@ -112,9 +112,9 @@ user-editable valuations later).
 
 A test cross-checks the table against the data and **fails the build if any
 currency lacks an entry**, so a new card with a new currency can't score against a
-missing value. Currencies outside the researched set (`AED (Nol points)`,
-`ThankYou Points`, `Multiple programs (customizable)`) are shipped as **flagged
-placeholders**, not invented values.
+missing value. A currency still outside the researched set
+(`Multiple programs (customizable)`, whose value is user-customizable and so
+genuinely unknown) is shipped as a **flagged placeholder**, not an invented value.
 
 ### 4. Card scorer — `score-card.ts`
 
@@ -174,10 +174,13 @@ Decisions worth knowing before extending the engine:
   no lossy remapping. It is the *input* to the normalizer, not a normalized model.
 
 - **Valuations are researched defaults, overridable, and honest about gaps.** Every
-  currency carries a confidence, and the three currencies with no researched value
-  are flagged placeholders (conservative `0.0075`) rather than invented numbers —
-  any card using them is marked uncertain. `AED (<store> credit)` currencies are
-  valued as restricted credit (0.0075), not face-value cash; only pure `AED` is 1.0.
+  currency carries a confidence, and any currency with no researched value is a
+  flagged placeholder (conservative `0.0075`) rather than an invented number — any
+  card using it is marked uncertain. `AED (<program>)` currencies are judged on how
+  cash-like they actually are, not lumped together: transit fare credit
+  (`AED (Nol points)`) and the statement-credit `AED (Salaam Points convertible)`
+  redeem at face value (`1.0`), `AED (Booking.com credit)` is a flagged `0.85`
+  pending card re-verification, and pure `AED` is `1.0`.
 
 - **Scoring is conservative and flags its assumptions.** Spend routes to the
   highest-yield matching category; over-cap spend earns nothing more (never
