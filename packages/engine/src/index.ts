@@ -50,3 +50,14 @@ export type {
   SpendingProfile,
   AedRange,
 } from "./score-card";
+
+// Portfolio optimizer: best 1/2/3-card portfolio for a spending + eligibility profile.
+export { optimizePortfolio } from "./optimize-portfolio";
+export type {
+  UserProfile,
+  OptimizeOptions,
+  Portfolio,
+  PortfolioResult,
+  CategoryAllocation,
+  CardContribution,
+} from "./optimize-portfolio";

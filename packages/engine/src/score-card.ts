@@ -180,7 +180,7 @@ export interface CardScore {
 // ---------------------------------------------------------------------------
 
 /** Reward-currency units earned in a month for `spendAed` at a resolved rate. */
-function monthlyUnits(
+export function monthlyUnits(
   value: number,
   unit: NormalizedRate["unit"],
   spendAed: number,
@@ -205,7 +205,7 @@ function monthlyUnits(
 }
 
 /** AED earned per 1 AED spent at a resolved rate — used to pick the best category. */
-function yieldPerAed(rate: NormalizedRate, aedPerUnit: number): number {
+export function yieldPerAed(rate: NormalizedRate, aedPerUnit: number): number {
   if (rate.value === null || rate.unit === null) return 0; // unresolved → deprioritize
   return monthlyUnits(rate.value, rate.unit, 1, aedPerUnit) * aedPerUnit;
 }
@@ -215,7 +215,7 @@ function yieldPerAed(rate: NormalizedRate, aedPerUnit: number): number {
 // ---------------------------------------------------------------------------
 
 /** Detect first-year-free / free-for-life from the free-text waiver string. */
-function computeFees(card: Card): FeeBreakdown {
+export function computeFees(card: Card): FeeBreakdown {
   const fee = card.fees.annual_fee_aed;
   const waiver = card.fees.waiver_conditions ?? "";
   const freeForLife = /free for life|lifetime free|no annual fee/i.test(waiver) || fee === 0;
@@ -234,7 +234,7 @@ function computeFees(card: Card): FeeBreakdown {
 // Category matching.
 // ---------------------------------------------------------------------------
 
-interface EarnOption {
+export interface EarnOption {
   cardCategory: string;
   rate: NormalizedRate;
   monthlyCap: number | null;
@@ -243,7 +243,7 @@ interface EarnOption {
 }
 
 /** Build the list of ways this card can earn, incl. a virtual base-rate fallback. */
-function buildEarnOptions(card: Card): { options: EarnOption[]; flags: ScoreFlag[] } {
+export function buildEarnOptions(card: Card): { options: EarnOption[]; flags: ScoreFlag[] } {
   const flags: ScoreFlag[] = [];
   const options: EarnOption[] = card.rewards.categories.map((cat: RewardCategory) => {
     const rule = MATCH_TABLE[cat.category] ?? {
@@ -280,12 +280,502 @@ function buildEarnOptions(card: Card): { options: EarnOption[]; flags: ScoreFlag
 }
 
 /** Candidate earn-options for a given spend category. */
-function candidatesFor(cat: SpendCategory, options: EarnOption[]): EarnOption[] {
+export function candidatesFor(cat: SpendCategory, options: EarnOption[]): EarnOption[] {
   return options.filter((o) => {
     if (o.rule.kind === "categories") return o.rule.categories.includes(cat);
     if (o.rule.kind === "catchall") return true;
     return false; // unmatched never claims spend
   });
+}
+
+// ---------------------------------------------------------------------------
+// Earning + caps for ONE option — the single source of truth for the cap math.
+// Both scoreCard and the portfolio optimizer route through here so caps behave
+// identically everywhere. Given a monthly AED spend already routed to an option,
+// it returns the annual reward (as a min/max range, since a tier-3 rate has no
+// single value) plus which cap (if any) bound.
+// ---------------------------------------------------------------------------
+
+export interface OptionEarning {
+  /** Reward-currency units earned per YEAR (max null when the rate is unbounded). */
+  annualUnits: { min: number; max: number | null };
+  /** AED value of those units after valuation. */
+  annualValueAed: AedRange;
+  /** Set when a cap limited earnings at this spend level. */
+  capBound?: "monthly" | "annual";
+  /** True when the rate has no stated ceiling, so the upside can't be bounded. */
+  unbounded: boolean;
+}
+
+export function earnOnOption(
+  option: EarnOption,
+  monthlySpendAed: number,
+  aedPerUnit: number,
+): OptionEarning {
+  const rate = option.rate;
+  // Resolve the rate into a min/max value pair in the rate's unit.
+  // - resolved rate: min===max===value.
+  // - range rate ("Up to X%"): min=range.min, max=range.max (may be null = unbounded).
+  const lo = rate.value ?? rate.range?.min ?? 0;
+  const hi = rate.value ?? rate.range?.max ?? null; // null => unbounded upper
+
+  const earn = (v: number): { units: number; aed: number; cap?: "monthly" | "annual" } => {
+    const rawMonthly = monthlyUnits(v, rate.unit, monthlySpendAed, aedPerUnit);
+    let cap: "monthly" | "annual" | undefined;
+    let capped = rawMonthly;
+    if (option.monthlyCap !== null && capped > option.monthlyCap) {
+      capped = option.monthlyCap; // why: caps are in reward-currency units; monthly first
+      cap = "monthly";
+    }
+    let annual = capped * 12;
+    if (option.annualCap !== null && annual > option.annualCap) {
+      annual = option.annualCap;
+      cap = "annual";
+    }
+    return { units: annual, aed: annual * aedPerUnit, cap };
+  };
+
+  const low = earn(lo);
+  // For an unbounded upper rate we cannot invent a ceiling — max mirrors min and we flag it.
+  const high = hi === null ? low : earn(hi);
+  const unbounded = hi === null && rate.value === null;
+
+  return {
+    annualUnits: { min: low.units, max: unbounded ? null : high.units },
+    annualValueAed: { min: low.aed, max: high.aed },
+    capBound: low.cap ?? high.cap,
+    unbounded,
+  };
+}
+
+// ===========================================================================
+// Shared scoring core: assign spend across ONE OR MORE cards, exactly.
+//
+// This is the single source of truth both scoreCard and optimizePortfolio use.
+// scoreCard(card) is just earnAcrossCards([card]); the portfolio optimizer runs
+// earnAcrossCards on each candidate subset. Because it's literally the same
+// function, a single card scored on its own and the best-1-card portfolio return
+// identical numbers by construction.
+//
+// The assignment rule (unified): each AED of spend earns on the best-yielding
+// option AVAILABLE IN CONTEXT; when an option's reward cap is full, the overflow
+// flows to the next-best option — another card in a portfolio, or the SAME card's
+// base rate for a lone card. This matches how the cards actually work: a bonus cap
+// means "no more BONUS," not "no more earning" — spend past the cap still earns
+// the base rate. Spend only earns nothing if every eligible option's cap is full.
+//
+// We solve the assignment EXACTLY (not greedily) as a min-cost max-flow, because
+// caps make naive per-category greedy wrong: filling a shared/capped bonus with
+// one category can starve another that had no other good home. At <=3 cards /
+// ~10 categories this is cheap, so correctness is free.
+// ===========================================================================
+
+/** Float tolerance for flow arithmetic and value comparisons (AED are continuous). */
+const EPS = 1e-9;
+
+/**
+ * Per-card data that doesn't depend on the portfolio (options, valuation, fees).
+ * Precomputed once so the optimizer can reuse it across every candidate subset.
+ */
+export interface CardData {
+  card: Card;
+  options: EarnOption[];
+  aedPerUnit: number;
+  valuation: ValuationEntry;
+  fees: FeeBreakdown;
+  /** Structural flags from option-building (e.g. an unrecognized reward category). */
+  buildFlags: ScoreFlag[];
+  /** Parallel to `options`: expected AED/AED yield used for routing decisions. */
+  yields: number[];
+  /** Parallel to `options`: annual AED-spend capacity before the reward cap binds (null = uncapped). */
+  capacities: (number | null)[];
+}
+
+/**
+ * Expected reward-currency units per 1 AED spent, using the rate's MIDPOINT when
+ * it's a bounded range (so a genuinely-valuable "up to X%" option isn't ignored)
+ * and its lower bound when unbounded (we refuse to invent a ceiling). For a
+ * resolved rate this equals the exact yield — so for the real cards (none of which
+ * has a range rate among scored cards) routing is identical to a point estimate.
+ *
+ * why expected value for routing: the assignment is a decision under uncertainty.
+ * Routing on the expected rate is the neutral choice; realized value is then
+ * reported as a min/max range around it.
+ */
+function expectedUnitsPerAed(rate: NormalizedRate, aedPerUnit: number): number {
+  if (rate.unit === null) return 0;
+  const v =
+    rate.value ??
+    (rate.range
+      ? rate.range.max === null
+        ? rate.range.min
+        : (rate.range.min + rate.range.max) / 2
+      : 0);
+  return monthlyUnits(v, rate.unit, 1, aedPerUnit);
+}
+
+/** Expected AED earned per 1 AED spent — the routing weight for an option. */
+function expectedYieldPerAed(rate: NormalizedRate, aedPerUnit: number): number {
+  return expectedUnitsPerAed(rate, aedPerUnit) * aedPerUnit;
+}
+
+/**
+ * Effective ANNUAL AED-spend capacity of an option: the amount of spend past
+ * which its reward cap binds and additional spend here earns nothing (so the
+ * overflow must route to the next-best option). null = uncapped.
+ *
+ * Derivation: max annual reward units = min(monthlyCap*12, annualCap). Dividing
+ * by units-per-AED converts that unit ceiling into an AED-spend ceiling. Assumes
+ * even monthly spend — the same steady-state assumption the rest of the engine makes.
+ */
+function optionCapacityAnnualAed(option: EarnOption, aedPerUnit: number): number | null {
+  if (option.monthlyCap === null && option.annualCap === null) return null;
+  const unitsPerAed = expectedUnitsPerAed(option.rate, aedPerUnit);
+  // A zero-yield option (unresolved/0% rate) earns nothing regardless, so its cap
+  // is immaterial — leave it uncapped for the flow and let earnOnOption report 0.
+  if (unitsPerAed <= 0) return null;
+  const capUnits = Math.min(
+    option.monthlyCap !== null ? option.monthlyCap * 12 : Infinity,
+    option.annualCap !== null ? option.annualCap : Infinity,
+  );
+  return capUnits / unitsPerAed;
+}
+
+/** Precompute the portfolio-independent data for one card. */
+export function precomputeCardData(card: Card, valuations: ValuationTable = DEFAULT_VALUATIONS): CardData {
+  const { options, flags } = buildEarnOptions(card);
+  const valuation = resolveValuation(card.rewards.currency, valuations);
+  return {
+    card,
+    options,
+    aedPerUnit: valuation.aedPerUnit,
+    valuation,
+    fees: computeFees(card),
+    buildFlags: flags,
+    yields: options.map((o) => expectedYieldPerAed(o.rate, valuation.aedPerUnit)),
+    capacities: options.map((o) => optionCapacityAnnualAed(o, valuation.aedPerUnit)),
+  };
+}
+
+/**
+ * Which cap direction (monthly vs annual) bounds an option — for the receipt when
+ * the FLOW saturated the option's capacity (earnOnOption itself won't report a cap
+ * when spend was pre-limited to exactly the cap).
+ */
+function bindingCapDirection(option: EarnOption): "monthly" | "annual" | undefined {
+  if (option.monthlyCap === null && option.annualCap === null) return undefined;
+  const monthlyAsAnnual = option.monthlyCap !== null ? option.monthlyCap * 12 : Infinity;
+  const annual = option.annualCap !== null ? option.annualCap : Infinity;
+  return monthlyAsAnnual <= annual ? "monthly" : "annual";
+}
+
+// ---------------------------------------------------------------------------
+// Min-cost max-flow. We model routing spend as a transportation problem:
+//
+//     source ──[spend]──> category ──[eligible]──> option ──[cap]──> sink
+//
+//   • source -> category c : capacity = c's ANNUAL spend, cost 0
+//   • category c -> option o: exists iff o can earn on c; capacity ∞;
+//                             cost = MAXY - yield(o)   (>= 0 after the shift)
+//   • option o -> sink      : capacity = o's annual AED-spend cap (∞ if uncapped)
+//
+// Minimising total cost maximises total yield: every valid assignment routes the
+// same total flow (all the spend), so sum((MAXY - y)*flow) is minimised exactly
+// when sum(y*flow) is maximised. The MAXY shift keeps costs non-negative, so
+// successive-shortest-path (SPFA) augmentation is provably optimal.
+//
+// A virtual zero-yield "unearned" option (uncapped, worst cost) keeps the flow
+// feasible even when every real cap is full — spend that can't earn anywhere lands
+// there and is reported, never crashing the solver or silently vanishing.
+// ---------------------------------------------------------------------------
+
+interface FlowEdge {
+  to: number;
+  cap: number;
+  cost: number;
+  flow: number;
+}
+
+class MinCostFlow {
+  private edges: FlowEdge[] = [];
+  private adj: number[][];
+
+  constructor(private n: number) {
+    this.adj = Array.from({ length: n }, () => []);
+  }
+
+  /** Add a directed edge u->v plus its (zero-capacity) residual reverse edge. */
+  addEdge(u: number, v: number, cap: number, cost: number): number {
+    const id = this.edges.length;
+    this.adj[u]!.push(id);
+    this.edges.push({ to: v, cap, cost, flow: 0 });
+    this.adj[v]!.push(id + 1);
+    this.edges.push({ to: u, cap: 0, cost: -cost, flow: 0 });
+    return id;
+  }
+
+  /** Flow currently pushed through a forward edge (by the id addEdge returned). */
+  flowOn(id: number): number {
+    return this.edges[id]!.flow;
+  }
+
+  /** Saturate max flow from s to t at minimum total cost (SPFA shortest paths). */
+  solve(s: number, t: number): void {
+    for (;;) {
+      const dist = new Array(this.n).fill(Infinity);
+      const inQueue = new Array(this.n).fill(false);
+      const prevEdge = new Array(this.n).fill(-1);
+      dist[s] = 0;
+      const queue: number[] = [s];
+      inQueue[s] = true;
+      while (queue.length > 0) {
+        const u = queue.shift()!;
+        inQueue[u] = false;
+        for (const id of this.adj[u]!) {
+          const e = this.edges[id]!;
+          if (e.cap - e.flow > EPS && dist[u] + e.cost < dist[e.to] - EPS) {
+            dist[e.to] = dist[u] + e.cost;
+            prevEdge[e.to] = id;
+            if (!inQueue[e.to]) {
+              inQueue[e.to] = true;
+              queue.push(e.to);
+            }
+          }
+        }
+      }
+      if (dist[t] === Infinity) break; // no augmenting path left → max flow reached
+
+      let push = Infinity;
+      for (let v = t; v !== s; ) {
+        const id = prevEdge[v]!;
+        const e = this.edges[id]!;
+        push = Math.min(push, e.cap - e.flow);
+        v = this.edges[id ^ 1]!.to; // reverse edge's target = the predecessor node
+      }
+      for (let v = t; v !== s; ) {
+        const id = prevEdge[v]!;
+        this.edges[id]!.flow += push;
+        this.edges[id ^ 1]!.flow -= push;
+        v = this.edges[id ^ 1]!.to;
+      }
+    }
+  }
+}
+
+/** A single option belonging to a specific card in the set being scored. */
+interface FlatOption {
+  cardIndex: number;
+  option: EarnOption;
+  yield: number;
+  capAnnualAed: number | null;
+  aedPerUnit: number;
+}
+
+/** Flatten every card's options into one indexed list (stable order). */
+function flattenOptions(cards: CardData[]): FlatOption[] {
+  const flat: FlatOption[] = [];
+  cards.forEach((cd, cardIndex) => {
+    cd.options.forEach((option, i) => {
+      flat.push({
+        cardIndex,
+        option,
+        yield: cd.yields[i]!,
+        capAnnualAed: cd.capacities[i]!,
+        aedPerUnit: cd.aedPerUnit,
+      });
+    });
+  });
+  return flat;
+}
+
+/** Raw flow solution: annual AED spend on each option, on each (category, option) edge. */
+interface FlowSolution {
+  optionSpend: number[];
+  edgeSpend: { category: SpendCategory; optionIndex: number; annualAed: number }[];
+  unearnedAnnualAed: number;
+}
+
+function solveAssignment(
+  spending: SpendingProfile,
+  cards: CardData[],
+  flat: FlatOption[],
+): FlowSolution {
+  const categories = (Object.keys(spending) as SpendCategory[]).filter(
+    (c) => (spending[c] ?? 0) > 0,
+  );
+
+  const maxYield = flat.reduce((m, o) => Math.max(m, o.yield), 0);
+
+  // Node layout: [source] [categories...] [options...] [unearned] [sink].
+  const C = categories.length;
+  const O = flat.length;
+  const SOURCE = 0;
+  const CAT0 = 1;
+  const OPT0 = CAT0 + C;
+  const UNEARNED = OPT0 + O;
+  const SINK = UNEARNED + 1;
+  const flow = new MinCostFlow(SINK + 1);
+
+  categories.forEach((c, ci) => {
+    flow.addEdge(SOURCE, CAT0 + ci, (spending[c] ?? 0) * 12, 0);
+  });
+
+  const edgeIds: { category: SpendCategory; optionIndex: number; edgeId: number }[] = [];
+  categories.forEach((c, ci) => {
+    flat.forEach((po, oi) => {
+      // Eligibility uses the same candidatesFor as scoreCard — one source of truth.
+      const eligible = candidatesFor(c, cards[po.cardIndex]!.options).includes(po.option);
+      if (!eligible) return;
+      const id = flow.addEdge(CAT0 + ci, OPT0 + oi, Infinity, maxYield - po.yield);
+      edgeIds.push({ category: c, optionIndex: oi, edgeId: id });
+    });
+    // category -> unearned (worst cost): feasibility if every real cap fills.
+    flow.addEdge(CAT0 + ci, UNEARNED, Infinity, maxYield - 0);
+  });
+
+  const optSinkIds = flat.map((po, oi) =>
+    flow.addEdge(OPT0 + oi, SINK, po.capAnnualAed ?? Infinity, 0),
+  );
+  const unearnedSinkId = flow.addEdge(UNEARNED, SINK, Infinity, 0);
+
+  flow.solve(SOURCE, SINK);
+
+  return {
+    optionSpend: flat.map((_, oi) => flow.flowOn(optSinkIds[oi]!)),
+    edgeSpend: edgeIds
+      .map((e) => ({ category: e.category, optionIndex: e.optionIndex, annualAed: flow.flowOn(e.edgeId) }))
+      .filter((e) => e.annualAed > EPS),
+    unearnedAnnualAed: flow.flowOn(unearnedSinkId),
+  };
+}
+
+/** One option that received spend, with its aggregate earnings (the per-option receipt). */
+export interface OptionOutcome {
+  cardIndex: number;
+  option: EarnOption;
+  aedPerUnit: number;
+  /** Aggregate monthly AED routed to this option (may come from several categories). */
+  monthlySpendAed: number;
+  /** Categories feeding this option, in the user's category order. */
+  spendCategories: SpendCategory[];
+  /** Full earn result (annual units + AED range + unbounded flag) from the shared cap math. */
+  earning: OptionEarning;
+  /** Set when the flow saturated this option's cap. */
+  capBound?: "monthly" | "annual";
+  /** Set when the option relies on an optimistic merchant assumption. */
+  merchantAssumption?: string;
+}
+
+/** One (category, option) slice that received spend (the "swipe THIS card" receipt). */
+export interface SliceOutcome {
+  spendCategory: SpendCategory;
+  cardIndex: number;
+  option: EarnOption;
+  monthlySpendAed: number;
+  /** This slice's proportional share of its option's (possibly capped) value. */
+  annualValueAed: AedRange;
+  capBound?: "monthly" | "annual";
+  merchantAssumption?: string;
+}
+
+/** The shared scoring result for a set of cards under one spending profile. */
+export interface EarnResult {
+  cards: CardData[];
+  /** Only options that received spend. */
+  optionOutcomes: OptionOutcome[];
+  /** Only (category, option) slices that received spend. */
+  slices: SliceOutcome[];
+  /** Gross AED/year each card contributes (parallel to `cards`). */
+  perCardGross: AedRange[];
+  /** Gross AED/year across all cards, before fees. */
+  grossAnnualValue: AedRange;
+  /** Monthly AED that earns nothing because every eligible option's cap is full. */
+  unearnedMonthlyAed: number;
+}
+
+/**
+ * Assign `spending` across `cards` optimally and report what each option/slice
+ * earns. THE single source of truth for portfolio-aware earning — scoreCard and
+ * optimizePortfolio both call it, so a lone card and a 1-card portfolio agree.
+ */
+export function earnAcrossCards(spending: SpendingProfile, cards: CardData[]): EarnResult {
+  const flat = flattenOptions(cards);
+  const sol = solveAssignment(spending, cards, flat);
+
+  // Per-option aggregate earnings. Caps apply to the AGGREGATE on an option (several
+  // categories can feed one option), so value is computed at the option level.
+  const optionValue: AedRange[] = flat.map((po, oi) => {
+    const monthlyAgg = sol.optionSpend[oi]! / 12;
+    if (monthlyAgg <= EPS) return { min: 0, max: 0 };
+    return earnOnOption(po.option, monthlyAgg, po.aedPerUnit).annualValueAed;
+  });
+  const optionCapBound: (("monthly" | "annual") | undefined)[] = flat.map((po, oi) => {
+    const cap = po.capAnnualAed;
+    if (cap === null) return undefined;
+    return sol.optionSpend[oi]! >= cap - EPS ? bindingCapDirection(po.option) : undefined;
+  });
+
+  // Per-option outcome (for the single-card receipt). Categories feeding each option
+  // are gathered from the slices, preserving the user's category order.
+  const catsByOption = new Map<number, SpendCategory[]>();
+  for (const e of sol.edgeSpend) {
+    const list = catsByOption.get(e.optionIndex) ?? [];
+    if (!list.includes(e.category)) list.push(e.category);
+    catsByOption.set(e.optionIndex, list);
+  }
+  const optionOutcomes: OptionOutcome[] = [];
+  flat.forEach((po, oi) => {
+    const monthly = sol.optionSpend[oi]! / 12;
+    if (monthly <= EPS) return;
+    optionOutcomes.push({
+      cardIndex: po.cardIndex,
+      option: po.option,
+      aedPerUnit: po.aedPerUnit,
+      monthlySpendAed: monthly,
+      spendCategories: catsByOption.get(oi) ?? [],
+      earning: earnOnOption(po.option, monthly, po.aedPerUnit),
+      capBound: optionCapBound[oi],
+      merchantAssumption: po.option.rule.kind === "categories" ? po.option.rule.merchant : undefined,
+    });
+  });
+
+  // Per-slice outcome (for the portfolio's "swipe THIS card" receipt). A slice takes
+  // its option's value in proportion to its spend, so slices sum back to the option.
+  const slices: SliceOutcome[] = sol.edgeSpend.map((e) => {
+    const po = flat[e.optionIndex]!;
+    const totalOnOption = sol.optionSpend[e.optionIndex]!;
+    const share = totalOnOption > EPS ? e.annualAed / totalOnOption : 0;
+    const optVal = optionValue[e.optionIndex]!;
+    return {
+      spendCategory: e.category,
+      cardIndex: po.cardIndex,
+      option: po.option,
+      monthlySpendAed: e.annualAed / 12,
+      annualValueAed: { min: optVal.min * share, max: optVal.max * share },
+      capBound: optionCapBound[e.optionIndex],
+      merchantAssumption: po.option.rule.kind === "categories" ? po.option.rule.merchant : undefined,
+    };
+  });
+
+  // Per-card gross and portfolio gross.
+  const perCardGross: AedRange[] = cards.map(() => ({ min: 0, max: 0 }));
+  flat.forEach((po, oi) => {
+    perCardGross[po.cardIndex]!.min += optionValue[oi]!.min;
+    perCardGross[po.cardIndex]!.max += optionValue[oi]!.max;
+  });
+  const grossAnnualValue = perCardGross.reduce(
+    (acc, g) => ({ min: acc.min + g.min, max: acc.max + g.max }),
+    { min: 0, max: 0 },
+  );
+
+  return {
+    cards,
+    optionOutcomes,
+    slices,
+    perCardGross,
+    grossAnnualValue,
+    unearnedMonthlyAed: sol.unearnedAnnualAed / 12,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -362,46 +852,23 @@ export function scoreCard(
     const rate = option.rate;
     const merchant = option.rule.kind === "categories" ? option.rule.merchant : undefined;
 
-    // Resolve the rate into a min/max value pair in the rate's unit.
-    // - resolved rate: min===max===value.
-    // - range rate ("Up to X%"): min=range.min, max=range.max (may be null = unbounded).
-    const lo = rate.value ?? rate.range?.min ?? 0;
-    const hi = rate.value ?? rate.range?.max ?? null; // null => unbounded upper
-
-    const earn = (v: number): { units: number; aed: number; cap?: "monthly" | "annual" } => {
-      const rawMonthly = monthlyUnits(v, rate.unit, monthlySpend, valuation.aedPerUnit);
-      let cap: "monthly" | "annual" | undefined;
-      let capped = rawMonthly;
-      if (option.monthlyCap !== null && capped > option.monthlyCap) {
-        capped = option.monthlyCap; // why: caps are in reward-currency units; monthly first
-        cap = "monthly";
-      }
-      let annual = capped * 12;
-      if (option.annualCap !== null && annual > option.annualCap) {
-        annual = option.annualCap;
-        cap = "annual";
-      }
-      return { units: annual, aed: annual * valuation.aedPerUnit, cap };
-    };
-
-    const low = earn(lo);
-    // For an unbounded upper rate we cannot invent a ceiling — max mirrors min and we flag it.
-    const high = hi === null ? low : earn(hi);
-    const unbounded = hi === null && rate.value === null;
+    // Delegate the earn + cap math to the shared helper (one source of truth).
+    const earned = earnOnOption(option, monthlySpend, valuation.aedPerUnit);
+    const unbounded = earned.unbounded;
 
     breakdown.push({
       cardCategory: option.cardCategory,
       spendCategories: cats,
       monthlySpendAed: monthlySpend,
       rate,
-      annualUnits: { min: low.units, max: hi === null && rate.value === null ? null : high.units },
-      annualValueAed: { min: low.aed, max: high.aed },
-      capBound: low.cap ?? high.cap,
+      annualUnits: earned.annualUnits,
+      annualValueAed: earned.annualValueAed,
+      capBound: earned.capBound,
       merchantAssumption: merchant,
     });
 
-    grossMin += low.aed;
-    grossMax += high.aed;
+    grossMin += earned.annualValueAed.min;
+    grossMax += earned.annualValueAed.max;
 
     // Inherit flags for the receipt.
     if (rate.confidence === "unknown") {
@@ -420,10 +887,10 @@ export function scoreCard(
         message: `${option.cardCategory} has an unbounded variable rate — upside not scored`,
       });
     }
-    if (low.cap ?? high.cap) {
+    if (earned.capBound) {
       flags.push({
         level: "low",
-        message: `${low.cap ?? high.cap} cap reached on ${option.cardCategory} — over-cap spend not modeled`,
+        message: `${earned.capBound} cap reached on ${option.cardCategory} — over-cap spend not modeled`,
       });
     }
     if (merchant) {
