@@ -201,7 +201,3 @@ Decisions worth knowing before extending the engine:
   flag rather than a fabricated ceiling. The single ranking number is the range
   midpoint, with the full range exposed alongside it.
 
-## Open questions
-
-Three cofounder-alignment questions are unresolved (tracked in `CLAUDE.md`). Tasks
-that depend on them are flagged rather than guessed.
