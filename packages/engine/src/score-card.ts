@@ -49,6 +49,31 @@ export type SpendCategory =
 export type SpendingProfile = Partial<Record<SpendCategory, number>>;
 
 /**
+ * The canonical spend categories as a RUNTIME list, for validating input at a
+ * boundary (the union type erases at compile time and can't be iterated). The
+ * `satisfies` clause rejects any entry that isn't a SpendCategory, and the
+ * exhaustiveness check below fails the build if a category is missing — so this
+ * list and the union can never silently drift apart.
+ */
+export const SPEND_CATEGORIES = [
+  "groceries",
+  "dining",
+  "fuel",
+  "utilities",
+  "education",
+  "travel",
+  "transport",
+  "entertainment",
+  "international",
+  "other",
+] as const satisfies readonly SpendCategory[];
+
+// Compile-time guard: every SpendCategory must appear in SPEND_CATEGORIES.
+type _MissingCategory = Exclude<SpendCategory, (typeof SPEND_CATEGORIES)[number]>;
+const _allCategoriesCovered: _MissingCategory extends never ? true : never = true;
+void _allCategoriesCovered;
+
+/**
  * How a card reward-category name maps to canonical spend categories.
  *  - `categories`: matches those specific spend categories. `merchant` marks an
  *    optimistic assumption (the bonus only applies at a specific merchant we
