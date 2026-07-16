@@ -12,7 +12,7 @@
 
 /**
  * How a card denominates its rewards. Only these three values appear across all
- * 55 cards. Modeled as a union (not a bare string) because it drives valuation:
+ * 51 cards. Modeled as a union (not a bare string) because it drives valuation:
  * cashback is worth face value in AED, while points/miles need scenario-dependent
  * valuation in the Points & Redemption engine.
  */
@@ -24,7 +24,7 @@ export interface Eligibility {
   min_age: number;
   /** Whether the applicant must route their salary to the issuing bank to qualify. */
   salary_transfer_required: boolean;
-  // why: null in all 55 cards today, so the source never reveals the non-null
+  // why: null in all 51 cards today, so the source never reveals the non-null
   // shape. Typed as string[] | null (a list of employer constraints, e.g. an
   // approved-employer allowlist) so a real restriction can be captured later
   // without a schema change. If it turns out to be free text, narrow to string.
@@ -60,7 +60,7 @@ export interface Rewards {
   base_rate: string;
   /** Category-specific reward rates. Always 1–3 entries in the current data. */
   categories: RewardCategory[];
-  /** Cap across all categories combined; null = no overall cap. (null in all 55 today.) */
+  /** Cap across all categories combined; null = no overall cap. (null in all 51 today.) */
   overall_cap: number | null;
   /** Minimum monthly spend before any rewards accrue (0 = no minimum). */
   min_monthly_spend_required_aed: number;
@@ -99,4 +99,9 @@ export interface Card {
   // guess a reward structure or silently delete the card, we mark it excluded so
   // the scorer benches it visibly — pending verification. Absent/false = scored.
   excluded_from_scoring?: boolean;
+  // why: a card that is STILL scored but carries a known data-quality caveat (e.g.
+  // enbd_visa_flexi's earn rate implies an implausible return). The scorer surfaces
+  // this as a loud flag on every score so the number is never trusted blindly.
+  // Distinct from excluded_from_scoring: the card still ranks, just with a warning.
+  data_caveat?: string;
 }

@@ -261,7 +261,7 @@ describe("optimizePortfolio — never returns two salary-transfer cards together
  * Case 7 — full-data smoke test: all real cards, a realistic profile. Must run
  * fast and return sane, flagged output.
  */
-describe("optimizePortfolio — full 55-card smoke test", () => {
+describe("optimizePortfolio — full 51-card smoke test", () => {
   const spending: SpendingProfile = {
     groceries: 3000,
     dining: 2000,

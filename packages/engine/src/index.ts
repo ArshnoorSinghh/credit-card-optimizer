@@ -72,3 +72,64 @@ export type {
   CategoryAllocation,
   CardContribution,
 } from "./optimize-portfolio";
+
+// ── Engine 2: Points & Redemption Optimizer ─────────────────────────────────
+
+// Points inventory: the user's manually-entered holdings.
+export type { PointsHolding, PointsInventory } from "./points-inventory";
+
+// Redemption valuation model: per-currency named routes (currency x route) -> AED,
+// with a semantic class, per-entry confidence, and an explicit cash-capability flag.
+export {
+  REDEMPTION_VALUATIONS,
+  CARD_BILL_CLASSES,
+  defaultRedemptionProfile,
+  resolveRedemptionProfile,
+  withRedemptionValuations,
+  primaryRoute,
+  routesForClasses,
+  bestRouteAmongClasses,
+  bestRoute,
+  supportedClasses,
+  isCashCapable,
+  premiumFlightRoute,
+  worstConfidence,
+  deriveFlatValuationTable,
+  reconcileWithFlat,
+} from "./redemption-valuations";
+export type {
+  RedemptionClass,
+  RedemptionConfidence,
+  RedemptionValuationEntry,
+  RedemptionRoute,
+  PremiumCabinModel,
+  CurrencyRedemptionProfile,
+  RedemptionValuationTable,
+  RedemptionProfileOverride,
+  RedemptionOverrides,
+  FlatReconciliation,
+} from "./redemption-valuations";
+
+// Conversion model: bank points -> airline miles, with break-even math.
+export { CONVERSIONS, CONVERSION_FINDING, conversionsFrom, evaluateConversion } from "./conversions";
+export type { Conversion, ConversionOutcome } from "./conversions";
+
+// Redemption recommender: best redemption per holding for a goal, ranked by AED.
+export { recommendRedemptions } from "./recommend-redemptions";
+export type {
+  RedemptionGoal,
+  RecommendOptions,
+  RedemptionCandidate,
+  RedemptionSuggestion,
+  RedemptionPlan,
+} from "./recommend-redemptions";
+
+// Burn engine: expiry-driven burn priority with flagged program defaults.
+export { burnPriority, PROGRAM_EXPIRY_DEFAULTS, DEVALUATIONS } from "./burn-priority";
+export type {
+  BurnUrgency,
+  BurnItem,
+  BurnPlan,
+  ProgramExpiryDefault,
+  Devaluation,
+} from "./burn-priority";

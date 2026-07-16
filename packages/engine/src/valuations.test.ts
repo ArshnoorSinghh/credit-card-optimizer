@@ -26,15 +26,17 @@ describe("DEFAULT_VALUATIONS", () => {
     expect(DEFAULT_VALUATIONS["AED (Nol points)"]).toMatchObject({ aedPerUnit: 1.0, confidence: "medium" });
   });
 
-  it("prices ThankYou Points at the realistic mid-range floor (medium confidence)", () => {
-    expect(DEFAULT_VALUATIONS["ThankYou Points"]).toMatchObject({ aedPerUnit: 0.05, confidence: "medium" });
+  it("prices ThankYou Points at the UAE pay-with-points rate (medium confidence)", () => {
+    // 0.03 per the 2026-07 UAE research; the earlier 0.05 was a US best-case figure.
+    expect(DEFAULT_VALUATIONS["ThankYou Points"]).toMatchObject({ aedPerUnit: 0.03, confidence: "medium" });
   });
 
   it("treats the Salaam-convertible cashback currency at face value", () => {
-    // Functionally cashback (type cashback, percent rates, AED caps), unlike the
-    // pure-points "Salaam Points" currency which stays at its low placeholder.
+    // Functionally cashback (type cashback, percent rates, AED caps) — a DIFFERENT
+    // currency from the pure-points "Salaam Points", which left with the 2026-07
+    // Amex-network cleanup (its only card was mashreq_solitaire_amex).
     expect(DEFAULT_VALUATIONS["AED (Salaam Points convertible)"]).toMatchObject({ aedPerUnit: 1.0 });
-    expect(DEFAULT_VALUATIONS["Salaam Points"]).toMatchObject({ aedPerUnit: 0.0075 });
+    expect(DEFAULT_VALUATIONS["Salaam Points"]).toBeUndefined();
   });
 
   it("keeps Booking.com credit as a flagged 0.85 placeholder pending re-verification", () => {

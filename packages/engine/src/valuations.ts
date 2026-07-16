@@ -39,28 +39,39 @@ export const DEFAULT_VALUATIONS: ValuationTable = {
   // Cashback — face value by definition.
   AED: { aedPerUnit: 1.0, confidence: "high", note: "Cashback — face value by definition" },
 
-  // Airline miles — deep, liquid programs; firm data.
-  "Skywards Miles": { aedPerUnit: 0.035, confidence: "high" },
-  "Etihad Guest Miles": { aedPerUnit: 0.035, confidence: "high" },
+  // Airline miles — deep, liquid programs; firm data. 0.037 = economy-flight value
+  // from the 2026-07 redemption research (Skywards economy Saver NOT devalued;
+  // Etihad economy). Adopted from Engine 2's primary route. // was 0.035.
+  "Skywards Miles": { aedPerUnit: 0.037, confidence: "high", note: "economy-flight value (research 2026-07)" },
+  "Etihad Guest Miles": { aedPerUnit: 0.037, confidence: "high", note: "economy-flight value (research 2026-07)" },
 
   // Points with official/known redemption value.
   "Smiles Points": { aedPerUnit: 0.01, confidence: "high", note: "Official Smiles redemption value" },
 
   // Points with a defensible but softer estimate.
-  "Membership Rewards": { aedPerUnit: 0.07, confidence: "medium" },
   "FAB Rewards": { aedPerUnit: 0.007, confidence: "medium" },
-  // ENBD Plus Points: issuer states up to ~1.5% of spend redeemable as cashback;
-  // 0.01 is the conservative end of that band (1 pt/AED earning -> ~1% back).
-  "Plus Points": { aedPerUnit: 0.01, confidence: "medium" },
-  "TouchPoints (convertible to miles)": { aedPerUnit: 0.01, confidence: "medium", note: "ADCB TouchPoints" },
-  "Marriott Bonvoy Points": { aedPerUnit: 0.03, confidence: "medium" },
+  // ENBD Plus Points: HELD at 0.01 pending verification. Engine 2 research puts the
+  // card-bill route near 0.75, but adopting that makes enbd_visa_flexi (1 Plus
+  // Point/AED) imply a >75% return — implausible. The earn rate AND per-point value
+  // both need cofounder verification before we move this off 0.01. See the
+  // data_caveat flag on enbd_visa_flexi and the implausibility guardrail in scoreCard.
+  "Plus Points": { aedPerUnit: 0.01, confidence: "low", note: "HELD at 0.01 pending earn-rate + per-point verification (research suggests ~0.75; would imply implausible >75% return on enbd_visa_flexi)" },
+  // ADCB TouchPoints: primary = in-store instant redemption 0.005 (research 2026-07);
+  // NO card-bill route exists. // was 0.01.
+  "TouchPoints (convertible to miles)": { aedPerUnit: 0.005, confidence: "high", note: "ADCB TouchPoints — in-store instant redemption (research 2026-07)" },
+  "Marriott Bonvoy Points": { aedPerUnit: 0.028, confidence: "medium", note: "hotel-night value (research 2026-07)" }, // was 0.03
 
   // Bank/store points where UAE-specific redemption data is thin. Conservative
   // 0.0075 placeholder, flagged low for research.
   "LuLu Points": { aedPerUnit: 0.0075, confidence: "low" },
-  "DIB Points": { aedPerUnit: 0.0075, confidence: "low" },
+  // DIB Wala'a: base/cashback/bill-payment redemption 0.005 (research 2026-07). // was 0.0075.
+  "DIB Points": { aedPerUnit: 0.005, confidence: "medium", note: "DIB Wala'a base redemption (research 2026-07)" },
   "RAKrewards Points": { aedPerUnit: 0.0075, confidence: "low" },
-  "Salaam Points": { aedPerUnit: 0.0075, confidence: "low" },
+  // "Salaam Points" was removed in 2026-07: its only card (mashreq_solitaire_amex)
+  // left with the Amex-network cleanup, so no card earns it. The researched value
+  // (Mashreq cashback 0.00263) and its mile-transfer ratios are preserved in
+  // Engine 2 (redemption-valuations.ts / conversions.ts) for if a Salaam card returns.
+  // NOTE: "AED (Salaam Points convertible)" below is a DIFFERENT currency and stays.
   // why 1.0: this card's rewards are type "cashback", quoted as percentages with
   // AED-denominated caps and redeemable as statement credit — functionally
   // cashback that happens to be Salaam-convertible. So it earns face value, and
@@ -71,7 +82,6 @@ export const DEFAULT_VALUATIONS: ValuationTable = {
   "CBD Reward Points": { aedPerUnit: 0.0075, confidence: "low" },
   "U By Emaar Points": { aedPerUnit: 0.0075, confidence: "low" },
   "dnata Points": { aedPerUnit: 0.0075, confidence: "low" },
-  "DDF Reward Points": { aedPerUnit: 0.0075, confidence: "low" },
   "HSBC Reward Points": { aedPerUnit: 0.0075, confidence: "low" },
   "Diners Club Reward Points": { aedPerUnit: 0.0075, confidence: "low" },
   // why 0.85 placeholder, low: the card data conflicts with the issuer's current
@@ -92,13 +102,13 @@ export const DEFAULT_VALUATIONS: ValuationTable = {
     note: "transit fare credit redeems at face value",
   },
 
-  // ThankYou Points: ~1¢ (0.05 AED) is the realistic US practical floor; 1.6–1.9¢
-  // is reachable only via optimized transfer partners. We price the realistic
-  // mid-range, not best-case. Medium.
+  // Citi ThankYou (UAE): pay-with-points redemption 0.03 (research 2026-07). The
+  // earlier 0.05 reflected US best-case transfers; the UAE realistic default is
+  // lower. // was 0.05.
   "ThankYou Points": {
-    aedPerUnit: 0.05,
+    aedPerUnit: 0.03,
     confidence: "medium",
-    note: "~1¢ US practical floor; 1.6–1.9¢ only via optimized transfers — we price realistic mid-range, not best-case",
+    note: "Citi UAE pay-with-points redemption (research 2026-07)",
   },
   // Still NOT researched — the currency is user-customizable, so it's genuinely
   // unknown. Flagged placeholder; override before trusting.
