@@ -62,6 +62,21 @@ export type {
   AedRange,
 } from "./score-card";
 
+// Merchant -> spend-category mapping (UAE-specific, extendable data table).
+export { MERCHANT_MAP, resolveMerchant } from "./merchant-map";
+export type { MerchantEntry, ResolvedMerchant } from "./merchant-map";
+
+// "Which card should I use?" — deterministic lookup over the scorer. No AI.
+export { askWhichCard, bestCardForCategory, bestCardOverall } from "./which-card";
+export type {
+  AskWhichCardInput,
+  CardRecommendation,
+  UnownedSuggestion,
+  WhichCardAnswer,
+  UnrecognizedInput,
+  WhichCardResult,
+} from "./which-card";
+
 // Portfolio optimizer: best 1/2/3-card portfolio for a spending + eligibility profile.
 export { optimizePortfolio } from "./optimize-portfolio";
 export type {
