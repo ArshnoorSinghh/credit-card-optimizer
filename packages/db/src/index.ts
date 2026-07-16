@@ -145,3 +145,15 @@ export async function getCardById(id: string): Promise<Card | null> {
   const row = await getPrisma().card.findUnique({ where: { id }, include: cardInclude });
   return row ? toEngineCard(row) : null;
 }
+
+// Registered users live in ./users — a separate module because they are an APP
+// concern (identities the web layer attaches data to), not card data. Re-exported
+// here so `@fils/db` remains the single import surface for the app.
+export {
+  upsertUser,
+  getUserByClerkId,
+  deleteUserByClerkId,
+  getRegisteredUserCount,
+  type UserSyncInput,
+  type AppUser,
+} from "./users";
