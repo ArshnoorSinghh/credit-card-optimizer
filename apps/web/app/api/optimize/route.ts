@@ -86,7 +86,15 @@ export async function POST(request: Request): Promise<Response> {
   if (!validated.ok) return badRequest(validated.message);
 
   // Load cards from Postgres, then hand the engine a plain array.
-  const cards = await getAllCards();
+  // Falls back to the engine's bundled CARDS when DATABASE_URL is not configured
+  // (e.g. local dev without a DB), so the optimizer stays usable.
+  let cards;
+  try {
+    cards = await getAllCards();
+  } catch {
+    const { CARDS } = await import("@fils/engine");
+    cards = CARDS;
+  }
 
   const result: OptimizeResponse = optimizePortfolio(
     validated.value.spending,
