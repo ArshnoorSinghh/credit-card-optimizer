@@ -931,13 +931,36 @@ export function scoreCard(
   const netMaxYear1 = grossMax - fees.year1FeeAed;
   if (grossMax !== grossMin) uncertain = true;
 
+  const netAnnualValue = (netMinOngoing + netMaxOngoing) / 2;
+
+  // --- Data-quality caveat: a card kept in the ranking but flagged for a known
+  // data problem (e.g. enbd_visa_flexi's suspect earn rate). Loud + uncertain. ---
+  if (card.data_caveat) {
+    uncertain = true;
+    flags.push({ level: "unknown", message: `Data caveat: ${card.data_caveat}` });
+  }
+
+  // --- Implausibility guardrail (permanent sanity check): net annual value should
+  // never exceed the user's total annual spend — that would be a >100% return,
+  // which in this dataset always means a bad earn rate or valuation, not a real
+  // card. We FLAG it (never crash, never drop the card) so it can't be trusted
+  // silently. Guarded on positive spend to avoid firing on an empty profile. ---
+  const totalAnnualSpendAed = Object.values(spending).reduce((s, v) => s + (v ?? 0), 0) * 12;
+  if (totalAnnualSpendAed > 0 && netAnnualValue > totalAnnualSpendAed) {
+    uncertain = true;
+    flags.push({
+      level: "unknown",
+      message: `Implausible — net annual value (${netAnnualValue.toFixed(0)} AED) exceeds total annual spend (${totalAnnualSpendAed.toFixed(0)} AED); check earn rate/valuation`,
+    });
+  }
+
   return {
     cardId: card.id,
     rewardCurrency: card.rewards.currency,
     valuation,
     // why midpoint for the single ranking number: it's a neutral expected value
     // across the uncertainty band. The full range is exposed alongside it.
-    netAnnualValue: (netMinOngoing + netMaxOngoing) / 2,
+    netAnnualValue,
     netAnnualValueRange: { min: netMinOngoing, max: netMaxOngoing },
     netAnnualValueYear1: (netMinYear1 + netMaxYear1) / 2,
     grossAnnualValue: { min: grossMin, max: grossMax },

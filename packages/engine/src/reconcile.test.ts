@@ -22,7 +22,7 @@ const OPEN: UserProfile = { monthlySalaryAed: 1_000_000, uaeResident: true };
 /**
  * The reconciliation guarantee: scoreCard(card) and the best 1-card portfolio for
  * that same card are THE SAME COMPUTATION (both call earnAcrossCards([card])), so
- * they must return identical financial numbers for all 55 cards. If a user sees a
+ * they must return identical financial numbers for all 51 cards. If a user sees a
  * card on the single-card screen and again as a 1-card portfolio, the numbers agree.
  */
 describe("reconciliation — scoreCard === best-1-card portfolio for every card", () => {

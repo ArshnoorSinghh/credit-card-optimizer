@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import cardsData from "../data/cards.json";
 import type { Card } from "./card";
 import { scoreCard, AED_PER_USD, type SpendingProfile } from "./score-card";
+import { withValuations } from "./valuations";
 
 const cards = cardsData as Card[];
 const byId = (id: string): Card => {
@@ -66,13 +67,14 @@ describe("scoreCard — cashback with a binding cap (fab_cashback)", () => {
 
 /**
  * Case 2 — MILES with per-USD conversion + merchant assumption
- * (enbd_skywards_signature, currency Skywards Miles @ 0.035).
+ * (enbd_skywards_signature, currency Skywards Miles @ 0.037).
  *
  * Hand math (convert AED->USD at 3.6725 first, since rates are "per USD"):
  *   travel 4000 -> emirates_purchases 2 miles/USD = 2*(4000/3.6725)*12 miles/yr
  *   international 1500 -> international_spend 1.5 miles/USD
  *   groceries+dining+fuel+other = 11000 -> base 1 mile/USD
- * Miles -> AED at 0.035. Fee 735, first year free.
+ * Miles -> AED at 0.037 (was 0.035 before the 2026-07 economy-flight research;
+ * the miles themselves are unchanged, only the per-mile value). Fee 735, year 1 free.
  */
 describe("scoreCard — miles card with USD conversion (enbd_skywards_signature)", () => {
   const score = scoreCard(PROFILE, byId("enbd_skywards_signature"));
@@ -89,10 +91,11 @@ describe("scoreCard — miles card with USD conversion (enbd_skywards_signature)
   });
 
   it("matches the hand-computed net value", () => {
-    // emirates 914.9081 + intl 257.3179 + base 1257.9986 = 2430.2246 gross
-    expect(score.grossAnnualValue.min).toBeCloseTo(2430.2246, 2);
-    expect(score.netAnnualValue).toBeCloseTo(1695.2246, 2); // - 735 ongoing
-    expect(score.netAnnualValueYear1).toBeCloseTo(2430.2246, 2); // first year free
+    // miles * 0.037: emirates 26140.2314 -> 967.1886, intl 7351.9401 -> 272.0218,
+    // base 35942.8182 -> 1329.8843. Gross = 2569.0946.
+    expect(score.grossAnnualValue.min).toBeCloseTo(2569.0946, 2);
+    expect(score.netAnnualValue).toBeCloseTo(1834.0946, 2); // - 735 ongoing
+    expect(score.netAnnualValueYear1).toBeCloseTo(2569.0946, 2); // first year free
     expect(score.fees).toMatchObject({ year1FeeAed: 0, ongoingFeeAed: 735 });
   });
 
@@ -237,6 +240,42 @@ describe("scoreCard — flat-rate points card (enbd_visa_flexi)", () => {
     expect(score.breakdown.some((b) => b.cardCategory === "user_chosen_category")).toBe(false);
     expect(score.flags.some((f) => /chosen bonus category/.test(f.message))).toBe(false);
   });
+
+  // The card is still scored and still ranks, but its earn rate is suspect: 1 Plus
+  // Point/AED against the researched ~0.75 per-point value would imply a >75%
+  // return. Plus Points is therefore HELD at 0.01 and the card carries a loud flag.
+  it("surfaces the data caveat on every score, and stays uncertain", () => {
+    expect(score.flags.some((f) => /Data caveat:.*>75% return/.test(f.message))).toBe(true);
+    expect(score.uncertain).toBe(true);
+    expect(score.benched).toBe(false); // flagged, not dropped
+  });
+});
+
+/**
+ * Permanent sanity guardrail: a net annual value above the user's total annual
+ * spend is a >100% return, which in this dataset always means a bad earn rate or
+ * valuation — never a real card. It must be FLAGGED, not crashed, not dropped.
+ */
+describe("scoreCard — implausibility guardrail", () => {
+  it("flags a card whose net annual value exceeds total annual spend", () => {
+    // Value Plus Points at an absurd 1.5 AED/pt so enbd_visa_flexi (1 pt/AED,
+    // 16500/mo = 198000/yr spend) grosses 297000 — comfortably over 100% of spend.
+    const absurd = withValuations({ "Plus Points": { aedPerUnit: 1.5, confidence: "low" } });
+    const score = scoreCard(PROFILE, byId("enbd_visa_flexi"), absurd);
+    expect(Number.isFinite(score.netAnnualValue)).toBe(true); // never crashes
+    expect(score.flags.some((f) => /Implausible.*exceeds total annual spend/.test(f.message))).toBe(true);
+    expect(score.uncertain).toBe(true);
+  });
+
+  it("stays silent for a normal card", () => {
+    expect(scoreCard(PROFILE, byId("fab_cashback")).flags.some((f) => /Implausible/.test(f.message))).toBe(false);
+  });
+
+  it("does not fire at the held 0.01 valuation (75% return is under the 100% backstop)", () => {
+    // Documents the division of labour: the guardrail is a coarse >100% backstop,
+    // so the enbd_visa_flexi data_caveat above is what covers the 75% case.
+    expect(scoreCard(PROFILE, byId("enbd_visa_flexi")).flags.some((f) => /Implausible/.test(f.message))).toBe(false);
+  });
 });
 
 /**
@@ -261,7 +300,7 @@ describe("scoreCard — benched card (ei_flex_elite)", () => {
   });
 });
 
-/** Every card must score without throwing (smoke test across all 55). */
+/** Every card must score without throwing (smoke test across all 51). */
 describe("scoreCard — runs on all cards", () => {
   it("produces a finite ranking number for every card", () => {
     for (const card of cards) {

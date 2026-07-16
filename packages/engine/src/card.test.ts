@@ -11,7 +11,7 @@ type JsonCard = Omit<Card, "rewards"> & {
 };
 
 // Compile-time proof (no `as` cast, which would mask a mismatch): this forces
-// `tsc` to check all 55 cards structurally against Card — every field, every
+// `tsc` to check all 51 cards structurally against Card — every field, every
 // nested block, nullability — with `rewards.type` relaxed to string per above.
 // It fails `pnpm --filter @fils/engine typecheck` if any card deviates.
 const cards = cardsData satisfies readonly JsonCard[];
@@ -23,8 +23,11 @@ const REWARD_TYPES = [
 ] as const satisfies readonly RewardType[];
 
 describe("cards.json conforms to the Card type", () => {
-  it("has all 55 cards", () => {
-    expect(cards).toHaveLength(55);
+  // 51 since the 2026-07 Amex cleanup: the 3 American Express UAE cards (amex_gold,
+  // amex_platinum, amex_ddf) plus mashreq_solitaire_amex (Mashreq-issued but on the
+  // Amex network) — Amex is niche in the UAE and not worth maintaining.
+  it("has all 51 cards", () => {
+    expect(cards).toHaveLength(51);
   });
 
   it("gives every card the required nested blocks", () => {

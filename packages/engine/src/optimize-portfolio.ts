@@ -19,7 +19,7 @@
  * is `earnAcrossCards([card])`; a 1-card portfolio here is the same call, so a
  * lone card and the best-1-card portfolio return identical numbers by construction.
  *
- * Why enumerate exhaustively: at <=55 cards, C(55,1)+C(55,2)+C(55,3) ~= 27,000
+ * Why enumerate exhaustively: at <=51 cards, C(51,1)+C(51,2)+C(51,3) ~= 22,000
  * subsets — trivially fast. Value is non-additive across cards (two cards can be
  * complementary or redundant), so only checking every subset is guaranteed to find
  * the optimum, and at this scale that is free.
@@ -324,7 +324,7 @@ export function optimizePortfolio(
 
   // --- Eligibility filter (first). Drop cards the user can't get, and benched
   // cards (excluded_from_scoring) which have no trustworthy reward structure to
-  // rank. Both counts are reported so the UI can say "42 of 55 cards apply." ---
+  // rank. Both counts are reported so the UI can say "42 of 51 cards apply." ---
   let benchedCount = 0;
   let excludedForEligibility = 0;
   const eligible: CardData[] = [];
