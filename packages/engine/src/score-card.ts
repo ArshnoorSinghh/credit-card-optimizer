@@ -132,6 +132,22 @@ const MATCH_TABLE: Record<string, MatchRule> = {
   // route to "unmatched" and be flagged, rather than being silently modeled.)
 };
 
+/**
+ * The merchant a card reward category's bonus is LOCKED to, if any
+ * (e.g. "lulu_supermarket" -> "LuLu"), else undefined.
+ *
+ * Exposed so a caller who KNOWS the merchant can act on the lock. `scoreCard` itself
+ * can only flag it as an optimistic assumption — from a generic spending profile it
+ * can't tell whether your groceries spend happened at LuLu. `which-card.ts` does
+ * know the merchant, and uses this to drop bonuses locked to a different one.
+ *
+ * MATCH_TABLE stays private: this returns only the one fact a caller needs.
+ */
+export function merchantLockFor(cardCategory: string): string | undefined {
+  const rule = MATCH_TABLE[cardCategory];
+  return rule?.kind === "categories" ? rule.merchant : undefined;
+}
+
 /** A pair of AED values bounding an uncertain quantity (min===max when certain). */
 export interface AedRange {
   min: number;
