@@ -1,13 +1,129 @@
-// Empty schema for now — models come later once the domain is settled.
-// Vercel Postgres exposes POSTGRES_PRISMA_URL (pooled, for queries) and
-// POSTGRES_URL_NON_POOLING (direct, for migrations).
+// Fils — card data schema (Vercel Postgres / Neon).
+//
+// SOURCE OF TRUTH: packages/engine/data/cards.json.
+// This database is populated FROM that file by `pnpm --filter @fils/db seed`.
+// To change card data today: edit cards.json, then re-seed. (An admin write path
+// comes later; until then these tables are a queryable read-cache of the JSON.)
+//
+// ARCHITECTURE: packages/db depends on packages/engine for TYPES ONLY (a type-only
+// import, erased at compile time). The engine never imports this package and never
+// touches a database — it stays a pure calculator that receives plain card arrays.
+//
+// Modeling rule applied here: anything the engine filters or scores on gets a real,
+// indexable column; nested blocks the engine never reads stay JSON. See the notes
+// on `redemption` / `benefits` below.
 
 generator client {
   provider = "prisma-client-js"
 }
 
+// Connection URLs deliberately do NOT live here: Prisma 7 removed `url`/`directUrl`
+// from the datasource block. The CLI (migrate/introspect) reads the DIRECT url from
+// prisma.config.ts; the runtime client gets the POOLED url via a driver adapter in
+// src/index.ts. See prisma.config.ts for why the two connections differ.
 datasource db {
-  provider  = "postgresql"
-  url       = env("POSTGRES_PRISMA_URL")
-  directUrl = env("POSTGRES_URL_NON_POOLING")
+  provider = "postgresql"
+}
+
+/// How a card denominates rewards. Mirrors the engine's `RewardType` union exactly;
+/// a DB enum keeps the three legal values enforced at the storage layer.
+enum RewardType {
+  cashback
+  points
+  miles
+}
+
+/// A UAE credit card — a faithful 1:1 mirror of one entry in cards.json.
+model Card {
+  /// Natural key carried over from the source data, e.g. "fab_cashback".
+  id      String @id
+  name    String
+  bank    String
+  network String
+  tier    String
+
+  /// Index of this card within cards.json. Postgres has no inherent row order, so
+  /// reads MUST ORDER BY something; ordering by this preserves the source order
+  /// exactly. That matters beyond tidiness: the optimizer enumerates cards, so a
+  /// different order could flip an exact tie and make /api/optimize disagree with
+  /// the engine's own tests. Stripped by the mapper — never seen by the engine.
+  sortOrder Int @map("sort_order")
+
+  // --- Eligibility (flattened 1:1 rather than a side table: strictly one per card
+  // and always loaded together, so a separate table would buy only joins). ---
+  eligMinMonthlySalaryAed    Int     @map("elig_min_monthly_salary_aed")
+  eligUaeResidentRequired    Boolean @map("elig_uae_resident_required")
+  eligMinAge                 Int     @map("elig_min_age")
+  eligSalaryTransferRequired Boolean @map("elig_salary_transfer_required")
+  /// string[] | null. JSON: null on every card today, never queried, shape unsettled.
+  eligEmployerRestrictions   Json?   @map("elig_employer_restrictions")
+
+  // --- Fees ---
+  /// Float, not Int: hsbc_liveplus charges 313.95. Not Decimal either — this table
+  /// mirrors a JSON document and performs no arithmetic, so a double round-trips every
+  /// source value exactly (Decimal(10,2) would silently round anything finer).
+  feesAnnualFeeAed     Float   @map("fees_annual_fee_aed")
+  /// Free text; the scorer parses it for waivers ("Free for life", "first year free").
+  feesWaiverConditions String? @map("fees_waiver_conditions")
+  feesJoiningFeeAed    Float   @map("fees_joining_fee_aed")
+
+  // --- Rewards (scalars flattened; the category rates are relational, below) ---
+  rewardsType                       RewardType @map("rewards_type")
+  rewardsCurrency                   String     @map("rewards_currency")
+  /// RAW headline rate string. Deliberately unparsed — per CLAUDE.md the normalizer
+  /// turns rate strings into numbers and flags uncertain ones. The DB never parses.
+  rewardsBaseRate                   String     @map("rewards_base_rate")
+  rewardsOverallCap                 Float?     @map("rewards_overall_cap")
+  rewardsMinMonthlySpendRequiredAed Float      @map("rewards_min_monthly_spend_required_aed")
+
+  categories RewardCategory[]
+
+  // --- Display-only blobs. JSON because the engine never reads them: Engine 1 scores
+  // off rewards.*, and Engine 2 keys its valuation model off rewards.currency, not
+  // this block. Storing them as tables would be join sprawl for zero query benefit.
+  // Tradeoff accepted: no DB-level type safety and no efficient filtering on these.
+  // Either can be promoted to real columns later with a migration if that changes. ---
+  /// { currency, primary_uses: string[], redemption_url }
+  redemption Json
+  /// string[] — marketing bullet points.
+  benefits Json
+
+  sourceUrl String  @map("source_url")
+  notes     String?
+  /// Nullable (not defaulted false) so a card that omits the field in cards.json
+  /// round-trips back out omitted, rather than gaining a phantom `false`.
+  excludedFromScoring Boolean? @map("excluded_from_scoring")
+  /// Known data-quality caveat surfaced as a loud flag by the scorer.
+  dataCaveat          String?  @map("data_caveat")
+
+  // --- DB-only metadata. Never surfaced to the engine (stripped by the mapper). ---
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([bank])
+  @@index([eligMinMonthlySalaryAed])
+  @@index([rewardsCurrency])
+  @@map("cards")
+}
+
+/// One category-specific reward rate (0–3 per card). Relational — not JSON —
+/// because the engine reads every rate, and real rows let us index and query them
+/// (e.g. "which cards bonus dining?").
+model RewardCategory {
+  id     Int    @id @default(autoincrement())
+  cardId String @map("card_id")
+  card   Card   @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  /// Preserves the cards.json array order so the DB round-trips the source exactly.
+  position   Int
+  category   String
+  /// RAW rate string ("5%", "2 miles per USD 1"). Parsed by the normalizer, never here.
+  rate       String
+  monthlyCap Float? @map("monthly_cap")
+  annualCap  Float? @map("annual_cap")
+
+  @@unique([cardId, position])
+  @@index([cardId])
+  @@index([category])
+  @@map("reward_categories")
 }

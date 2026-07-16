@@ -1,16 +1,17 @@
 import {
-  CARDS,
   optimizePortfolio,
   SPEND_CATEGORIES,
   type SpendCategory,
   type SpendingProfile,
   type UserProfile,
 } from "@fils/engine";
+import { getAllCards } from "@fils/db";
 import type { OptimizeError, OptimizeResponse } from "@/lib/optimize-contract";
 
-// The engine holds the cards; the route only imports it (never the reverse), so
-// the engine stays pure and framework-free. CARDS is a build-time bundled import,
-// so this works in a serverless function with no filesystem access at runtime.
+// Cards come from Postgres via @fils/db — the single place card data is loaded.
+// The engine receives a plain Card[] and neither knows nor cares where it came
+// from: it stays a pure calculator with no database access. Dependency arrows point
+// one way (web -> db -> engine types), so the engine never imports @fils/db.
 
 const CATEGORY_SET = new Set<string>(SPEND_CATEGORIES);
 
@@ -84,10 +85,13 @@ export async function POST(request: Request): Promise<Response> {
   const validated = validateBody(body);
   if (!validated.ok) return badRequest(validated.message);
 
+  // Load cards from Postgres, then hand the engine a plain array.
+  const cards = await getAllCards();
+
   const result: OptimizeResponse = optimizePortfolio(
     validated.value.spending,
     validated.value.profile,
-    CARDS,
+    cards,
   );
   return Response.json(result);
 }

@@ -2,7 +2,7 @@
 
 A UAE credit-card optimization platform. Two engines:
 
-1. **Card Optimizer** — recommends the best 1/2/3-card portfolio across ~55 UAE
+1. **Card Optimizer** — recommends the best 1/2/3-card portfolio across ~51 UAE
    credit cards, given a user's spending pattern, eligibility, and fee structures.
 2. **Points & Redemption Optimizer** — models point inventory, scenario-dependent
    valuation, redemption recommendations, and expiry/burn timing.
@@ -26,7 +26,7 @@ ranges rather than silent point estimates.
 fils/
   apps/web/          Next.js (App Router) — UI + /api routes that call the engine
   packages/engine/   Pure TypeScript — domain models, normalizer, optimizers, tests
-  packages/db/       Prisma schema + client + seed script
+  packages/db/       Prisma schema + migrations + seed + typed data-access layer
 ```
 
 The engine is framework-free, pure TypeScript: no I/O, no Next.js/Prisma/Node-only
@@ -62,10 +62,61 @@ pnpm --filter web build
 
 ## Data
 
-The engine reads `packages/engine/data/cards.json` — 55 UAE cards with messy,
-inconsistent free-text rate strings. The normalizer parses these and **flags
-genuinely uncertain rates instead of fabricating values** — no rate is ever
+`packages/engine/data/cards.json` — 51 UAE cards with messy, inconsistent
+free-text rate strings — is the **source of truth**. The normalizer parses these and
+**flags genuinely uncertain rates instead of fabricating values** — no rate is ever
 invented, and no unrecognized string is silently defaulted to a number.
+
+### Database (Postgres)
+
+The app loads cards from Postgres, not from the JSON file. The database is a
+queryable **copy** of `cards.json`, populated by the seed script.
+
+> **Editing card data:** edit `cards.json`, then **re-seed**. There is no admin
+> write path yet, and nothing else writes to these tables. The seed is idempotent
+> (upsert by card id), so re-running never duplicates and always converges on
+> exactly what the JSON says.
+
+```bash
+# one-time / after schema changes — creates + applies a migration
+pnpm --filter @fils/db migrate
+
+# load cards.json into Postgres (safe to re-run)
+pnpm --filter @fils/db seed
+
+# integration tests (needs DATABASE_URL + a seeded DB)
+pnpm --filter @fils/db test
+```
+
+**Environment** (`packages/db/.env`, gitignored; `vercel env pull` fills it):
+
+| Var | Connection | Used by |
+| --- | --- | --- |
+| `DATABASE_URL` | **pooled** (PgBouncer) | app queries at runtime |
+| `DIRECT_URL` | **direct** | `prisma migrate` only |
+
+Two URLs because serverless functions open many short-lived connections and must go
+through the pooler, while migrations need a direct session (a transaction-mode
+pooler breaks advisory locks and transactional DDL). `apps/web/.env.local` needs
+`DATABASE_URL` for local `next dev`; Vercel injects it in deployed environments.
+
+**Migrations** live in `packages/db/prisma/migrations/` and are versioned in git
+like code: each is a timestamped, immutable folder of SQL that has been applied, so
+the schema's history is reviewable and reproducible on any environment. Never edit
+an applied migration — add a new one.
+
+### Architecture rule
+
+Data flows one way:
+
+```
+apps/web  ->  @fils/db  ->  @fils/engine (TYPES ONLY)
+```
+
+`packages/db` imports the engine's types with `import type` (erased at compile time).
+The engine **never** imports `@fils/db`, never touches a database, and receives plain
+card arrays — it stays a pure calculator. `packages/db/src/architecture.test.ts`
+fails the build if that inverts.
 
 ## Engine progress
 
@@ -82,7 +133,7 @@ field-for-field. It models the data **as it exists on disk** — deliberately me
 rate strings are left as text for the normalizer, not pre-parsed.
 
 Conformance is enforced at build time: `card.test.ts` imports the real
-`cards.json` and assigns it to `Card[]`, so `tsc` fails if any of the 55 cards
+`cards.json` and assigns it to `Card[]`, so `tsc` fails if any of the 51 cards
 deviates from the type. Reward-type values are additionally checked at runtime.
 
 ### 2. Rate normalizer — `normalize-rate.ts`
@@ -97,8 +148,8 @@ string into one of three confidence tiers and never guesses:
 | 2 | `low` | number parses, but a condition is missing from the structured data — surface "verify this card" | `"10% on Emaar purchases"` |
 | 3 | `unknown` | no single value; emit a bounded/unbounded range instead of a point estimate | `"Up to 5%"`, `"Variable"` |
 
-Running it over all 55 cards (150 rate strings) today: **144 tier-1, 2 tier-2,
-4 tier-3**. The two tier-2 and four tier-3 strings are listed by a sweep test,
+Running it over all 51 cards (140 rate strings) today: **136 tier-1, 2 tier-2,
+2 tier-3**. The two tier-2 and two tier-3 strings are listed by a sweep test,
 and their counts are locked so a new card with a novel string breaks the build
 instead of being silently reclassified.
 
@@ -106,7 +157,7 @@ instead of being silently reclassified.
 
 `DEFAULT_VALUATIONS` maps every reward currency in `cards.json` to an AED-per-unit
 value with a per-entry confidence (`high` / `medium` / `low`) — e.g. 1 Skywards
-Mile ≈ 0.035 AED (high), 1 FAB Reward ≈ 0.007 AED (medium). Cashback (`AED`) is
+Mile ≈ 0.037 AED (high), 1 FAB Reward ≈ 0.007 AED (medium). Cashback (`AED`) is
 1.0 by definition. It's plain data plus pure lookups; `withValuations(overrides)`
 lets a caller adjust one currency without restating the rest (the path to
 user-editable valuations later).
@@ -155,7 +206,7 @@ uncertainty flags — the scorer's receipt, portfolio edition.
   are dropped and benched cards are set aside (both counts reported). At most one
   salary-transfer-required card per portfolio — a salary routes to a single bank —
   enforced during enumeration.
-- **Exhaustive subset search.** Every 1/2/3-card subset is scored — ~27k at 55
+- **Exhaustive subset search.** Every 1/2/3-card subset is scored — ~22k at 51
   cards, trivially fast. Portfolio value is non-additive across cards (two cards can
   be complementary or redundant), so only exhaustive search is provably correct, and
   at this scale it's free. No approximations.
@@ -220,7 +271,7 @@ Decisions worth knowing before extending the engine:
   next-best option: another card in a portfolio, or the card's own base rate for a
   lone card. Because `scoreCard(card)` and the best 1-card portfolio are the *same*
   computation (both call `earnAcrossCards`), a card scored on its own and as a 1-card
-  portfolio return identical numbers — a property proven across all 55 cards in
+  portfolio return identical numbers — a property proven across all 51 cards in
   `reconcile.test.ts`. Reached caps are still flagged; merchant-locked bonuses (e.g.
   an Emirates co-brand's airline rate) are credited but flagged as an optimistic
   assumption, since a generic profile can't confirm the spend is at that merchant.

@@ -1,4 +1,15 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+import { CARDS } from "@fils/engine";
+
+// why mock @fils/db: these are unit tests of the ROUTE (validation, wiring, status
+// codes) and must stay fast and runnable with no DATABASE_URL. We feed the route
+// the same canonical card array the database is seeded from, so the assertions
+// below still exercise the real engine. That the DB actually returns this shape is
+// proven separately by packages/db's integration tests against Postgres.
+vi.mock("@fils/db", () => ({
+  getAllCards: vi.fn(async () => CARDS),
+}));
+
 import { POST } from "./route";
 import { GET } from "../health/route";
 import type { OptimizeRequest } from "@/lib/optimize-contract";
