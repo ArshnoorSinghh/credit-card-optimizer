@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.5.18",
     "@fils/db": "workspace:*",
     "@fils/engine": "workspace:*",
     "next": "^16.2.10",

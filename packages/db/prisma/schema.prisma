@@ -25,6 +25,44 @@ datasource db {
   provider = "postgresql"
 }
 
+/// A registered Fils user.
+///
+/// SPLIT OF RESPONSIBILITY: Clerk owns the IDENTITY — credentials, password
+/// hashing, email verification, sessions. This table owns only what WE attach to
+/// that identity (saved cards / saved points, later) plus enough to count
+/// registrations.
+///
+/// Deliberately stores NO credential material: no password, no hash, no reset
+/// token. Clerk's API will not return those even to the secret key, so there is
+/// nothing to accidentally persist. If this table leaked it would expose an email
+/// and an opaque Clerk id — nothing that authenticates anyone.
+model User {
+  /// Surrogate key — deliberately NOT Clerk's id. Future tables (saved cards,
+  /// saved points) will reference this as an FK; keeping Clerk's id out of those
+  /// FKs means swapping auth provider later rewrites exactly one column here
+  /// instead of every child table.
+  id String @id @default(cuid())
+
+  /// Clerk's stable user id, e.g. "user_3GbAoaagN8bcBsoGoFaCa94DubL". UNIQUE
+  /// because it is the natural key we sync on and the upsert target — it is what
+  /// maps an incoming session back to this row.
+  clerkUserId String @unique @map("clerk_user_id")
+
+  /// The user's PRIMARY email as of the last sync. Clerk allows several addresses
+  /// per user and remains the source of truth; this is a denormalized copy for
+  /// display and metrics.
+  ///
+  /// why NOT @unique: Clerk already enforces email uniqueness upstream, and a
+  /// stale copy mid-email-change must never make the upsert throw. A unique
+  /// constraint here would convert an eventual-consistency blip into a 500.
+  email String
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
 /// How a card denominates rewards. Mirrors the engine's `RewardType` union exactly;
 /// a DB enum keeps the three legal values enforced at the storage layer.
 enum RewardType {
