@@ -12,13 +12,18 @@ by net expected value (rewards earned − fees) with reward caps and eligibility
 rules, and explicit uncertainty modeling — ambiguous reward rates propagate as
 ranges rather than silent point estimates.
 
-> **Status:** the Card Optimizer engine is complete. The monorepo skeleton is wired
-> end to end (the web app renders a placeholder `hello()` from the engine package).
-> Inside the engine, five building blocks are built and tested: the **card domain
-> model**, the **rate normalizer**, the **valuation model**, the per-card
-> **scorer**, and the **portfolio optimizer** (exact 1–3 card subset search). Still
-> to come: the Points & Redemption Optimizer, and wiring the engine into the web
-> app's API routes and UI.
+> **Status:** both engines are built and tested, and card data now lives in Postgres.
+> The **Card Optimizer** is complete — card domain model, rate normalizer, valuation
+> model, per-card scorer, and portfolio optimizer (exact 1–3 card subset search). The
+> **Points & Redemption Optimizer** is complete — redemption valuation model,
+> conversion model, redemption recommender, and burn engine. Both are pure,
+> framework-free, and independently testable.
+>
+> `POST /api/optimize` is live and reads cards from Postgres via `@fils/db`; the web
+> app has a deliberately unstyled test page that exercises it end to end.
+>
+> Still to come: a real frontend, an admin write path for card data (edits go through
+> `cards.json` + re-seed for now), and user accounts/auth.
 
 ## Structure
 
@@ -118,12 +123,12 @@ The engine **never** imports `@fils/db`, never touches a database, and receives 
 card arrays — it stays a pure calculator. `packages/db/src/architecture.test.ts`
 fails the build if that inverts.
 
-## Engine progress
+## Engine 1 — Card Optimizer
 
-Five pieces of the engine are built and tested (`packages/engine/src`). They form
-a chain — raw card → normalized rates → AED valuation → per-card score → best
-portfolio. All are pure and deterministic, with the math commented inline — this
-package is human-owned, so it's meant to be read and explained, not just run.
+Five pieces (`packages/engine/src`). They form a chain — raw card → normalized rates
+→ AED valuation → per-card score → best portfolio. All are pure and deterministic,
+with the math commented inline — this package is human-owned, so it's meant to be
+read and explained, not just run.
 
 ### 1. Card domain model — `card.ts`
 
@@ -221,9 +226,103 @@ uncertainty flags — the scorer's receipt, portfolio edition.
   is where "fewer cards" bites: a 3rd card whose fee eats its own rewards isn't
   recommended just because it ties.
 
+## Engine 2 — Points & Redemption Optimizer
+
+Four pieces plus an inventory type (`packages/engine/src`), same rules as Engine 1:
+pure, deterministic, no I/O, every value carries a confidence, nothing is invented.
+Where Engine 1 asks *"which cards should I carry?"*, Engine 2 asks *"I have these
+points — what are they actually worth, how should I spend them, and what's about to
+expire?"*
+
+### 1. Redemption valuation model — `redemption-valuations.ts`
+
+Engine 1 needs one number per currency. Engine 2 needs more resolution: the same
+Skywards Mile is worth ~0.037 AED as an economy seat but only ~0.011 dumped into a
+mall. So each currency owns a list of **named routes**, each with an AED value, a
+confidence, and a semantic `class` (`card_bill`, `external_bill`, `fixed_use`,
+`voucher`, `partner_spend`, `flight_economy`, `flight_premium`, `hotel`, `transfer`).
+Goals and phrasing branch on the class, so adding a program means adding data, not code.
+
+The structural fact this encodes: **cash-equivalent redemption is per-currency, not
+universal.** Most UAE bank currencies can pay down your card bill; **ADCB TouchPoints
+and Etisalat Smiles cannot** — Smiles is voucher/bill-pay only ("cashback not
+permitted"). That's an explicit `cashCapable` flag, never an assumption.
+
+Merchant-tier variance is modeled rather than averaged away — the same TouchPoint is
+`0.006` at a Max partner, `0.005` in-store, `0.004` as a voucher, `0.004348` against
+a utility bill. **Skywards premium cabins carry no fixed number**: after the ~15%
+premium devaluation (20 May 2026) any single figure is unreliable, so premium is
+valued as `economy × a user-supplied multiplier`, and is simply not valued if you
+don't supply one. Economy Saver was not devalued, so `0.037` stands.
+
+Each currency names a **primary** route — the one Engine 1's flat value represents —
+so `deriveFlatValuationTable()` / `reconcileWithFlat()` can prove the two engines
+agree. They currently agree everywhere except one deliberate divergence: **Plus
+Points**, where research says ~0.75 but Engine 1 holds `0.01` pending verification
+(see Key decisions). A test locks that hold in place so it stays visible.
+
+### 2. Conversion model — `conversions.ts`
+
+Bank points → airline miles is a separate concern from valuation, and the ratios are
+the most volatile numbers in the codebase (TouchPoints → Skywards was 18:1 before
+Nov 2024, now 22:1), so they live in one small editable table: TouchPoints 22:1 /
+14:1, Mashreq 32:1 / 22:1, DIB 20:1.
+
+Converting only pays off when `points × source_value < miles × mile_value`, which
+reduces to a **break-even destination value of `source_value × ratio`**. Run over the
+real numbers, the finding is uniform: **at baseline economy value (~0.037), direct
+redemption beats every published conversion** — TouchPoints → Etihad would need a
+mile worth 0.084, Mashreq 0.076, DIB 0.10. Conversion only wins for premium cabins
+above break-even, so the recommender never suggests it otherwise and says why.
+
+### 3. Points inventory — `points-inventory.ts`
+
+`{ currency, balance, expiryDate?, earnedDate? }` — manual entry. Expiry is optional
+because most UAE programs don't show it, and we refuse to invent one.
+
+### 4. Redemption recommender — `recommend-redemptions.ts`
+
+Input: inventory + a goal (`flights` | `hotels` | `max_value` | `cash_equivalent`).
+For each holding it considers every direct route *and* every conversion whose
+destination serves the goal, picks the best by realized AED, ranks holdings, and
+returns a receipt — `balance × rate = AED`, the route chosen, whether a conversion
+was involved, and inherited confidence flags.
+
+It **never says "cash"**, because that word is wrong for most of these currencies.
+Card-bill-capable currencies read *"redeem as AED X off your card bill (statement
+credit)"*; TouchPoints and Smiles read *"pay AED X of a utility bill / redeem as
+vouchers — no card-bill payment available."* A currency with no route for the goal
+reports that plainly instead of returning a fabricated number.
+
+### 5. Burn engine — `burn-priority.ts`
+
+Ranks holdings by what you lose first: **urgency** (≤90 days urgent, ≤180 soon),
+then **value-at-risk** (`balance × best rate`), then **versatility ascending** — the
+least flexible currency burns first, because a voucher-only balance has fewer escape
+routes than miles if you miss the window.
+
+It refuses to manufacture urgency. An explicit expiry is ground truth; a known
+program policy (Etihad 18 months — extendable **only by flight activity** since June
+2024; Skywards ~36; Smiles 24; Marriott 24 inactivity) can only *project* a date if
+the holding also has an earned date, and every projection is flagged *"estimated from
+program policy, not user-confirmed."* No date and no policy ⇒ **"expiry unknown"** —
+never a false alarm. Known devaluations (Skywards premium, 20 May 2026) surface as
+their own "burn premium redemptions before this date" warning.
+
 ## Key decisions
 
 Decisions worth knowing before extending the engine:
+
+- **A suspect number is held, flagged, and left visible — not quietly adopted.**
+  Research puts ENBD Plus Points near `0.75` AED/point, but `enbd_visa_flexi` earns
+  1 point per AED — so adopting it would imply a **>75% return**, which is
+  impossible. Rather than invent a plausible earn rate to make the model behave,
+  Engine 1 **holds Plus Points at `0.01`** until both the earn rate and the per-point
+  value are verified, the card carries a loud `data_caveat` flag on every score, and
+  Engine 2 records `0.75` as a deliberate, tested divergence. Backing this is a
+  permanent guardrail: any card whose net annual value exceeds the user's total
+  annual spend is flagged *"implausible — check earn rate/valuation"* (flagged, never
+  crashed, never silently dropped).
 
 - **Uncertainty is explicit, never fabricated.** Rates carry a `confidence`
   (`high` / `low` / `unknown`) and, when unresolved, a `range` — the optimizer is
