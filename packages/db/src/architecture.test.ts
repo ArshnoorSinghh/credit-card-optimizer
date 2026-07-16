@@ -54,8 +54,11 @@ describe("engine stays pure and upstream of the database", () => {
     expect(json(`${ENGINE_DIR}package.json`).dependencies ?? {}).toEqual({});
   });
 
-  it("no engine source file imports the database, a framework, or Node I/O", () => {
-    const forbidden = ["@fils/db", "@prisma/client", "prisma", "next", "react"];
+  it("no engine source file imports the database, a framework, auth, or Node I/O", () => {
+    // "@clerk" catches every @clerk/* package via the startsWith check below. The
+    // engine must stay AUTH-UNAWARE: it scores cards against a spending profile and
+    // has no concept of a logged-in user. Auth lives in apps/web only.
+    const forbidden = ["@fils/db", "@prisma/client", "prisma", "next", "react", "@clerk"];
     const forbiddenBuiltins = ["node:fs", "node:path", "node:http", "node:child_process", "fs", "path"];
 
     const offenders: string[] = [];
@@ -76,6 +79,22 @@ describe("engine stays pure and upstream of the database", () => {
     for (const file of engineSourceFiles()) {
       for (const spec of importsOf(file)) {
         if (spec.startsWith("../") && !spec.startsWith("../data/")) offenders.push(`${file} -> ${spec}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it("this package never imports an auth provider — it stays a database layer", () => {
+    // packages/db is not a Clerk adapter: upsertUser() takes a plain
+    // { clerkUserId, email } that the CALLER resolved. If Clerk types leak in here,
+    // swapping auth provider stops being a change confined to apps/web, and this
+    // package can no longer be tested without an auth SDK.
+    const offenders: string[] = [];
+    for (const file of readdirSync(fileURLToPath(new URL(".", import.meta.url)))) {
+      if (!file.endsWith(".ts") || file.endsWith(".test.ts")) continue;
+      const src = readFileSync(fileURLToPath(new URL(file, import.meta.url)), "utf8");
+      for (const m of src.matchAll(/(?:from|import)\s*\(?\s*["']([^"']+)["']/g)) {
+        if (m[1]!.startsWith("@clerk")) offenders.push(`${file} -> ${m[1]}`);
       }
     }
     expect(offenders).toEqual([]);
