@@ -231,13 +231,46 @@ values and would move in step (e.g. CBD travel route ~0.01 vs cash ~0.005).
 - HSBC Reward Points value.
 - `enbd_visa_flexi` salary requirement (12k vs 15k — pre-existing note).
 
-## New cards added
-_None yet._ See Section C dependency below.
+## Section C — new cards added (safe lane)
 
-## Section C dependency (adding cards)
-Adding a card with a **new reward currency** will break the build: the engine's
-valuations test **fails if any `cards.json` currency lacks a `valuations.ts`
-entry**. So new-currency cards require an engine edit (a valuation entry), which is
-**out of the `cards.json`-only mandate** and needs Arshnoor. New cards that reuse
-an **existing** currency (e.g. cashback `AED`, `Skywards Miles`) can be added
-freely — that's the safe lane to start Section C.
+Added **2 cards** (dataset now **53**), both **reusing existing currencies** so no
+engine valuation change is needed. Both use clean **tier-1** rate strings and
+**recognized** category keys, so the normalizer tier-count and category-mapping
+tests still pass. Verified by running the engine suite: **215 / 216 tests pass**;
+the only failure is the count assertion below (by design).
+
+| id | Bank | Currency | Fee | Salary | Earn | Sources |
+| --- | --- | --- | --- | --- | --- | --- |
+| `citi_rewards` | Citibank UAE | ThankYou Points *(existing)* | 300 (yr1 free, waived AED 9k/yr) | 8,000 | 1 TY/AED base; 1.5 on groceries & non-AED | citibank.ae/credit-cards/rewards/citi-rewards-credit-card; paisabazaar; yallacompare |
+| `adcb_365_cashback` | ADCB | AED *(existing)* | 383.25 (yr1 free) | 8,000 | 6% dining, 5% fuel, 3% groceries, 1% other; min AED 2,500/mo | adcb.com/.../365-cashback-card; kredit.ae |
+
+**Caveats recorded on the cards (`notes`) and flagged for review:**
+- `citi_rewards`: `network=Mastercard`, `tier=Titanium` are best-effort — confirm with issuer.
+- `adcb_365_cashback`: real card also gives **5% on digital/AI subscriptions** (dropped — engine caps a card at **3 categories**) and caps total cashback at **AED 1,000/month** (**not modeled** — no overall monthly-cap field), so high-spend estimates may be overstated.
+
+### ⚠️ One required engine change (NOT done — flagged for Arshnoor)
+Adding cards trips one count assertion in a **human-owned engine test**:
+```
+packages/engine/src/card.test.ts:29-30
+  it("has all 51 cards", () => { expect(cards).toHaveLength(51); });
+```
+Bump `51` → **`53`** (and the "51 cards" text in the comment above it). One-line
+mechanical change; left for the engine owner per the Golden Rules. Until then
+`pnpm --filter @fils/engine test` shows exactly this one failure by design. The
+app build (`next build`) and typecheck are unaffected — this is a vitest assertion,
+not a compile error.
+
+### Candidates researched but NOT added (with reasons)
+Diligence trail — these were considered for the safe lane and rejected:
+- **CBD Super Saver** — 4+ bonus categories (supermarket/education/utilities/transport) exceed the engine's 3-category limit; can't model faithfully.
+- **ADCB TouchPoints Infinite** — heavily *tiered-down* earn (0.2–1.5 TP/AED across many categories) doesn't fit the bonus-category model; salary disputed (30k vs 40k).
+- **FAB Infinite** — non-standard "1.5 FAB Rewards per AED 10" unit + unstated standard-variant salary.
+- **Mashreq Platinum Elite** — Mashreq's own site lists it under **discontinued cards**.
+- **DIB Prime Platinum** — sources conflict badly (fee "none" vs "AED 600/month"; unclear Wala'a→DIB Points mapping).
+
+## Section C dependency (for future additions)
+Adding a card with a **new reward currency** additionally breaks
+`valuations.test.ts` (every `cards.json` currency must have a `valuations.ts`
+entry) — that needs an engine valuation entry (Arshnoor). Cards reusing an
+**existing** currency (as both above do) avoid that; the only engine touch they
+require is the count bump noted above.
