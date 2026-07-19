@@ -141,10 +141,34 @@ issuer T&C). Nothing here is edited into `cards.json` yet.
 | `adcb_traveller` | min salary | 20,000 | AED 20,000 | ✓ |
 | `adcb_traveller` | base earn | 1 TP/AED | Some sources: **2 TP/AED** on all spend (may be promo/variant) | ⚠ verify base rate |
 
-_Banks still to pass: Mashreq, HSBC, Emirates Islamic, DIB, ADIB, RAKBANK, CBD,
-Standard Chartered, Citi (+ remaining ENBD/ADCB/FAB cards)._ Given finding #2, the
-realistic output of a full pass is a list of ✓ / ⚠ like the above; converting ⚠
-rows into edits needs a second source or issuer T&C confirmation.
+### Mashreq Bank
+| Card | Field | In data | Finding | Verdict |
+| --- | --- | --- | --- | --- |
+| `mashreq_cashback` | annual fee | 367 | Multiple sources: **free for life / no annual fee** (may be a NEO vs Gold variant mix-up) | ⚠ likely 0 |
+| `mashreq_cashback` | min salary | 8,000 | Sources: **AED 5,000** | ⚠ likely 5,000 |
+| `mashreq_cashback` | categories | supermarket 5%, dining+ent 3% | Sources: **5% dining** (local+intl, no cap) + 5% on noon/Namshi ecosystem; 1% other | ⚠ rates/mapping differ |
+
+### HSBC UAE
+| Card | Field | In data | Finding | Verdict |
+| --- | --- | --- | --- | --- |
+| `hsbc_liveplus` | annual fee | 313.95 | AED 313.95 incl. VAT (yr-1 free, waived on AED 12k/yr) | ✓ |
+| `hsbc_liveplus` | min salary | 12,500 | Sources vary AED 10,000–12,500 | ✓ (plausible) |
+| `hsbc_liveplus` | categories | 5% dining+ent+groceries, 1% other | Real: **6% dining / 5% fuel / 2% groceries+ent**, each **cap AED 200/cycle**, **min AED 3,000/mo**, else 0.5% | ⚠ rates + caps + min-spend unmodeled |
+
+### 📌 Pattern emerging (useful for the whole dataset)
+Across FAB, ENBD, ADCB, Mashreq, HSBC:
+- **Annual fees are usually correct** (only `mashreq_cashback` looks wrong so far).
+- **Min salary has recurring candidate errors** (ENBD 15k→12k, Mashreq 8k→5k) —
+  worth a dedicated salary re-check across all cards.
+- **Reward category structures are the weak spot**: rates get simplified, categories
+  mislabeled, and two real mechanics are **systematically unmodeled** — **per-category
+  reward caps** and **monthly minimum-spend thresholds** to unlock cashback. These
+  materially change scoring and are the highest-value thing for the team to confirm.
+
+_Banks still to pass: Emirates Islamic, DIB, ADIB, RAKBANK, CBD, Standard Chartered,
+Citi (+ remaining ENBD/ADCB/FAB/Mashreq/HSBC cards)._ Given finding #2, the realistic
+output of a full pass is a list of ✓ / ⚠ like the above; converting ⚠ rows into edits
+needs a second source or issuer T&C confirmation.
 
 ## Corrections applied to `cards.json`
 _None yet._ Per finding #2, no edit has a reliable enough source to change a number
