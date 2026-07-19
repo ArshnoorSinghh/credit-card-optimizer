@@ -112,6 +112,40 @@ team.
 
 ---
 
+## Section A — verification pass (in progress, bank by bank)
+
+Method: cross-reference each card's concrete fields (salary, annual fee, earn
+rates, currency) against multiple sources. **✓ = confirmed matches data**
+(no change needed); **⚠ = candidate discrepancy** (logged, not yet edited — a
+single aggregator isn't enough to change financial data; needs a 2nd source or
+issuer T&C). Nothing here is edited into `cards.json` yet.
+
+### First Abu Dhabi Bank
+| Card | Field | In data | Finding | Verdict |
+| --- | --- | --- | --- | --- |
+| `fab_cashback` | 5% categories | groceries, education, utilities | Sources say 5% on **fuel, dining, groceries**; 3% international; 1% other | ⚠ likely miscategorized |
+| `fab_cashback` | min monthly spend | 0 | Sources: **AED 3,000/mo** required to earn cashback | ⚠ unmodeled |
+| `fab_etihad_guest_elite` | card identity + earn unit | miles per USD | No card by this exact name found; FAB Etihad cards quote **miles per AED 10**, and "Elite" is an *account* tier, not this card | ⚠ verify identity + units |
+
+### Emirates NBD
+| Card | Field | In data | Finding | Verdict |
+| --- | --- | --- | --- | --- |
+| `enbd_skywards_signature` | annual fee | 735 | AED 735 (+ joining AED 1,573.95) | ✓ |
+| `enbd_skywards_signature` | min salary | 15,000 | Sources: **AED 12,000** (matches the 12k-vs-15k dispute already noted on `enbd_visa_flexi`) | ⚠ likely 12,000 |
+| `enbd_skywards_signature` | earn rates | base 1, Emirates 2, intl 1.5 (mi/USD) | Sources: base **0.75**, Emirates **1.5**, intl **1.0** mi/USD | ⚠ rates look overstated |
+
+### Abu Dhabi Commercial Bank
+| Card | Field | In data | Finding | Verdict |
+| --- | --- | --- | --- | --- |
+| `adcb_traveller` | annual fee | 1,575 | AED 1,575 (eff. 15 Sep 2024) | ✓ |
+| `adcb_traveller` | min salary | 20,000 | AED 20,000 | ✓ |
+| `adcb_traveller` | base earn | 1 TP/AED | Some sources: **2 TP/AED** on all spend (may be promo/variant) | ⚠ verify base rate |
+
+_Banks still to pass: Mashreq, HSBC, Emirates Islamic, DIB, ADIB, RAKBANK, CBD,
+Standard Chartered, Citi (+ remaining ENBD/ADCB/FAB cards)._ Given finding #2, the
+realistic output of a full pass is a list of ✓ / ⚠ like the above; converting ⚠
+rows into edits needs a second source or issuer T&C confirmation.
+
 ## Corrections applied to `cards.json`
 _None yet._ Per finding #2, no edit has a reliable enough source to change a number
 in the source-of-truth data file without either a bank T&C or team confirmation.
