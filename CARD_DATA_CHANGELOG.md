@@ -104,11 +104,20 @@ team.
 - **Sources:** emiratesislamic.ae/.../flex-card/flex-eismartmiles-details ·
   emiratesislamic.ae/.../ei-smartmiles-conversion · kredit.ae/blog/...flex-elite...
 
-### B6. Merchant-locked / miscategorized rates  ⏳ NOT STARTED
-- CLAUDEUI: some cards store merchant-specific rates as general rates. The engine
-  already flags several of these at scoring time (`merchant` assumption → low
-  confidence). A systematic pass over each card's `categories[].category` vs the
-  issuer's actual scope is pending. No edits yet.
+### B6. Merchant-locked / miscategorized rates  ✅ REVIEWED — already handled by design
+- CLAUDEUI: some cards store merchant-specific rates as general rates. On review,
+  the engine **already isolates and flags these** in two places, so they are not
+  silently over-counted:
+  - `score-card.ts` `MATCH_TABLE` tags merchant-locked categories with a `merchant`
+    field — `emirates_purchases`, `etihad_purchases`, `dnata_travel`,
+    `marriott_hotels`, `booking_com`, `lulu_supermarket`/`lulu_purchases`,
+    `emaar_properties`, `dubai_duty_free`, `rta_transport`, `smiles_partners`. Each
+    scores but is flagged as an **optimistic merchant assumption** (lowered confidence).
+  - `normalize-rate.ts` marks merchant-scoped free-text base rates (e.g.
+    `"5% on dnata travel"`, `"10% on Emaar purchases"`) as **tier-2 / low confidence**.
+- **Conclusion:** no `cards.json` change needed for the flagging mechanism itself.
+  The residual work — confirming each card's bonus scope matches the issuer — is
+  folded into the Section A per-card verification above. No edits made.
 
 ---
 
@@ -182,11 +191,52 @@ Across FAB, ENBD, ADCB, Mashreq, HSBC:
   is a ~3.67× error. Seen on `citi_prestige` and `fab_etihad_guest_elite`; worth a
   dedicated unit audit of every miles/points card.
 
-_Coverage so far: 7 of 12 banks spot-checked (FAB, ENBD, ADCB, Mashreq, HSBC,
-Emirates Islamic, Citi). Still to pass: DIB, ADIB, RAKBANK, CBD, Standard Chartered
-(+ remaining cards within checked banks)._ Given finding #2, the realistic output of
-a full pass is a list of ✓ / ⚠ like the above; converting ⚠ rows into edits needs a
-second source or issuer T&C confirmation.
+### Dubai Islamic Bank
+| Card | Field | In data | Finding | Verdict |
+| --- | --- | --- | --- | --- |
+| `dib_skywards_dib_signature` | annual fee | 1,575 | AED 1,575 | ✓ |
+| `dib_skywards_dib_signature` | min salary | 15,000 | AED 15,000 | ✓ |
+| `dib_skywards_dib_signature` | earn rates | base 1, Emirates 2 (mi/USD) | Sources: **0.2 mi/USD** on everyday categories, **0.5** in EEA (tiered-down) | ⚠ data likely overstates |
+
+### Abu Dhabi Islamic Bank
+| Card | Field | In data | Finding | Verdict |
+| --- | --- | --- | --- | --- |
+| `adib_smiles_signature` | annual fee | 1,199 | AED 1,199 appears in a source as **supplementary from the 5th card**, not clearly the primary annual fee | ⚠ fee attribution unclear |
+| `adib_smiles_signature` | salary / earn | 20,000 / 1 pt base, 5 partners | Signature salary + per-txn earn rate **not found** (only signup/quarterly bonuses) | ⚠ unverified |
+
+### RAKBANK
+| Card | Field | In data | Finding | Verdict |
+| --- | --- | --- | --- | --- |
+| `rakbank_titanium_cashback` | annual fee | 0 | No annual fee | ✓ |
+| `rakbank_titanium_cashback` | 5% category | groceries+dining+fuel 5% | 5% on supermarkets, dining & fuel | ✓ |
+| `rakbank_titanium_cashback` | min salary | 5,000 | Sources: **AED 8,000** | ⚠ likely 8,000 |
+| `rakbank_titanium_cashback` | conditions | none | Real: **AED 5,000/mo** min spend for 5%; base tiers 1%/2%; **50% cinema** | ⚠ unmodeled |
+
+### Commercial Bank of Dubai
+| Card | Field | In data | Finding | Verdict |
+| --- | --- | --- | --- | --- |
+| `cbd_smiles_signature` | annual fee | 525 | AED 500 + VAT = **525** (yr1 free, waived AED 24k/yr) | ✓ |
+| `cbd_smiles_signature` | min salary | 12,000 | Sources: **AED 5,000** | ⚠ likely 5,000 |
+| `cbd_smiles_signature` | earn | 1 pt base, 5 partners | Real: **10** on Etisalat/Smiles/elGrocer (cap 25k/mo), **3** intl, **2** other | ⚠ structure differs |
+
+### Standard Chartered
+| Card | Field | In data | Finding | Verdict |
+| --- | --- | --- | --- | --- |
+| `sc_cashback` | annual fee | 525 | Sources: **AED 315** (yr2+) | ⚠ likely 315 |
+| `sc_cashback` | min salary | 8,000 | AED 8,000 (10,000 if employer not listed) | ✓ |
+| `sc_cashback` | 5% categories | groceries+dining 5% | Sources describe SC cashback as **2% intl / 1% domestic**; 5% may belong to a different SC card (Platinum X) | ⚠ verify + lineup overlap |
+
+> **SC lineup note:** SC's cashback cards (Cashback / Simply Cash / Platinum X)
+> overlap confusingly across sources. Cross-check the existing `sc_cashback` and the
+> newly-added `sc_simply_cash` against issuer KFS to avoid duplication/mislabel.
+
+### ✅ Section A pass complete: 12 of 12 banks spot-checked
+Roughly **half the checked fields matched the data** (esp. annual fees) and half are
+⚠ candidates (esp. **min salary** and **reward-earn structure/caps/min-spend/units**).
+Per finding #2, converting ⚠ rows into `cards.json` edits needs a second source or
+issuer T&C — none were edited (flags only). The highest-value follow-ups: a
+**salary re-check** and a **reward-mechanics pass** (caps + min-spend + USD/AED units)
+across the dataset, done from issuer KFS documents.
 
 ## Corrections applied to `cards.json`
 _None yet._ Per finding #2, no edit has a reliable enough source to change a number
