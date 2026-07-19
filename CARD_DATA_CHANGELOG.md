@@ -117,14 +117,36 @@ _None yet._ Per finding #2, no edit has a reliable enough source to change a num
 in the source-of-truth data file without either a bank T&C or team confirmation.
 This section will fill in as sources firm up (or as the team supplies figures).
 
-## Engine-valuation recommendations for Arshnoor (NOT applied — human-owned)
-| Currency | Current (`valuations.ts`) | Recommended | Confidence | Basis |
+## 🚧 The `valuations.ts` blocker — and the data anyway
+
+**The stumbling block, plainly:** the per-point AED values Section B asks me to fix
+are defined in **`packages/engine/src/valuations.ts`** (the `DEFAULT_VALUATIONS`
+object), keyed by the exact `rewards.currency` string. That file is **human-owned
+engine code** (CLAUDE.md) and the Golden Rules say *don't change engine logic
+without Arshnoor*. Editing `cards.json` does **not** touch these values — so I
+cannot correct them from my side of the fence. There is also a build guard: the
+valuations test **fails if any currency in `cards.json` lacks an entry here**,
+which is why new-currency cards (Section C) need an engine edit too.
+
+**So I'm handing over the data ready to apply.** Each row below is the exact
+`valuations.ts` key, its current value, my sourced recommendation, and the literal
+change — Arshnoor (or whoever owns the engine) applies it after a quick confirm.
+
+| `valuations.ts` key | Current | Recommended | Conf. | Basis / needed confirmation |
 | --- | --- | --- | --- | --- |
-| Plus Points | 0.01 (low, held) | ~0.015 **or** fix earn rate | low | 1.5% headline; needs official earn table |
-| CBD Reward Points | 0.0075 (low) | ~0.005 cash / ~0.01 travel | low→med | aggregator range; confirm via CBD T&C PDF |
-| RAKrewards Points | 0.0075 (low) | confirm before moving | low | no per-point value sourced |
-| HSBC Reward Points | 0.0075 (low) | confirm before moving | low | not researched to confidence |
-| EI SmartMiles (future) | — (not present) | 0.01 (medium) | medium | self-consistent 3.75%/2.25% math |
+| `"Plus Points"` | `0.01` (low, held) | `~0.015` **or** fix the earn rate instead | low | Fits "up to 1.5%" headline at 1 pt/AED. Confirm ENBD earn table before moving; also model the 500-pt/statement cap. |
+| `"CBD Reward Points"` | `0.0075` (low) | `~0.005` (cash) / `~0.01` (travel, Engine 2) | low→med | Channel-dependent; confirm via CBD Rewards T&C PDF. |
+| `"RAKrewards Points"` | `0.0075` (low) | hold until confirmed | low | No per-point AED value sourced. Earn side (2/5/3 on World card) also unconfirmed. |
+| `"HSBC Reward Points"` | `0.0075` (low) | hold until confirmed | low | Not researched to confidence; confirm via HSBC UAE T&C. |
+| EI SmartMiles *(not present)* | — | add `0.01` (medium) | medium | Self-consistent (3.75%/2.25% Instant Purchase). Add only when an EI SmartMiles card exists. |
+
+**Example of the literal edit** (for whoever applies it), once ENBD is confirmed:
+```ts
+// packages/engine/src/valuations.ts
+"Plus Points": { aedPerUnit: 0.015, confidence: "medium", note: "1.5% headline at 1 pt/AED (confirmed <source>, <date>)" },
+```
+Engine 2's `redemption-valuations.ts` carries the same currencies with per-route
+values and would move in step (e.g. CBD travel route ~0.01 vs cash ~0.005).
 
 ## Flagged as unverified (needs official confirmation)
 - ENBD Plus Points earn rate **and** per-point value; 500-pt/statement cap unmodeled.
