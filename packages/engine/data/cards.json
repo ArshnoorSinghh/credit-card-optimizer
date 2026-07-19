@@ -2866,5 +2866,53 @@
     ],
     "source_url": "https://www.adcb.com/en/personal/cards/credit-cards/365-cashback-card",
     "notes": "Added 2026-07 (card-data verification branch). Rates per ADCB's July 2026 update: 6% dining, 5% fuel & Salik, 3% groceries, 1% other; min AED 2,500/mo to earn (modeled). CAVEAT: real card also gives 5% on digital/AI subscriptions (dropped — engine caps cards at 3 categories) AND caps total cashback at AED 1,000/month (NOT modeled — no overall monthly-cap field), so high-spend estimates may be overstated. Flagged for review. network=Visa, tier=Signature best-effort. Reuses existing AED currency."
+  },
+  {
+    "id": "sc_simply_cash",
+    "name": "Standard Chartered Simply Cash Credit Card",
+    "bank": "Standard Chartered UAE",
+    "network": "Mastercard",
+    "tier": "Titanium",
+    "eligibility": {
+      "min_monthly_salary_aed": 8000,
+      "uae_resident_required": true,
+      "min_age": 21,
+      "salary_transfer_required": false,
+      "employer_restrictions": null
+    },
+    "fees": {
+      "annual_fee_aed": 525,
+      "waiver_conditions": "First year free; from year 2 waived on AED 9,000 annual spend",
+      "joining_fee_aed": 0
+    },
+    "rewards": {
+      "type": "cashback",
+      "currency": "AED",
+      "base_rate": "1% on all spend",
+      "categories": [
+        {
+          "category": "international_spend",
+          "rate": "2%",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
+      "overall_cap": null,
+      "min_monthly_spend_required_aed": 0
+    },
+    "redemption": {
+      "currency": "AED cashback",
+      "primary_uses": [
+        "statement credit"
+      ],
+      "redemption_url": "https://www.sc.com/ae/credit-cards/simply-cash/"
+    },
+    "benefits": [
+      "Cashback on all spend",
+      "Airport lounge access",
+      "Balance transfer"
+    ],
+    "source_url": "https://www.sc.com/ae/credit-cards/simply-cash/",
+    "notes": "Added 2026-07 (card-data verification branch). Fee 525 (yr1 free, waived on AED 9,000/yr), salary 8,000, base 1% + 2% international — from Standard Chartered UAE + aggregators. CAVEAT: card also advertises 'up to 4%' boostable cashback on dining/grocery/entertainment/education — OMITTED because it's conditional and normalizes as tier-3 (would overstate a flat rate); modeled conservatively. network=Mastercard, tier=Titanium best-effort. Reuses existing AED currency."
   }
 ]
