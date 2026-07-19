@@ -239,9 +239,32 @@ issuer T&C — none were edited (flags only). The highest-value follow-ups: a
 across the dataset, done from issuer KFS documents.
 
 ## Corrections applied to `cards.json`
-_None yet._ Per finding #2, no edit has a reliable enough source to change a number
-in the source-of-truth data file without either a bank T&C or team confirmation.
-This section will fill in as sources firm up (or as the team supplies figures).
+
+Applied 2026-07 under cofounder authorization to action the well-corroborated ⚠
+flags. **All are aggregator-sourced** (not issuer KFS) — high-confidence but worth
+a final spot-check. Engine suite re-run after edits: **216/217 pass** (only the
+count assertion). Salary changes don't affect `scoreCard`; the one fee change
+(`mashreq_cashback`) is on a card not hand-computed by any test.
+
+| Card | Field | Old → New | Source | Note |
+| --- | --- | --- | --- | --- |
+| `enbd_skywards_signature` | min salary | 15,000 → **12,000** | yallacompare; mymoneysouq | Corroborated by the 12k-vs-15k dispute already noted on `enbd_visa_flexi` |
+| `mashreq_cashback` | min salary | 8,000 → **5,000** | kredit.ae; mashreq.com | |
+| `mashreq_cashback` | annual fee | 367 → **0** (free for life) | multiple aggregators; mashreq.com | Waiver text updated to "Free for life". Caveat: possible NEO-vs-Gold variant mix-up — confirm the exact product |
+| `rakbank_titanium_cashback` | min salary | 5,000 → **8,000** | rakbank.ae; kredit.ae | |
+| `cbd_smiles_signature` | min salary | 12,000 → **5,000** | cbd.ae Smiles Signature offer page | |
+
+### Flags deliberately NOT applied (held, with reason)
+- `sc_cashback` fee 525 → 315: **held** — SC's cashback lineup (Cashback / Simply
+  Cash / Platinum X) overlaps confusingly across sources; the AED 315 figure may
+  belong to a different SC product. Needs issuer KFS before editing.
+- **Reward-rate / earn-structure / unit** ⚠ rows (e.g. ENBD & DIB tiered-down
+  miles, Citi per-USD units, FAB 5% category mapping, HSBC 6/5/2 + caps): **held** —
+  these require modeling decisions (≤3-category limit, cap/min-spend fields, USD↔AED
+  unit conversions) and are riskier than a single scalar; they stay flagged for a
+  dedicated reward-mechanics pass against issuer KFS.
+- **Per-point values** (Plus Points, RAK/CBD/HSBC): **held** — engine-owned
+  (`valuations.ts`); see the recommendations table above.
 
 ## 🚧 The `valuations.ts` blocker — and the data anyway
 

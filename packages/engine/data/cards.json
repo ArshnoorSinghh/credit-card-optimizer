@@ -183,7 +183,7 @@
     "network": "Visa",
     "tier": "Signature",
     "eligibility": {
-      "min_monthly_salary_aed": 15000,
+      "min_monthly_salary_aed": 12000,
       "uae_resident_required": true,
       "min_age": 21,
       "salary_transfer_required": true,
@@ -1048,15 +1048,15 @@
     "network": "Visa",
     "tier": "Platinum",
     "eligibility": {
-      "min_monthly_salary_aed": 8000,
+      "min_monthly_salary_aed": 5000,
       "uae_resident_required": true,
       "min_age": 21,
       "salary_transfer_required": false,
       "employer_restrictions": null
     },
     "fees": {
-      "annual_fee_aed": 367,
-      "waiver_conditions": "First year free",
+      "annual_fee_aed": 0,
+      "waiver_conditions": "Free for life",
       "joining_fee_aed": 0
     },
     "rewards": {
@@ -2126,7 +2126,7 @@
     "network": "Mastercard",
     "tier": "Titanium",
     "eligibility": {
-      "min_monthly_salary_aed": 5000,
+      "min_monthly_salary_aed": 8000,
       "uae_resident_required": true,
       "min_age": 21,
       "salary_transfer_required": false,
@@ -2330,7 +2330,7 @@
     "network": "Visa",
     "tier": "Signature",
     "eligibility": {
-      "min_monthly_salary_aed": 12000,
+      "min_monthly_salary_aed": 5000,
       "uae_resident_required": true,
       "min_age": 21,
       "salary_transfer_required": false,
