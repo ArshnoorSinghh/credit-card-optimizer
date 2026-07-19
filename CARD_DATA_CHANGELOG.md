@@ -155,6 +155,19 @@ issuer T&C). Nothing here is edited into `cards.json` yet.
 | `hsbc_liveplus` | min salary | 12,500 | Sources vary AED 10,000–12,500 | ✓ (plausible) |
 | `hsbc_liveplus` | categories | 5% dining+ent+groceries, 1% other | Real: **6% dining / 5% fuel / 2% groceries+ent**, each **cap AED 200/cycle**, **min AED 3,000/mo**, else 0.5% | ⚠ rates + caps + min-spend unmodeled |
 
+### Emirates Islamic
+| Card | Field | In data | Finding | Verdict |
+| --- | --- | --- | --- | --- |
+| `ei_cashback` | annual fee | 367 | Current EI cashback cards are **Cashback Plus** (fee 299, sal 12k) and **Switch** (fee 313.95, sal 5k) — neither is 367 | ⚠ fee + card identity |
+| `ei_cashback` | category caps | none | Both real cards cap each category at **AED 200/mo** | ⚠ caps unmodeled |
+
+### Citibank UAE
+| Card | Field | In data | Finding | Verdict |
+| --- | --- | --- | --- | --- |
+| `citi_prestige` | min salary | 30,000 | AED 30,000 | ✓ |
+| `citi_prestige` | annual fee | 1,500 | AED 1,500 | ✓ |
+| `citi_prestige` | earn rates | base 1.5, intl 3, dining/travel 2 (**per AED**) | Sources: **3 TY/USD intl, 2 TY/USD local** (**per USD**, not per AED — ~3.67× difference) | ⚠ earn unit/rate |
+
 ### 📌 Pattern emerging (useful for the whole dataset)
 Across FAB, ENBD, ADCB, Mashreq, HSBC:
 - **Annual fees are usually correct** (only `mashreq_cashback` looks wrong so far).
@@ -164,11 +177,16 @@ Across FAB, ENBD, ADCB, Mashreq, HSBC:
   mislabeled, and two real mechanics are **systematically unmodeled** — **per-category
   reward caps** and **monthly minimum-spend thresholds** to unlock cashback. These
   materially change scoring and are the highest-value thing for the team to confirm.
+- **Earn-rate UNITS are inconsistent and high-impact**: the data mixes miles/points
+  *per USD* vs *per AED* (and issuers sometimes quote *per AED 10*). USD vs AED alone
+  is a ~3.67× error. Seen on `citi_prestige` and `fab_etihad_guest_elite`; worth a
+  dedicated unit audit of every miles/points card.
 
-_Banks still to pass: Emirates Islamic, DIB, ADIB, RAKBANK, CBD, Standard Chartered,
-Citi (+ remaining ENBD/ADCB/FAB/Mashreq/HSBC cards)._ Given finding #2, the realistic
-output of a full pass is a list of ✓ / ⚠ like the above; converting ⚠ rows into edits
-needs a second source or issuer T&C confirmation.
+_Coverage so far: 7 of 12 banks spot-checked (FAB, ENBD, ADCB, Mashreq, HSBC,
+Emirates Islamic, Citi). Still to pass: DIB, ADIB, RAKBANK, CBD, Standard Chartered
+(+ remaining cards within checked banks)._ Given finding #2, the realistic output of
+a full pass is a list of ✓ / ⚠ like the above; converting ⚠ rows into edits needs a
+second source or issuer T&C confirmation.
 
 ## Corrections applied to `cards.json`
 _None yet._ Per finding #2, no edit has a reliable enough source to change a number
