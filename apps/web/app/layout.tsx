@@ -27,23 +27,46 @@ export const metadata: Metadata = {
 };
 
 // Dark theme for Clerk's hosted UI so sign-in/sign-up match the product.
+// why: the color variables below are the source of truth — Clerk derives every
+// text/border/muted shade from them, so setting them correctly (bright fg,
+// legible secondary) guarantees contrast on our near-black canvas. The element
+// overrides only sharpen a few pieces that otherwise render too dim.
 const clerkAppearance = {
   variables: {
     colorPrimary: "#7c6cff",
-    colorBackground: "#12121c",
+    // Surface the Clerk card ABOVE the page canvas so it reads as a distinct
+    // panel instead of blending into the background.
+    colorBackground: "#14141f",
     colorText: "#f4f4f7",
-    colorTextSecondary: "#a6a6b4",
-    colorInputBackground: "#191926",
+    // Brighter than the old #a6a6b4 — labels, hints and the "or" divider were
+    // too dim against the dark card.
+    colorTextSecondary: "#c9c9d4",
+    colorInputBackground: "#1c1c2a",
     colorInputText: "#f4f4f7",
     colorNeutral: "#ffffff",
+    colorDanger: "#fb7185",
+    colorSuccess: "#34d399",
     borderRadius: "0.75rem",
+    fontSize: "0.95rem",
   },
   elements: {
-    card: "bg-surface border border-line shadow-2xl",
+    // Distinct, elevated panel so it doesn't merge with the page background.
+    card: "bg-[#14141f] border border-white/10 shadow-[0_30px_80px_-24px_rgba(0,0,0,0.85)]",
     headerTitle: "text-fg",
-    socialButtonsBlockButton: "border-line text-fg",
-    formFieldInput: "bg-surface-2 border-line",
-    footerActionLink: "text-violet",
+    headerSubtitle: "text-[#c9c9d4]",
+    socialButtonsBlockButton: "border-white/12 text-fg hover:bg-white/5",
+    socialButtonsBlockButtonText: "text-fg font-medium",
+    dividerLine: "bg-white/12",
+    dividerText: "text-[#c9c9d4]",
+    formFieldLabel: "text-[#e4e4ea] font-medium",
+    formFieldInput: "bg-[#1c1c2a] border-white/12 text-fg placeholder:text-[#8a8a98]",
+    formFieldInputShowPasswordButton: "text-[#c9c9d4] hover:text-fg",
+    formFieldHintText: "text-[#c9c9d4]",
+    identityPreviewText: "text-fg",
+    identityPreviewEditButton: "text-violet",
+    footer: "bg-transparent",
+    footerActionText: "text-[#c9c9d4]",
+    footerActionLink: "text-violet hover:text-violet/80 font-medium",
   },
 };
 

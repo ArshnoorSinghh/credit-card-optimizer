@@ -22,10 +22,3 @@ export function cardById(id: string): Card | undefined {
 export function cardsByBank(bank: string): Card[] {
   return CARDS.filter((c) => c.bank === bank);
 }
-
-/** Short accent per reward type, for consistent color-coding of card art. */
-export const REWARD_ACCENT: Record<string, string> = {
-  cashback: "from-emerald-400/30 to-sky/20",
-  points: "from-violet/30 to-indigo/20",
-  miles: "from-sky/30 to-indigo/20",
-};

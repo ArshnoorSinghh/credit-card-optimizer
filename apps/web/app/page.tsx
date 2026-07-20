@@ -154,11 +154,10 @@ export default function LandingPage() {
               <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}>
                 <CreditCardArt
                   bank="Emirates NBD"
-                  name="Skywards Signature"
+                  name="Emirates NBD Skywards Signature"
                   tier="Signature"
                   network="Visa"
                   highlight="1.5 miles / AED"
-                  gradient="from-indigo via-violet to-sky"
                 />
               </motion.div>
             </motion.div>
@@ -170,12 +169,11 @@ export default function LandingPage() {
             >
               <motion.div animate={{ y: [0, 12, 0] }} transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}>
                 <CreditCardArt
-                  bank="Mashreq"
-                  name="Cashback Card"
+                  bank="Mashreq Bank"
+                  name="Mashreq Cashback Card"
                   tier="Platinum"
                   network="Mastercard"
                   highlight="Up to 5% back"
-                  gradient="from-sky via-indigo to-violet"
                 />
               </motion.div>
             </motion.div>
