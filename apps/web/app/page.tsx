@@ -176,7 +176,7 @@ export default function LandingPage() {
       <StickySteps steps={STEPS} />
 
       {/* ---------------- FEATURES (bold dusk band) ---------------- */}
-      <section className="relative overflow-hidden bg-dusk text-[#f7f1e6]">
+      <section className="relative overflow-hidden bg-dusk text-on-dusk">
         {/* a low sun still glowing at the horizon of the dark band */}
         <div className="pointer-events-none absolute -top-24 right-[8%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,rgba(244,166,58,0.4),transparent_65%)]" />
         <div className="relative mx-auto max-w-6xl px-5 py-24 md:py-32">
@@ -187,7 +187,7 @@ export default function LandingPage() {
             <h2 className="mt-5 text-3xl font-semibold md:text-5xl">
               Quantitative modeling, in plain language
             </h2>
-            <p className="mt-4 text-lg text-[#e7dcc9]">
+            <p className="mt-4 text-lg text-on-dusk-muted">
               Under the hood: constrained combinatorial optimization and expected-value modeling.
               On the surface: just tell it how you spend.
             </p>
@@ -205,7 +205,7 @@ export default function LandingPage() {
                     <f.icon className="h-5 w-5" />
                   </span>
                   <h3 className="text-xl font-semibold">{f.title}</h3>
-                  <p className="mt-3 text-[#d8ccb8]">{f.body}</p>
+                  <p className="mt-3 text-on-dusk-faint">{f.body}</p>
                 </motion.div>
               </StaggerItem>
             ))}
@@ -220,7 +220,7 @@ export default function LandingPage() {
             Trusted by smart spenders
           </p>
           <h2 className="mx-auto mt-4 max-w-2xl text-3xl font-semibold md:text-4xl">
-            <span className="text-gradient">8,400+</span> UAE residents have found their best cards
+            <span className="text-fg">8,400+</span> UAE residents have found their best cards
           </h2>
         </Reveal>
 
@@ -249,7 +249,7 @@ export default function LandingPage() {
               <Card className="h-full">
                 <p className="text-lg leading-relaxed text-fg">“{t.quote}”</p>
                 <div className="mt-6 flex items-center gap-3">
-                  <span className="grid h-10 w-10 place-items-center rounded-full bg-brand text-sm font-semibold text-white">
+                  <span className="grid h-10 w-10 place-items-center rounded-full border border-line bg-surface-2 font-display text-sm font-semibold text-clay">
                     {t.name.charAt(0)}
                   </span>
                   <div>

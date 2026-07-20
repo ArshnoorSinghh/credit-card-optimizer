@@ -7,6 +7,8 @@ import { Aurora } from "@/components/aurora";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Reveal } from "@/components/ui/reveal";
+import { CountTo } from "@/components/count-to";
 import { aed } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
@@ -88,14 +90,16 @@ export default function PointsPage() {
 
   return (
     <main className="relative min-h-[calc(100vh-4rem)] overflow-hidden">
-      <Aurora className="opacity-40" />
+      <Aurora subtle className="opacity-40" />
       <div className="relative mx-auto max-w-5xl px-5 py-12">
-        <Badge tone="brand">Points Optimizer</Badge>
-        <h1 className="mt-4 text-4xl font-semibold md:text-5xl">Make your points count</h1>
-        <p className="mt-3 max-w-xl text-muted">
-          Add what you&apos;re holding and pick a goal. We show the best redemption route, the real
-          AED value, and what&apos;s at risk of expiring.
-        </p>
+        <Reveal>
+          <Badge tone="brand">Points Optimizer</Badge>
+          <h1 className="mt-4 text-4xl font-semibold md:text-5xl">Make your points count</h1>
+          <p className="mt-3 max-w-xl text-muted">
+            Add what you&apos;re holding and pick a goal. We show the best redemption route, the real
+            AED value, and what&apos;s at risk of expiring.
+          </p>
+        </Reveal>
 
         <div className="mt-10 grid gap-6 lg:grid-cols-[380px_1fr]">
           {/* Holdings editor */}
@@ -187,7 +191,7 @@ export default function PointsPage() {
           <div className="space-y-5">
             <Card glow>
               <p className="text-sm text-muted">Total realizable value ({GOALS.find((g) => g.key === goal)?.label})</p>
-              <p className="mt-1 text-5xl font-semibold text-gradient">{aed(total)}</p>
+              <CountTo value={total} format={aed} className="mt-1 block text-5xl font-semibold text-gradient" />
             </Card>
 
             {burnRisks.length > 0 && (

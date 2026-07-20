@@ -82,8 +82,11 @@ export function BurjSunrise({ className }: { className?: string }) {
         transition={intro(0.15, 1.8)}
       />
 
-      {/* God-rays — a slow fan of light, masked to fade near the sun and at the
-          edges. Breathes very gently rather than spinning forever. */}
+      {/* God-rays — a soft fan of light. The stops are FEATHERED (each ray ramps
+          up and back down rather than a hard 2° stripe), and a small blur kills
+          the conic-gradient aliasing/moiré. It fans in ONCE during the intro then
+          holds perfectly still — no forever-rotation, which would fight the calm
+          of a settled scene. The sun disc and motes carry the living motion. */}
       <motion.div
         className="absolute h-[1200px] w-[1200px]"
         style={{
@@ -91,24 +94,19 @@ export function BurjSunrise({ className }: { className?: string }) {
           top: SUN_Y,
           x: "-50%",
           y: "-50%",
+          // 16° period: transparent → soft amber peak at 4° → transparent by 8° →
+          // gap to 16°. Feathered edges instead of a hard-cut stripe.
           background:
-            "repeating-conic-gradient(from 0deg at 50% 50%, rgba(244,166,58,0.13) 0deg 2deg, transparent 2deg 12deg)",
+            "repeating-conic-gradient(from 0deg at 50% 50%, transparent 0deg, rgba(244,166,58,0.12) 4deg, transparent 8deg, transparent 16deg)",
+          filter: "blur(2px)",
           WebkitMaskImage:
             "radial-gradient(circle at 50% 50%, transparent 9%, #000 22%, transparent 62%)",
           maskImage:
             "radial-gradient(circle at 50% 50%, transparent 9%, #000 22%, transparent 62%)",
         }}
-        initial={reduce ? false : { opacity: 0 }}
-        animate={
-          reduce
-            ? { opacity: 0.7 }
-            : { opacity: [0, 0.85, 0.62, 0.85], rotate: [0, 4] }
-        }
-        transition={
-          reduce
-            ? { duration: 0 }
-            : { opacity: { duration: 9, delay: 0.5, repeat: Infinity, repeatType: "mirror" }, rotate: { duration: 24, delay: 0.5, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" } }
-        }
+        initial={reduce ? false : { opacity: 0, rotate: -6 }}
+        animate={{ opacity: 0.7, rotate: 0 }}
+        transition={intro(0.5, 2.2)}
       />
 
       {/* Horizon haze — warm band that grounds the skyline in light. */}
