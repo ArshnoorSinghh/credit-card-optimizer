@@ -39,6 +39,13 @@
   --color-warning: #b9770c; /* dark saffron */
   --color-danger: #c0392b;  /* pomegranate red */
 
+  /* ---- Color: text tones for use ON the dark dusk band (the one full-bleed
+     contrast section). Warm light-on-dark, mirroring the canvas neutrals so the
+     band feels like the same golden hour after sundown. All clear AA on dusk. ---- */
+  --color-on-dusk: #f7f1e6;       /* primary — matches the page canvas */
+  --color-on-dusk-muted: #e7dcc9; /* warm sand — body copy */
+  --color-on-dusk-faint: #d8ccb8; /* softer sand — tertiary */
+
   /* ---- Radii (rounded, hospitality-soft) ---- */
   --radius-sm: 0.625rem; /* 10px */
   --radius-md: 1rem; /* 16px */

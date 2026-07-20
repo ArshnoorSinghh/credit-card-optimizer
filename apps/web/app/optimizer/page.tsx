@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
 import type { SpendCategory } from "@fils/engine";
 import { Aurora } from "@/components/aurora";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { SpendSlider } from "@/components/spend-slider";
 import { PortfolioResults } from "@/components/portfolio-results";
+import { Reveal } from "@/components/ui/reveal";
 import { CATEGORIES, DEFAULT_SPEND, DEFAULT_PROFILE, runOptimize, totalSpend } from "@/lib/optimizer";
 import { loadProfile, saveProfile } from "@/lib/profile-store";
 import { aed } from "@/lib/format";
@@ -45,13 +45,15 @@ export default function OptimizerPage() {
 
   return (
     <main className="relative min-h-[calc(100vh-4rem)] overflow-hidden">
-      <Aurora className="opacity-40" />
+      <Aurora subtle className="opacity-40" />
       <div className="relative mx-auto max-w-6xl px-5 py-12">
-        <Badge tone="brand">Card Optimizer</Badge>
-        <h1 className="mt-4 text-4xl font-semibold md:text-5xl">Tune it live</h1>
-        <p className="mt-3 max-w-xl text-muted">
-          Drag any category and watch the optimal 1, 2, and 3-card portfolios recompute in real time.
-        </p>
+        <Reveal>
+          <Badge tone="brand">Card Optimizer</Badge>
+          <h1 className="mt-4 text-4xl font-semibold md:text-5xl">Tune it live</h1>
+          <p className="mt-3 max-w-xl text-muted">
+            Drag any category and watch the optimal 1, 2, and 3-card portfolios recompute in real time.
+          </p>
+        </Reveal>
 
         <div className="mt-10 grid gap-6 lg:grid-cols-[360px_1fr]">
           {/* Controls */}
@@ -61,7 +63,7 @@ export default function OptimizerPage() {
                 <h3 className="text-sm font-semibold uppercase tracking-wide text-faint">
                   Monthly spend
                 </h3>
-                <span className="text-sm text-gradient font-semibold">{aed(totalSpend(spend))}</span>
+                <span className="text-sm font-semibold text-clay">{aed(totalSpend(spend))}</span>
               </div>
               <div className="space-y-4">
                 {CATEGORIES.map((cat) => (
@@ -81,15 +83,12 @@ export default function OptimizerPage() {
             </Card>
           </div>
 
-          {/* Results */}
-          <motion.div
-            key={result?.eligibleCardCount ?? 0}
-            initial={{ opacity: 0.6 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.2 }}
-          >
+          {/* Results — no remount key: the pane persists across edits so the
+              headline figure can TWEEN to its new value (see CountTo) instead of
+              snapping. The per-size fade lives inside PortfolioResults. */}
+          <div>
             <PortfolioResults result={result} />
-          </motion.div>
+          </div>
         </div>
       </div>
     </main>

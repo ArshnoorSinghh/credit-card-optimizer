@@ -8,6 +8,7 @@ import type { Portfolio, PortfolioResult } from "@fils/engine";
 import { ALL_CARDS } from "@/lib/cards";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { CountTo } from "@/components/count-to";
 import { aed, aedRange, label } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
@@ -65,7 +66,7 @@ export function PortfolioResults({ result }: { result: PortfolioResult | null })
             {size === s && (
               <motion.span
                 layoutId="sizeTab"
-                className="absolute inset-0 rounded-full bg-brand"
+                className="absolute inset-0 rounded-full bg-flame"
                 transition={{ type: "spring", stiffness: 400, damping: 32 }}
               />
             )}
@@ -101,17 +102,19 @@ export function PortfolioResults({ result }: { result: PortfolioResult | null })
                     </Badge>
                   )}
                   <p className="text-sm text-muted">Net value per year (ongoing)</p>
-                  <p className="mt-1 text-5xl font-semibold text-gradient">
-                    {aed(active.netAnnualValue)}
-                  </p>
+                  <CountTo
+                    value={active.netAnnualValue}
+                    format={aed}
+                    className="mt-1 block text-5xl font-semibold text-gradient"
+                  />
                 </div>
                 <div className="text-right text-sm text-muted">
                   <p>
-                    Year 1: <span className="text-fg">{aed(active.netAnnualValueYear1)}</span>
+                    Year 1: <span className="tabular-nums text-fg">{aed(active.netAnnualValueYear1)}</span>
                   </p>
                   <p className="mt-1">
                     Annual fees:{" "}
-                    <span className="text-fg">{aed(active.totalFees.ongoing)}</span>
+                    <span className="tabular-nums text-fg">{aed(active.totalFees.ongoing)}</span>
                   </p>
                 </div>
               </div>
@@ -124,7 +127,7 @@ export function PortfolioResults({ result }: { result: PortfolioResult | null })
                     href={`/cards/${id}`}
                     className="group inline-flex items-center gap-2 rounded-full border border-line bg-surface-2 px-4 py-2 text-sm transition-colors hover:border-line-strong"
                   >
-                    <span className="h-2 w-2 rounded-full bg-brand" />
+                    <span className="h-2 w-2 rounded-full bg-flame" />
                     <span className="font-medium text-fg group-hover:text-clay">{nameOf(id)}</span>
                     <span className="text-faint">{BANK.get(id)}</span>
                   </Link>
@@ -140,16 +143,15 @@ export function PortfolioResults({ result }: { result: PortfolioResult | null })
                   {active.allocations.map((a, i) => (
                     <div
                       key={i}
-                      className="flex items-center justify-between gap-4 bg-surface-2/40 px-4 py-3 text-sm"
+                      className="grid grid-cols-[6rem_1fr_auto] items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-black/[0.04]"
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="w-24 font-medium text-fg">{label(a.spendCategory)}</span>
-                        <span className="text-muted">
-                          {aed(a.monthlySpendAed)}/mo → <span className="text-fg">{nameOf(a.cardId)}</span>
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-right">
-                        <span className="text-fg">
+                      <span className="font-medium text-fg">{label(a.spendCategory)}</span>
+                      <span className="text-muted">
+                        <span className="tabular-nums">{aed(a.monthlySpendAed)}</span>/mo →{" "}
+                        <span className="text-fg">{nameOf(a.cardId)}</span>
+                      </span>
+                      <span className="flex items-center justify-end gap-2 text-right">
+                        <span className="tabular-nums text-fg">
                           {aedRange(a.annualValueAed.min, a.annualValueAed.max)}/yr
                         </span>
                         {a.capBound && (
@@ -157,7 +159,7 @@ export function PortfolioResults({ result }: { result: PortfolioResult | null })
                             {a.capBound} cap
                           </Badge>
                         )}
-                      </div>
+                      </span>
                     </div>
                   ))}
                 </div>
