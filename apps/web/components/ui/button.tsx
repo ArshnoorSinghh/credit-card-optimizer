@@ -20,15 +20,13 @@ type Size = "sm" | "md" | "lg";
 const base =
   "inline-flex items-center justify-center gap-2 font-medium rounded-full whitespace-nowrap " +
   "transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 " +
-  "focus-visible:ring-violet/60 disabled:opacity-50 disabled:pointer-events-none select-none";
+  "focus-visible:ring-flame/60 disabled:opacity-50 disabled:pointer-events-none select-none";
 
 const variants: Record<Variant, string> = {
-  brand:
-    "bg-brand text-white shadow-[0_8px_30px_-8px_rgba(124,108,255,0.7)] " +
-    "hover:shadow-[0_12px_44px_-8px_rgba(124,108,255,0.9)]",
+  brand: "bg-brand text-white shadow-glow hover:shadow-glow-lg",
   solid: "bg-surface-2 text-fg border border-line hover:border-line-strong",
-  outline: "border border-line-strong text-fg hover:bg-white/5",
-  ghost: "text-muted hover:text-fg hover:bg-white/5",
+  outline: "border border-line-strong text-fg hover:bg-black/[0.04]",
+  ghost: "text-muted hover:text-fg hover:bg-black/[0.04]",
 };
 
 const sizes: Record<Size, string> = {

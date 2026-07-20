@@ -4,10 +4,10 @@ import { useEffect } from "react";
 import { motion, useMotionValue, useSpring } from "framer-motion";
 
 /*
-  CursorGlow — a soft violet spotlight that trails the cursor, the "subtle cursor
-  glow" from the design brief. Pointer position feeds two springs so the glow
-  eases toward the cursor rather than snapping. Fixed, behind content, and hidden
-  from touch devices / reduced-motion users.
+  CursorGlow — a soft, warm sunlight spotlight that trails the cursor. Pointer
+  position feeds two springs so the glow eases toward the cursor rather than
+  snapping. Fixed, behind content, and hidden from touch devices / reduced-motion
+  users. Kept faint so it warms the light canvas without distracting.
 */
 
 export function CursorGlow() {
@@ -33,8 +33,8 @@ export function CursorGlow() {
     <motion.div
       aria-hidden
       style={{ x: sx, y: sy }}
-      className="pointer-events-none fixed left-0 top-0 z-0 h-[600px] w-[600px] rounded-full opacity-40
-                 bg-[radial-gradient(circle,rgba(124,108,255,0.28),transparent_60%)]"
+      className="pointer-events-none fixed left-0 top-0 z-0 h-[600px] w-[600px] rounded-full opacity-30
+                 bg-[radial-gradient(circle,rgba(244,166,58,0.22),transparent_60%)]"
     />
   );
 }

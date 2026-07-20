@@ -60,7 +60,7 @@ export default function ResultsPage() {
         {/* Next steps: Points Optimizer + AI bot placeholder */}
         <div className="mt-12 grid gap-5 sm:grid-cols-2">
           <Card hover glow>
-            <span className="mb-4 inline-grid h-11 w-11 place-items-center rounded-[0.8rem] border border-line bg-surface-2 text-violet">
+            <span className="mb-4 inline-grid h-11 w-11 place-items-center rounded-[0.8rem] border border-line bg-surface-2 text-clay">
               <Coins className="h-5 w-5" />
             </span>
             <h3 className="text-xl font-semibold">Points Optimizer</h3>

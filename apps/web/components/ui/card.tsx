@@ -20,9 +20,9 @@ export function Card({ className, hover = false, glow = false, ...props }: CardP
       whileHover={hover ? { y: -6 } : undefined}
       transition={{ type: "spring", stiffness: 300, damping: 24 }}
       className={cn(
-        "relative rounded-[var(--radius-lg)] bg-surface border border-line p-6",
+        "relative rounded-[var(--radius-lg)] bg-surface border border-line p-6 shadow-card",
         hover &&
-          "cursor-default transition-shadow duration-300 hover:border-line-strong hover:shadow-[0_20px_60px_-20px_rgba(124,108,255,0.45)]",
+          "cursor-default transition-shadow duration-300 hover:border-line-strong hover:shadow-lift",
         glow && "ring-gradient",
         className,
       )}

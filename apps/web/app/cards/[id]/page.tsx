@@ -159,7 +159,7 @@ export default function CardDetailPage() {
                   href={card.redemption.redemption_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-4 inline-flex items-center gap-1.5 text-sm text-violet hover:underline"
+                  className="mt-4 inline-flex items-center gap-1.5 text-sm text-clay hover:underline"
                 >
                   Redemption details <ExternalLink className="h-3.5 w-3.5" />
                 </a>

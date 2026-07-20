@@ -88,7 +88,7 @@ export default function DashboardPage() {
           {/* Saved cards */}
           <Card>
             <div className="mb-4 flex items-center gap-2">
-              <CreditCard className="h-5 w-5 text-violet" />
+              <CreditCard className="h-5 w-5 text-clay" />
               <h3 className="text-lg font-semibold">Saved cards</h3>
             </div>
             <ul className="space-y-2">
@@ -109,7 +109,7 @@ export default function DashboardPage() {
           {/* Points snapshot */}
           <Card>
             <div className="mb-4 flex items-center gap-2">
-              <Coins className="h-5 w-5 text-violet" />
+              <Coins className="h-5 w-5 text-clay" />
               <h3 className="text-lg font-semibold">Points</h3>
             </div>
             <p className="text-sm text-muted">
