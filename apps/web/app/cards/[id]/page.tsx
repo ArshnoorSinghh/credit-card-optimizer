@@ -12,12 +12,6 @@ import { CreditCardArt } from "@/components/credit-card-art";
 import { cardById } from "@/lib/cards";
 import { aed, label } from "@/lib/format";
 
-const ART_GRADIENT: Record<string, string> = {
-  cashback: "from-emerald-400 via-teal-500 to-sky",
-  points: "from-violet via-indigo to-sky",
-  miles: "from-sky via-indigo to-violet",
-};
-
 function cap(monthly: number | null, annual: number | null): string {
   if (monthly) return `${monthly.toLocaleString()}/mo cap`;
   if (annual) return `${annual.toLocaleString()}/yr cap`;
@@ -60,7 +54,7 @@ export default function CardDetailPage() {
             name={card.name}
             tier={card.tier}
             network={card.network}
-            gradient={ART_GRADIENT[card.rewards.type] ?? "from-violet via-indigo to-sky"}
+            currency={card.rewards.currency}
           />
           <Card className="space-y-3">
             <Fact k="Annual fee">

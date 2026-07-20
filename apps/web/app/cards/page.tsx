@@ -12,13 +12,6 @@ import { ALL_CARDS, BANKS, REWARD_TYPES } from "@/lib/cards";
 import { aed, label } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
-// Vivid card-art gradient per reward type — keeps the gallery colour-coded.
-const ART_GRADIENT: Record<string, string> = {
-  cashback: "from-emerald-400 via-teal-500 to-sky",
-  points: "from-violet via-indigo to-sky",
-  miles: "from-sky via-indigo to-violet",
-};
-
 type FeeFilter = "all" | "free" | "paid";
 
 export default function CardBrowserPage() {
@@ -103,8 +96,8 @@ export default function CardBrowserPage() {
                     name={c.name}
                     tier={c.tier}
                     network={c.network}
+                    currency={c.rewards.currency}
                     highlight={c.rewards.base_rate.length < 22 ? c.rewards.base_rate : undefined}
-                    gradient={ART_GRADIENT[c.rewards.type] ?? "from-violet via-indigo to-sky"}
                     className="mb-5"
                   />
                   <div className="flex items-center justify-between gap-2">
