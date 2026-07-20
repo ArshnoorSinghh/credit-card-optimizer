@@ -76,7 +76,7 @@ export default function OptimizerPage() {
                 min={0}
                 value={salary}
                 onChange={(e) => setSalary(Number(e.target.value) || 0)}
-                className="w-full rounded-[var(--radius-md)] border border-line bg-surface-2 px-4 py-3 text-fg outline-none transition-colors focus:border-line-strong focus:ring-2 focus:ring-violet/40"
+                className="w-full rounded-[var(--radius-md)] border border-line bg-surface-2 px-4 py-3 text-fg outline-none transition-colors focus:border-line-strong focus:ring-2 focus:ring-flame/40"
               />
             </Card>
           </div>

@@ -83,7 +83,7 @@ export default function OnboardingPage() {
                       className={cn(
                         "group flex flex-col items-start gap-2 rounded-[var(--radius-md)] border p-4 text-left transition-all",
                         selected
-                          ? "border-violet/60 bg-violet/10"
+                          ? "border-flame/60 bg-flame/10"
                           : "border-line bg-surface hover:border-line-strong",
                       )}
                     >
@@ -149,7 +149,7 @@ export default function OnboardingPage() {
                   min={0}
                   value={salary}
                   onChange={(e) => setSalary(Number(e.target.value) || 0)}
-                  className="w-full rounded-[var(--radius-md)] border border-line bg-surface-2 px-4 py-3 text-fg outline-none transition-colors focus:border-line-strong focus:ring-2 focus:ring-violet/40"
+                  className="w-full rounded-[var(--radius-md)] border border-line bg-surface-2 px-4 py-3 text-fg outline-none transition-colors focus:border-line-strong focus:ring-2 focus:ring-flame/40"
                 />
                 <p className="mt-2 text-xs text-faint">
                   Used only to filter cards you&apos;re eligible for. Never stored on a server in the demo.

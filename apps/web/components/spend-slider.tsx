@@ -38,9 +38,9 @@ export function SpendSlider({
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         aria-label={meta.label}
-        className="h-2 w-full cursor-pointer appearance-none rounded-full accent-[var(--color-violet)]"
+        className="h-2 w-full cursor-pointer appearance-none rounded-full accent-[var(--color-flame)]"
         style={{
-          background: `linear-gradient(90deg, var(--color-violet) 0%, var(--color-indigo) ${pct}%, var(--color-surface-2) ${pct}%)`,
+          background: `linear-gradient(90deg, var(--color-sun) 0%, var(--color-flame) ${pct}%, var(--color-surface-2) ${pct}%)`,
         }}
       />
     </div>

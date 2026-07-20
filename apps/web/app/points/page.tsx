@@ -121,7 +121,7 @@ export default function PointsPage() {
                       </div>
                       <button
                         onClick={() => setHoldings((hs) => hs.filter((x) => x.id !== h.id))}
-                        className="rounded-full p-1.5 text-faint transition-colors hover:bg-white/5 hover:text-danger"
+                        className="rounded-full p-1.5 text-faint transition-colors hover:bg-black/[0.04] hover:text-danger"
                         aria-label="Remove"
                       >
                         <X className="h-4 w-4" />
@@ -171,7 +171,7 @@ export default function PointsPage() {
                     className={cn(
                       "flex items-center gap-2 rounded-[var(--radius-md)] border px-3 py-2.5 text-sm transition-all",
                       goal === g.key
-                        ? "border-violet/60 bg-violet/10 text-fg"
+                        ? "border-flame/60 bg-flame/10 text-fg"
                         : "border-line bg-surface-2/50 text-muted hover:text-fg",
                     )}
                   >

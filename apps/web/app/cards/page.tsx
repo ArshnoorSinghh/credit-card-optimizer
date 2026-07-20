@@ -51,7 +51,7 @@ export default function CardBrowserPage() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search cards…"
-              className="w-full rounded-full border border-line bg-surface-2 py-3 pl-11 pr-4 text-sm text-fg outline-none transition-colors focus:border-line-strong focus:ring-2 focus:ring-violet/40"
+              className="w-full rounded-full border border-line bg-surface-2 py-3 pl-11 pr-4 text-sm text-fg outline-none transition-colors focus:border-line-strong focus:ring-2 focus:ring-flame/40"
             />
           </div>
           <Select value={bank} onChange={setBank} options={[["all", "All banks"], ...BANKS.map((b) => [b, b] as [string, string])]} />
@@ -140,7 +140,7 @@ function Select({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="rounded-full border border-line bg-surface-2 px-4 py-3 text-sm text-fg outline-none transition-colors focus:border-line-strong focus:ring-2 focus:ring-violet/40"
+      className="rounded-full border border-line bg-surface-2 px-4 py-3 text-sm text-fg outline-none transition-colors focus:border-line-strong focus:ring-2 focus:ring-flame/40"
     >
       {options.map(([v, lbl]) => (
         <option key={v} value={v} className="bg-surface text-fg">

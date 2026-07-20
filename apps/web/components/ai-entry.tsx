@@ -43,7 +43,7 @@ export function AiEntry() {
         whileTap={{ scale: 0.95 }}
         onClick={() => setOpen((v) => !v)}
         aria-label="Open Fils AI assistant"
-        className="grid h-14 w-14 place-items-center rounded-full bg-brand text-white shadow-[0_10px_40px_-8px_rgba(124,108,255,0.8)]"
+        className="grid h-14 w-14 place-items-center rounded-full bg-brand text-white shadow-glow-lg"
       >
         {open ? <X className="h-6 w-6" /> : <Bot className="h-6 w-6" />}
       </motion.button>

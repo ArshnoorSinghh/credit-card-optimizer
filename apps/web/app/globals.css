@@ -1,54 +1,77 @@
 @import "tailwindcss";
 
 /*
-  Fils design system — Revolut-inspired.
-  Dark canvas, vibrant violet→indigo→cyan gradients, glass surfaces, generous
-  radius and spacing. This is the single source of truth for tokens; every page
-  inherits it. See .claude/skills/frontend-design/SKILL.md for the rules of use.
+  Fils design system — "Gulf Golden Hour."
+  A warm, light canvas grounded in the UAE: eggshell and sand neutrals, the low
+  amber-to-terracotta light of the desert sun, warm ink, and restrained gold.
+  Deliberately NOT the generic dark-purple + glow "AI SaaS" look. Light only —
+  there is no dark theme, by design (the product lives in daylight).
+
+  This is the single source of truth for tokens; every page inherits it. Never
+  hardcode a hex or a raw px — reach for a token or a scale step. See
+  .claude/skills/frontend-design/SKILL.md for the rules of use.
 */
 
 @theme {
-  /* ---- Color: canvas & surfaces ---- */
-  --color-bg: #07070c; /* page canvas — near-black with a cool cast */
-  --color-bg-soft: #0c0c14;
-  --color-surface: #12121c; /* raised cards */
-  --color-surface-2: #191926; /* cards on cards / inputs */
-  --color-line: rgba(255, 255, 255, 0.08); /* hairline borders */
-  --color-line-strong: rgba(255, 255, 255, 0.14);
+  /* ---- Color: canvas & surfaces (warm, light) ---- */
+  --color-bg: #f7f1e6;        /* page canvas — warm eggshell / bone */
+  --color-bg-soft: #efe6d6;   /* deeper sand — footers, wells */
+  --color-surface: #fffdf9;   /* raised cards — warm near-white, lifts off the canvas */
+  --color-surface-2: #f2eadd; /* inputs / card-on-card — warm sand */
+  --color-line: rgba(58, 42, 23, 0.12);        /* warm brown-ink hairline */
+  --color-line-strong: rgba(58, 42, 23, 0.2);
 
-  /* ---- Color: text ---- */
-  --color-fg: #f4f4f7;
-  --color-muted: #a6a6b4;
-  --color-faint: #6f6f80;
+  /* ---- Color: text (warm ink, never pure black) ---- */
+  --color-fg: #2a2016;    /* warm espresso — primary */
+  --color-muted: #6a5b47; /* warm taupe — body copy */
+  --color-faint: #7b6a51; /* soft sand-taupe — captions/labels */
 
-  /* ---- Color: brand gradient stops ---- */
-  --color-violet: #8b5cf6;
-  --color-indigo: #6366f1;
-  --color-sky: #38bdf8;
-  --color-accent: #7c6cff; /* solid stand-in for the gradient */
+  /* ---- Color: golden-hour accent + gradient stops ---- */
+  --color-sun: #f4a63a;    /* amber-gold — the rising sun */
+  --color-flame: #e86f2c;  /* sunset orange — the PRIMARY accent (fills) */
+  --color-clay: #c24e2c;   /* terracotta — deep golden hour (accent text) */
+  --color-gold: #b8912e;   /* restrained metallic gold — tier/fine accents */
+  --color-oasis: #3f7a5b;  /* date-palm green — grounded secondary */
+  --color-accent: #e86f2c; /* solid stand-in for the gradient = flame */
 
-  /* ---- Color: semantic ---- */
-  --color-success: #34d399;
-  --color-warning: #fbbf24;
-  --color-danger: #fb7185;
+  /* ---- Color: semantic (tuned to read on the light ground) ---- */
+  --color-success: #2f855a; /* oasis green */
+  --color-warning: #b9770c; /* dark saffron */
+  --color-danger: #c0392b;  /* pomegranate red */
 
-  /* ---- Radii (rounded, Revolut-soft) ---- */
+  /* ---- Radii (rounded, hospitality-soft) ---- */
   --radius-sm: 0.625rem; /* 10px */
   --radius-md: 1rem; /* 16px */
   --radius-lg: 1.5rem; /* 24px */
   --radius-xl: 2rem; /* 32px */
   --radius-full: 999px;
 
-  /* ---- Type scale. next/font injects --font-space-grotesk / --font-inter on
-     <html>; these theme tokens point at them (no self-reference). ---- */
-  --font-display: var(--font-space-grotesk), "Segoe UI", system-ui, sans-serif;
-  --font-sans: var(--font-inter), "Segoe UI", system-ui, sans-serif;
+  /* ---- Warm elevation. Shadows are warm brown / amber, never cold black or
+     purple glow — depth reads like sunlight, not neon. ---- */
+  --shadow-lift: 0 20px 50px -24px rgba(74, 52, 30, 0.32);
+  --shadow-glow: 0 8px 28px -8px rgba(232, 111, 44, 0.42);
+  --shadow-glow-lg: 0 14px 44px -10px rgba(232, 111, 44, 0.5);
+  --shadow-card: 0 1px 2px rgba(74, 52, 30, 0.06), 0 8px 24px -16px rgba(74, 52, 30, 0.2);
+
+  /* ---- Type. next/font injects --font-fraunces / --font-hanken on <html>;
+     these theme tokens point at them (no self-reference). Fraunces is a warm,
+     high-contrast serif for display (heritage / private-bank feel); Hanken
+     Grotesk is a clean humanist sans for body + data. ---- */
+  --font-display: var(--font-fraunces), "Iowan Old Style", Georgia, serif;
+  --font-sans: var(--font-hanken), "Segoe UI", system-ui, sans-serif;
 
   /* ---- Easing ---- */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* ---- Named gradients (usable as bg-[image] via utilities below) ---- */
-  --gradient-brand: linear-gradient(120deg, var(--color-violet), var(--color-indigo) 45%, var(--color-sky));
+  /* ---- Named gradients ----
+     brand: the sunset FILL (buttons, tiles, logo) — light amber → terracotta.
+     ink:   a DEEPER variant for gradient TEXT, so headlines stay legible on the
+            light canvas (the light-amber stop alone would be too low-contrast). */
+  --gradient-brand: linear-gradient(115deg, var(--color-sun), var(--color-flame) 45%, var(--color-clay));
+  --gradient-ink: linear-gradient(115deg, #e86f2c, #c24e2c 55%, #a5381a);
+  /* dusk: the one bold full-bleed contrast band — golden hour after sundown.
+     Deep espresso → terracotta, for a section with light text on top. */
+  --gradient-dusk: linear-gradient(160deg, #241407 0%, #3d1d10 52%, #5e2b15 100%);
 }
 
 /* ---- Base layer ---- */
@@ -73,16 +96,16 @@
 
   h1, h2, h3, h4 {
     font-family: var(--font-display);
-    letter-spacing: -0.02em;
-    line-height: 1.05;
+    letter-spacing: -0.015em; /* serifs need less negative tracking than the old grotesk */
+    line-height: 1.06;
   }
 
   ::selection {
-    background: color-mix(in oklab, var(--color-violet) 40%, transparent);
-    color: #fff;
+    background: color-mix(in oklab, var(--color-flame) 30%, transparent);
+    color: var(--color-fg);
   }
 
-  /* Themed scrollbar to match the dark canvas. */
+  /* Warm scrollbar to match the sand canvas. */
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
@@ -98,23 +121,23 @@
 
 /* ---- Reusable component utilities ---- */
 @layer components {
-  /* Gradient text — the brand's headline treatment. */
+  /* Gradient text — the brand's headline treatment (deep ink variant, legible). */
   .text-gradient {
-    background: var(--gradient-brand);
+    background: var(--gradient-ink);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
 
-  /* Glass surface — frosted card with a hairline edge. */
+  /* Glass surface — frosted warm panel with a hairline edge (navbar, overlays). */
   .glass {
-    background: color-mix(in oklab, var(--color-surface) 78%, transparent);
-    backdrop-filter: blur(16px) saturate(140%);
-    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    background: color-mix(in oklab, var(--color-surface) 72%, transparent);
+    backdrop-filter: blur(16px) saturate(120%);
+    -webkit-backdrop-filter: blur(16px) saturate(120%);
     border: 1px solid var(--color-line);
   }
 
-  /* Gradient hairline border via mask trick (crisp on dark bg). */
+  /* Gradient hairline emphasis via mask trick (crisp warm edge). */
   .ring-gradient {
     position: relative;
   }
@@ -130,16 +153,16 @@
       linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
-    opacity: 0.55;
+    opacity: 0.6;
     pointer-events: none;
   }
 
-  /* Soft radial glow blob for section backdrops. */
+  /* Soft radial glow blob for section backdrops (warm, low opacity). */
   .glow-blob {
     position: absolute;
     border-radius: var(--radius-full);
     filter: blur(90px);
-    opacity: 0.5;
+    opacity: 0.4;
     pointer-events: none;
   }
 }
@@ -147,6 +170,16 @@
 /* ---- Utilities ---- */
 @utility bg-brand {
   background-image: var(--gradient-brand);
+}
+
+@utility bg-dusk {
+  background-image: var(--gradient-dusk);
+}
+
+/* Marquee ticker (bank names) — the list is duplicated, so -50% loops seamlessly. */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 
 /* Respect reduced-motion: kill the heavy stuff. */

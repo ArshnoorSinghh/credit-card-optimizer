@@ -13,20 +13,24 @@ import {
   Wallet,
 } from "lucide-react";
 import { Aurora } from "@/components/aurora";
+import { BurjSunrise } from "@/components/burj-sunrise";
+import { HeroCards } from "@/components/hero-cards";
+import { BankMarquee } from "@/components/bank-marquee";
+import { CountUp } from "@/components/count-up";
+import { StickySteps } from "@/components/sticky-steps";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Reveal, Stagger, StaggerItem } from "@/components/ui/reveal";
-import { CreditCardArt } from "@/components/credit-card-art";
 import { Footer } from "@/components/footer";
 
 const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 const STATS = [
-  { value: "51", label: "UAE cards modelled" },
-  { value: "12", label: "banks covered" },
-  { value: "22k+", label: "portfolios searched" },
-  { value: "2", label: "optimization engines" },
+  { value: 51, suffix: "", label: "UAE cards modelled" },
+  { value: 12, suffix: "", label: "banks covered" },
+  { value: 22, suffix: "k+", label: "portfolios searched" },
+  { value: 2, suffix: "", label: "optimization engines" },
 ];
 
 const STEPS = [
@@ -79,7 +83,7 @@ export default function LandingPage() {
     <main className="relative">
       {/* ---------------- HERO ---------------- */}
       <section className="relative overflow-hidden">
-        <Aurora />
+        <BurjSunrise />
         <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-5 pb-24 pt-16 md:grid-cols-2 md:pb-32 md:pt-24">
           <div>
             <motion.div
@@ -143,93 +147,47 @@ export default function LandingPage() {
             </motion.p>
           </div>
 
-          {/* Floating card stack */}
-          <div className="relative mx-auto w-full max-w-sm">
-            <motion.div
-              initial={{ opacity: 0, y: 40, rotate: -6 }}
-              animate={{ opacity: 1, y: 0, rotate: -6 }}
-              transition={{ duration: 0.9, ease: EASE, delay: 0.2 }}
-              className="absolute inset-x-6 top-10"
-            >
-              <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}>
-                <CreditCardArt
-                  bank="Emirates NBD"
-                  name="Emirates NBD Skywards Signature"
-                  tier="Signature"
-                  network="Visa"
-                  highlight="1.5 miles / AED"
-                />
-              </motion.div>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 60, rotate: 5 }}
-              animate={{ opacity: 1, y: 0, rotate: 5 }}
-              transition={{ duration: 0.9, ease: EASE, delay: 0.35 }}
-              className="relative z-10"
-            >
-              <motion.div animate={{ y: [0, 12, 0] }} transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}>
-                <CreditCardArt
-                  bank="Mashreq Bank"
-                  name="Mashreq Cashback Card"
-                  tier="Platinum"
-                  network="Mastercard"
-                  highlight="Up to 5% back"
-                />
-              </motion.div>
-            </motion.div>
-          </div>
+          {/* Floating card fan — 3D tilt + scroll parallax */}
+          <HeroCards />
         </div>
 
-        {/* Stats strip */}
-        <div className="relative border-y border-line bg-bg-soft/60">
-          <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-5 py-8 md:grid-cols-4">
-            {STATS.map((s) => (
-              <Reveal key={s.label} className="text-center">
-                <p className="text-3xl font-semibold text-fg md:text-4xl">{s.value}</p>
-                <p className="mt-1 text-sm text-muted">{s.label}</p>
-              </Reveal>
-            ))}
-          </div>
-        </div>
       </section>
 
-      {/* ---------------- HOW IT WORKS ---------------- */}
-      <section className="relative mx-auto max-w-6xl px-5 py-24 md:py-32">
-        <Reveal className="mx-auto max-w-2xl text-center">
-          <Badge tone="brand">How it works</Badge>
-          <h2 className="mt-5 text-3xl font-semibold md:text-4xl">
-            From guesswork to your best wallet in three steps
-          </h2>
-        </Reveal>
+      {/* ---------------- BANK TICKER ---------------- */}
+      <BankMarquee />
 
-        <Stagger className="mt-14 grid gap-5 md:grid-cols-3">
-          {STEPS.map((step, i) => (
-            <StaggerItem key={step.title}>
-              <Card hover className="h-full">
-                <div className="mb-5 flex items-center gap-3">
-                  <span className="grid h-11 w-11 place-items-center rounded-[0.8rem] bg-brand text-white">
-                    <step.icon className="h-5 w-5" />
-                  </span>
-                  <span className="text-sm font-medium text-faint">Step {i + 1}</span>
-                </div>
-                <h3 className="text-xl font-semibold">{step.title}</h3>
-                <p className="mt-3 text-muted">{step.body}</p>
-              </Card>
-            </StaggerItem>
+      {/* ---------------- STATS ---------------- */}
+      <div className="relative border-b border-line bg-bg-soft/60">
+        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-5 py-12 md:grid-cols-4">
+          {STATS.map((s) => (
+            <Reveal key={s.label} className="text-center">
+              <CountUp
+                value={s.value}
+                suffix={s.suffix}
+                className="font-display text-4xl font-semibold text-fg md:text-5xl"
+              />
+              <p className="mt-1 text-sm text-muted">{s.label}</p>
+            </Reveal>
           ))}
-        </Stagger>
-      </section>
+        </div>
+      </div>
 
-      {/* ---------------- FEATURES (bento) ---------------- */}
-      <section className="relative overflow-hidden bg-bg-soft/50">
-        <Aurora className="opacity-60" />
+      {/* ---------------- HOW IT WORKS (pinned scroll sequence) ---------------- */}
+      <StickySteps steps={STEPS} />
+
+      {/* ---------------- FEATURES (bold dusk band) ---------------- */}
+      <section className="relative overflow-hidden bg-dusk text-[#f7f1e6]">
+        {/* a low sun still glowing at the horizon of the dark band */}
+        <div className="pointer-events-none absolute -top-24 right-[8%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,rgba(244,166,58,0.4),transparent_65%)]" />
         <div className="relative mx-auto max-w-6xl px-5 py-24 md:py-32">
           <Reveal className="max-w-2xl">
-            <Badge tone="brand">Two engines, one wallet</Badge>
-            <h2 className="mt-5 text-3xl font-semibold md:text-4xl">
+            <span className="text-sm font-medium uppercase tracking-widest text-sun">
+              Two engines, one wallet
+            </span>
+            <h2 className="mt-5 text-3xl font-semibold md:text-5xl">
               Quantitative modeling, in plain language
             </h2>
-            <p className="mt-4 text-lg text-muted">
+            <p className="mt-4 text-lg text-[#e7dcc9]">
               Under the hood: constrained combinatorial optimization and expected-value modeling.
               On the surface: just tell it how you spend.
             </p>
@@ -238,13 +196,17 @@ export default function LandingPage() {
           <Stagger className="mt-14 grid gap-5 md:grid-cols-3">
             {FEATURES.map((f) => (
               <StaggerItem key={f.title} className={f.span}>
-                <Card glow hover className="h-full">
-                  <span className="mb-5 inline-grid h-11 w-11 place-items-center rounded-[0.8rem] border border-line bg-surface-2 text-violet">
+                <motion.div
+                  whileHover={{ y: -6 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 24 }}
+                  className="h-full rounded-[var(--radius-lg)] border border-white/10 bg-white/[0.06] p-6 backdrop-blur-sm transition-colors hover:border-white/20"
+                >
+                  <span className="mb-5 inline-grid h-11 w-11 place-items-center rounded-[0.8rem] bg-brand text-white shadow-glow">
                     <f.icon className="h-5 w-5" />
                   </span>
                   <h3 className="text-xl font-semibold">{f.title}</h3>
-                  <p className="mt-3 text-muted">{f.body}</p>
-                </Card>
+                  <p className="mt-3 text-[#d8ccb8]">{f.body}</p>
+                </motion.div>
               </StaggerItem>
             ))}
           </Stagger>
@@ -254,7 +216,7 @@ export default function LandingPage() {
       {/* ---------------- SOCIAL PROOF ---------------- */}
       <section className="mx-auto max-w-6xl px-5 py-24 md:py-32">
         <Reveal className="text-center">
-          <p className="text-sm font-medium uppercase tracking-widest text-violet">
+          <p className="text-sm font-medium uppercase tracking-widest text-clay">
             Trusted by smart spenders
           </p>
           <h2 className="mx-auto mt-4 max-w-2xl text-3xl font-semibold md:text-4xl">

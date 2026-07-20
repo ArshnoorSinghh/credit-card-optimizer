@@ -125,7 +125,7 @@ export function PortfolioResults({ result }: { result: PortfolioResult | null })
                     className="group inline-flex items-center gap-2 rounded-full border border-line bg-surface-2 px-4 py-2 text-sm transition-colors hover:border-line-strong"
                   >
                     <span className="h-2 w-2 rounded-full bg-brand" />
-                    <span className="font-medium text-fg group-hover:text-white">{nameOf(id)}</span>
+                    <span className="font-medium text-fg group-hover:text-clay">{nameOf(id)}</span>
                     <span className="text-faint">{BANK.get(id)}</span>
                   </Link>
                 ))}
