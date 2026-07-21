@@ -122,7 +122,7 @@ export function StickySteps({ steps }: { steps: Step[] }) {
               <div className="relative w-px shrink-0 bg-line">
                 <motion.div
                   style={{ scaleY: reduce ? 1 : railScale }}
-                  className="absolute inset-0 origin-top bg-brand"
+                  className="absolute inset-0 origin-top bg-flame"
                 />
                 {!reduce && (
                   <motion.span
@@ -147,7 +147,7 @@ export function StickySteps({ steps }: { steps: Step[] }) {
                         transition={{ type: "spring", stiffness: 300, damping: 20 }}
                         className={
                           "grid h-11 w-11 shrink-0 place-items-center rounded-[0.8rem] transition-colors " +
-                          (on ? "bg-brand text-white shadow-glow" : "border border-line bg-surface-2 text-faint")
+                          (on ? "bg-flame text-white shadow-glow" : "border border-line bg-surface-2 text-faint")
                         }
                       >
                         <step.icon className="h-5 w-5" />
