@@ -1,5 +1,12 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
+import { assertDatabaseSafe } from "./src/guard";
+
+// The Prisma CLI (migrate/db push) connects with the URL below, bypassing the
+// guarded runtime client — so guard it here too. Without this, `prisma migrate dev`
+// pointed at DIRECT_URL=<prod> could alter production. Skipped when unset (fresh
+// clone) since a missing URL can't be the prod host.
+if (process.env.DIRECT_URL) assertDatabaseSafe(process.env.DIRECT_URL);
 
 /**
  * Prisma 7 configuration.
