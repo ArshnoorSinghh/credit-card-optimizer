@@ -23,6 +23,7 @@ import { fileURLToPath } from "node:url";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import type { Card } from "@fils/engine";
+import { assertDatabaseSafe } from "../src/guard";
 
 const CARDS_JSON = fileURLToPath(new URL("../../engine/data/cards.json", import.meta.url));
 
@@ -36,6 +37,8 @@ function createClient(): PrismaClient {
   // URL if DIRECT_URL isn't set.
   const connectionString = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
   if (!connectionString) throw new Error("DIRECT_URL / DATABASE_URL is not set — cannot seed.");
+  // Never seed the production database from a local run (see guard.ts).
+  assertDatabaseSafe(connectionString);
   return new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
 }
 
