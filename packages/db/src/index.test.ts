@@ -25,7 +25,7 @@ describe("getAllCards", () => {
   it("returns exactly the number of cards in cards.json", async () => {
     const cards = await getAllCards();
     expect(cards).toHaveLength(sourceCards.length);
-    expect(cards).toHaveLength(51);
+    expect(cards).toHaveLength(53); // 2026-07 hand-verified data (was 51; -adib_booking_signature, +others)
   });
 
   it("round-trips cards.json exactly — same order, same shape, no DB artifacts", async () => {

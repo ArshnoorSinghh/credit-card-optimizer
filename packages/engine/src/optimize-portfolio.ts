@@ -204,8 +204,10 @@ function collectFlags(portfolio: CardData[], result: EarnResult): { flags: Score
   const flags: ScoreFlag[] = [];
   let uncertain = false;
 
-  // Structural flags from option-building (e.g. an unrecognized reward category).
-  for (const cd of portfolio) {
+  // Structural flags from option-building (e.g. an unrecognized reward category) and
+  // min-spend gating. Read from result.cards — earnAcrossCards returns the GATED
+  // cards there, so a disabled-bonus flag surfaces in the portfolio receipt too.
+  for (const cd of result.cards) {
     for (const f of cd.buildFlags) {
       flags.push({ level: f.level, message: `${cd.card.id}: ${f.message}` });
       if (f.level === "unknown") uncertain = true;

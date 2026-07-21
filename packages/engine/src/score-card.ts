@@ -91,45 +91,162 @@ type MatchRule =
 // small, closed set in the data. Enumerating them means every match is a
 // reviewable decision, and a NEW/unknown category is caught (routed to
 // "unmatched" + flagged) instead of being silently mis-parsed.
+// why this table grew a lot in 2026-07: the hand-verified dataset replaced a small
+// set of tidy category keys with a much richer, messier vocabulary (~100 names,
+// many compound like "fuel_school_fees_utilities_government"). Each compound maps
+// to EVERY canonical component it names. Mappings are deliberately explicit (not
+// fuzzy string-splitting) so each one is a reviewable decision and a genuinely new
+// name still routes to "unmatched" + a flag instead of being silently mis-scored.
+// JUDGMENT CALLS worth a human's eye are marked `// review:`.
 const MATCH_TABLE: Record<string, MatchRule> = {
-  // Generic categories.
+  // ── Single canonical categories ──────────────────────────────────────────────
   international_spend: { kind: "categories", categories: ["international"] },
+  eligible_international_spend: { kind: "categories", categories: ["international"] },
+  eligible_foreign_currency_spend: { kind: "categories", categories: ["international"] },
+  foreign_currency_spend: { kind: "categories", categories: ["international"] },
+  non_aed_spend: { kind: "categories", categories: ["international"] },
+  eea_and_uk_spend: { kind: "categories", categories: ["international"] },
+  eu_and_uk_spend: { kind: "categories", categories: ["international"] },
+  uk_and_eea_spend: { kind: "categories", categories: ["international"] },
+  eu_spend: { kind: "categories", categories: ["international"] },
   dining: { kind: "categories", categories: ["dining"] },
+  dining_and_restaurants: { kind: "categories", categories: ["dining"] },
+  dining_including_online: { kind: "categories", categories: ["dining"] },
+  local_and_international_dining: { kind: "categories", categories: ["dining"] },
+  lifestyle_dining: { kind: "categories", categories: ["dining"] },
   groceries: { kind: "categories", categories: ["groceries"] },
   supermarket: { kind: "categories", categories: ["groceries"] },
+  supermarkets: { kind: "categories", categories: ["groceries"] },
   groceries_supermarket: { kind: "categories", categories: ["groceries"] },
+  groceries_and_supermarkets: { kind: "categories", categories: ["groceries"] },
+  grocery_and_supermarket: { kind: "categories", categories: ["groceries"] },
   groceries_other: { kind: "categories", categories: ["groceries"] },
+  lifestyle_supermarkets: { kind: "categories", categories: ["groceries"] },
   fuel: { kind: "categories", categories: ["fuel"] },
+  fuel_and_automotive: { kind: "categories", categories: ["fuel"] },
+  lifestyle_fuel: { kind: "categories", categories: ["fuel"] },
+  education: { kind: "categories", categories: ["education"] },
+  school_fees: { kind: "categories", categories: ["education"] },
+  school_and_education: { kind: "categories", categories: ["education"] },
+  lifestyle_education: { kind: "categories", categories: ["education"] },
+  utilities: { kind: "categories", categories: ["utilities"] },
+  utility_bills: { kind: "categories", categories: ["utilities"] },
+  bills: { kind: "categories", categories: ["utilities"] },
+  etisalat_and_du: { kind: "categories", categories: ["utilities"] }, // telecom
+  government_utilities_charity: { kind: "categories", categories: ["utilities"] },
+  transport: { kind: "categories", categories: ["transport"] },
+  salik_and_nol: { kind: "categories", categories: ["transport"] },
   travel_spend: { kind: "categories", categories: ["travel"] },
-  // Compound categories match every component.
+  travel_airlines: { kind: "categories", categories: ["travel"] },
+  airline_spend: { kind: "categories", categories: ["travel"] },
+  hotel_spend: { kind: "categories", categories: ["travel"] },
+  travel_and_hotels: { kind: "categories", categories: ["travel"] },
+  travel_hotels: { kind: "categories", categories: ["travel"] },
+  travel_flights_hotels: { kind: "categories", categories: ["travel"] },
+  cinemas: { kind: "categories", categories: ["entertainment"] },
+  online_cinema: { kind: "categories", categories: ["entertainment"] },
+  video_streaming: { kind: "categories", categories: ["entertainment"] },
+  home_digital_entertainment: { kind: "categories", categories: ["entertainment"] },
+  // review: "other" bucket — retail/shopping/electronics have no canonical bonus
+  // category, so they earn base-rate-equivalent via "other" (matches merchant-map).
+  fashion: { kind: "categories", categories: ["other"] },
+  electronics: { kind: "categories", categories: ["other"] },
+  other_retail: { kind: "categories", categories: ["other"] },
+  online_spend: { kind: "categories", categories: ["other"] },
+  aed_online_spend: { kind: "categories", categories: ["other"] },
+  aed_mobile_wallet_pos: { kind: "categories", categories: ["other"] },
+  automotive_servicing: { kind: "categories", categories: ["other"] },
+  ai_subscriptions: { kind: "categories", categories: ["other"] },
+  selected_digital_lifestyle_merchants: { kind: "categories", categories: ["other"] },
+
+  // ── Compound categories → every component they name ──────────────────────────
   groceries_dining: { kind: "categories", categories: ["groceries", "dining"] },
   groceries_education_utilities: { kind: "categories", categories: ["groceries", "education", "utilities"] },
   dining_international: { kind: "categories", categories: ["dining", "international"] },
+  grocery_and_non_aed_spend: { kind: "categories", categories: ["groceries", "international"] },
   fuel_utilities: { kind: "categories", categories: ["fuel", "utilities"] },
+  fuel_and_salik: { kind: "categories", categories: ["fuel", "transport"] },
   dining_entertainment: { kind: "categories", categories: ["dining", "entertainment"] },
   dining_entertainment_groceries: { kind: "categories", categories: ["dining", "entertainment", "groceries"] },
+  groceries_and_entertainment_combined: { kind: "categories", categories: ["groceries", "entertainment"] },
   groceries_dining_fuel: { kind: "categories", categories: ["groceries", "dining", "fuel"] },
+  supermarkets_fuel_dining: { kind: "categories", categories: ["groceries", "fuel", "dining"] },
   dining_travel: { kind: "categories", categories: ["dining", "travel"] },
-  // Catch-all / base categories.
+  travel_dining: { kind: "categories", categories: ["travel", "dining"] },
+  local_dining_and_hotels: { kind: "categories", categories: ["dining", "travel"] },
+  education_telecom: { kind: "categories", categories: ["education", "utilities"] },
+  international_and_direct_airline_spend: { kind: "categories", categories: ["international", "travel"] },
+  utilities_school_fees_fuel: { kind: "categories", categories: ["utilities", "education", "fuel"] },
+  fuel_school_fees_utilities_government: { kind: "categories", categories: ["fuel", "education", "utilities"] },
+  fuel_utilities_real_estate_education: { kind: "categories", categories: ["fuel", "utilities", "education"] },
+  school_fees_government_utilities_real_estate_fuel: { kind: "categories", categories: ["education", "utilities", "fuel"] },
+  government_utilities_education_charity_rental_telecom: { kind: "categories", categories: ["utilities", "education"] },
+  government_utilities_education_charity_fuel_rental_telecom: { kind: "categories", categories: ["utilities", "education", "fuel"] },
+  specified_low_interchange_categories: { kind: "categories", categories: ["utilities", "education"] },
+  fuel_transit_government_utilities_real_estate_education_telecom: { kind: "categories", categories: ["fuel", "transport", "utilities", "education"] },
+  fuel_education_government_real_estate_telecom_charity_transport: { kind: "categories", categories: ["fuel", "education", "utilities", "transport"] },
+  real_estate_education_fuel_government_ride_hailing_food_delivery_utilities_telecom: { kind: "categories", categories: ["education", "fuel", "utilities", "transport", "dining"] },
+  // review: broad government/insurance/auto compounds — "other" carries the
+  // insurance/auto/real-estate legs that have no canonical category of their own.
+  government_insurance_rental_housing_auto_dealers: { kind: "categories", categories: ["utilities", "other"] },
+  grocery_supermarket_insurance_auto_fast_food: { kind: "categories", categories: ["groceries", "dining", "other"] },
+  grocery_supermarkets_fast_food_insurance_car_dealers: { kind: "categories", categories: ["groceries", "dining", "other"] },
+  supermarkets_auto_dealers_insurance_fast_food: { kind: "categories", categories: ["groceries", "dining", "other"] },
+  supermarkets_grocery_insurance_car_dealers: { kind: "categories", categories: ["groceries", "other"] },
+  grocery_electronics_utilities_education_fuel: { kind: "categories", categories: ["groceries", "utilities", "education", "fuel", "other"] },
+  supermarkets_telecom_education_fuel_government_takaful_auto_transport_real_estate: { kind: "categories", categories: ["groceries", "utilities", "education", "fuel", "transport", "other"] },
+  government_transit_utilities_telecom_education_real_estate_fuel_grocery_insurance_auto: { kind: "categories", categories: ["utilities", "transport", "education", "fuel", "groceries", "other"] },
+  selected_categories_and_eu_spend: { kind: "categories", categories: ["international", "other"] },
+
+  // ── Catch-all / base categories ──────────────────────────────────────────────
   all_spend: { kind: "catchall" },
   all_other_spend: { kind: "catchall" },
-  // Merchant-locked bonuses: matched to their nearest canonical category, but
-  // flagged because a generic profile can't confirm the spend is at that merchant.
+
+  // ── Merchant-locked bonuses ──────────────────────────────────────────────────
+  // Matched to their nearest canonical category but flagged, because a generic
+  // spending profile can't confirm the spend is at that merchant. which-card.ts,
+  // which DOES know the merchant, uses these locks to keep/drop the bonus exactly.
   emirates_purchases: { kind: "categories", categories: ["travel"], merchant: "Emirates" },
+  emirates_spend: { kind: "categories", categories: ["travel"], merchant: "Emirates" },
+  emirates_and_flydubai_aed_spend: { kind: "categories", categories: ["travel"], merchant: "Emirates" },
+  direct_emirates_and_flydubai_aed_bookings: { kind: "categories", categories: ["travel"], merchant: "Emirates" },
   etihad_purchases: { kind: "categories", categories: ["travel"], merchant: "Etihad" },
+  etihad_and_selected_partners: { kind: "categories", categories: ["travel"], merchant: "Etihad" },
+  air_arabia_direct_spend: { kind: "categories", categories: ["travel"], merchant: "Air Arabia" },
   dnata_travel: { kind: "categories", categories: ["travel"], merchant: "dnata" },
+  dnata_costa_city_sightseeing_emirates_leisure_retail: { kind: "categories", categories: ["travel"], merchant: "dnata" },
   marriott_hotels: { kind: "categories", categories: ["travel"], merchant: "Marriott" },
+  marriott_bonvoy_hotels: { kind: "categories", categories: ["travel"], merchant: "Marriott" },
   booking_com: { kind: "categories", categories: ["travel"], merchant: "Booking.com" },
+  mmi_al_hamra_arabian_adventures_le_clos: { kind: "categories", categories: ["travel"], merchant: "Emirates Leisure" },
   lulu_supermarket: { kind: "categories", categories: ["groceries"], merchant: "LuLu" },
   lulu_purchases: { kind: "categories", categories: ["groceries"], merchant: "LuLu" },
+  lulu_stores: { kind: "categories", categories: ["groceries"], merchant: "LuLu" },
+  lulu_in_store_and_online: { kind: "categories", categories: ["groceries"], merchant: "LuLu" },
+  etisalat_smiles_app_elgrocer: { kind: "categories", categories: ["groceries"], merchant: "elGrocer" }, // review: grocery via Smiles app
+  first_10_talabat_orders: { kind: "categories", categories: ["dining"], merchant: "Talabat" },
+  // review: noon spans marketplace (other) + noon food (dining) + nownow (groceries).
+  noon_noon_food_noon_minutes_noon_supermall_nownow_namshi: { kind: "categories", categories: ["other", "dining", "groceries"], merchant: "noon" },
+  amazon_ae_prime_members: { kind: "categories", categories: ["other"], merchant: "Amazon" },
+  amazon_ae_non_prime_members: { kind: "categories", categories: ["other"], merchant: "Amazon" },
   emaar_properties: { kind: "categories", categories: ["other"], merchant: "Emaar" },
+  emaar_malls: { kind: "categories", categories: ["other"], merchant: "Emaar" },
+  emaar_hospitality: { kind: "categories", categories: ["travel"], merchant: "Emaar" },
+  emaar_entertainment: { kind: "categories", categories: ["entertainment"], merchant: "Emaar" },
   dubai_duty_free: { kind: "categories", categories: ["other"], merchant: "Dubai Duty Free" },
   rta_transport: { kind: "categories", categories: ["transport"], merchant: "RTA" },
+  rta_and_nol_spend: { kind: "categories", categories: ["transport"], merchant: "RTA" },
   smiles_partners: { kind: "categories", categories: ["other"], merchant: "Smiles partners" },
-  // (No card currently uses a "user-chosen category". enbd_visa_flexi, which once
-  // appeared to, was a data-entry error — it's a flat-rate points card; its "flexi"
-  // is customizable *perks*, not reward rates. If such a category reappears it will
-  // route to "unmatched" and be flagged, rather than being silently modeled.)
+
+  // ── Deliberately UNMATCHED (flagged, never silently modeled) ──────────────────
+  // These are spend-THRESHOLD lump bonuses or time/opt-in conditions that a steady
+  // per-category profile cannot express. Scoring them would require inventing a
+  // realization assumption, so we flag them instead. review: revisit if the product
+  // decides to model threshold bonuses.
+  monthly_spend_bonus: { kind: "unmatched", reason: "Threshold lump bonus (reach AED X/mo) — not modeled from a steady profile" },
+  quarterly_spend_bonus: { kind: "unmatched", reason: "Threshold lump bonus (cumulative quarter) — not modeled from a steady profile" },
+  optional_miles_accelerator: { kind: "unmatched", reason: "Opt-in paid accelerator — depends on an unmodeled enrollment choice" },
+  weekend_spend: { kind: "unmatched", reason: "Time-of-week bonus — a category profile can't say which spend fell on a weekend" },
 };
 
 /**
@@ -735,11 +852,59 @@ export interface EarnResult {
 }
 
 /**
+ * Minimum-spend gating (rewards.min_monthly_spend_required_aed).
+ *
+ * A number of cards (e.g. fab_cashback @ 3,000, cbd_one @ 5,000) pay their BONUS
+ * category rates only once monthly spend clears a threshold; below it, everything
+ * earns the base rate. We model that by dropping the card's bonus options (leaving
+ * only its catchall/base) when the spend that could land on it is below threshold,
+ * and flagging that the card was gated. The base_rate strings for these cards
+ * describe exactly the below-threshold behaviour ("... on all eligible spend when
+ * the AED 3,000 threshold is not met"), so the catchall is the right fallback.
+ *
+ * why the gate uses TOTAL profile spend: the threshold is the card's own monthly
+ * spend. For a single card (scoreCard, which-card, comparison — the paths that call
+ * this with one card, and the ones the tests exercise) the card sees the whole
+ * profile, so total profile spend IS the card's spend — exact. In a multi-card
+ * portfolio the allocator may route only part of the spend to a gated card;
+ * modelling that inside the min-cost flow would make the gate non-linear. We
+ * therefore evaluate the gate against total profile spend (an upper bound) and flag
+ * it — a documented simplification, not a silent one. // review: model per-card
+ * allocated spend here if portfolios with gated cards become a first-class case.
+ */
+function applySpendGate(cards: CardData[], spending: SpendingProfile): CardData[] {
+  const totalMonthly = Object.values(spending).reduce((s, v) => s + (v ?? 0), 0);
+  return cards.map((cd) => {
+    const threshold = cd.card.rewards.min_monthly_spend_required_aed ?? 0;
+    if (threshold <= 0 || totalMonthly >= threshold - EPS) return cd; // no gate, or met
+    // Below threshold: keep only catchall (base-rate) options; drop bonus options.
+    const keep = cd.options
+      .map((o, i) => (o.rule.kind === "catchall" ? i : -1))
+      .filter((i) => i >= 0);
+    return {
+      ...cd,
+      options: keep.map((i) => cd.options[i]!),
+      yields: keep.map((i) => cd.yields[i]!),
+      capacities: keep.map((i) => cd.capacities[i]!),
+      buildFlags: [
+        ...cd.buildFlags,
+        {
+          level: "low",
+          message: `Below the AED ${threshold}/mo minimum spend (spending ${totalMonthly.toFixed(0)}/mo) — bonus rates disabled, earns base rate only`,
+        },
+      ],
+    };
+  });
+}
+
+/**
  * Assign `spending` across `cards` optimally and report what each option/slice
  * earns. THE single source of truth for portfolio-aware earning — scoreCard and
  * optimizePortfolio both call it, so a lone card and a 1-card portfolio agree.
  */
-export function earnAcrossCards(spending: SpendingProfile, cards: CardData[]): EarnResult {
+export function earnAcrossCards(spending: SpendingProfile, inputCards: CardData[]): EarnResult {
+  // Apply minimum-spend gating first, so downstream sees each card's ACTIVE options.
+  const cards = applySpendGate(inputCards, spending);
   const flat = flattenOptions(cards);
   const sol = solveAssignment(spending, cards, flat);
 
@@ -861,7 +1026,8 @@ export function scoreCard(
   const cd = precomputeCardData(card, valuations);
   const result = earnAcrossCards(spending, [cd]);
 
-  const flags: ScoreFlag[] = [...cd.buildFlags]; // structural (e.g. unknown-category) flags first
+  // Structural flags first, read from the GATED card so a min-spend gate surfaces.
+  const flags: ScoreFlag[] = [...result.cards[0]!.buildFlags];
   let uncertain = false;
 
   // --- Build the per-option receipt + inherit flags from each earning option. ---

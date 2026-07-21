@@ -97,6 +97,19 @@ async function main(): Promise<void> {
       ]);
     }
 
+    // Prune cards that no longer exist in cards.json (e.g. a discontinued product
+    // like adib_booking_signature). Upsert alone never deletes, so without this the
+    // DB would keep stale rows and drift from the source. RewardCategory rows cascade
+    // on card delete (schema onDelete: Cascade). Nothing else references Card, so this
+    // touches only card REFERENCE data — never user rows.
+    const jsonIds = new Set(cards.map((c) => c.id));
+    const dbCards = await prisma.card.findMany({ select: { id: true } });
+    const stale = dbCards.filter((c) => !jsonIds.has(c.id)).map((c) => c.id);
+    if (stale.length > 0) {
+      await prisma.card.deleteMany({ where: { id: { in: stale } } });
+      console.log(`Pruned ${stale.length} stale card(s) not in cards.json: ${stale.join(", ")}`);
+    }
+
     // Assert the DB agrees with the source, so a silent partial seed can't pass.
     const seeded = await prisma.card.count();
     const categories = await prisma.rewardCategory.count();
