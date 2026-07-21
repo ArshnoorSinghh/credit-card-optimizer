@@ -52,7 +52,7 @@
     },
     "redemption": {
       "currency": "FAB Rewards",
-      "primary_uses": "Statement credit via FAB Mobile app; 100 FAB Rewards = AED 1 (10,000 FAB Rewards = AED 100)",
+      "primary_uses": ["Statement credit via FAB Mobile app; 100 FAB Rewards = AED 1 (10,000 FAB Rewards = AED 100)"],
       "redemption_url": "https://www.bankfab.com/en-ae/personal/rewards/fab-rewards/calculate"
     },
     "benefits": [
@@ -526,7 +526,7 @@
     },
     "redemption": {
       "currency": "AED cashback",
-      "primary_uses": "Statement credit, minimum AED 100 redemption; unredeemed cashback is forfeited after 36 months of inactivity",
+      "primary_uses": ["Statement credit, minimum AED 100 redemption; unredeemed cashback is forfeited after 36 months of inactivity"],
       "redemption_url": "https://www.mashreq.com/en/uae/neo/cards/credit-cards/cashback-credit-card/"
     },
     "benefits": [
@@ -654,7 +654,7 @@
     "tier": "Platinum",
     "eligibility": {
       "min_monthly_salary_aed": 12500,
-      "uae_resident_required": null,
+      "uae_resident_required": true,
       "min_age": 21,
       "salary_transfer_required": false,
       "employer_restrictions": null
@@ -1085,7 +1085,7 @@
     },
     "redemption": {
       "currency": "AED cashback",
-      "primary_uses": "Statement credit via the RAKBANK mobile app, minimum AED 100; unredeemed cashback expires 15 months after it is earned",
+      "primary_uses": ["Statement credit via the RAKBANK mobile app, minimum AED 100; unredeemed cashback expires 15 months after it is earned"],
       "redemption_url": "https://www.rakbank.ae/en/cards/credit-cards/titanium-credit-card"
     },
     "benefits": [
@@ -1122,7 +1122,7 @@
     },
     "redemption": {
       "currency": "AED cashback",
-      "primary_uses": "Statement credit; unredeemed cashback expires 15 months after it is earned",
+      "primary_uses": ["Statement credit; unredeemed cashback expires 15 months after it is earned"],
       "redemption_url": "https://www.rakbank.ae/en/cards/credit-cards/red-credit-card"
     },
     "benefits": [
@@ -2396,7 +2396,7 @@
     },
     "redemption": {
       "currency": "AED cashback",
-      "primary_uses": "Statement credit; unredeemed cashback expires 15 months after it is earned",
+      "primary_uses": ["Statement credit; unredeemed cashback expires 15 months after it is earned"],
       "redemption_url": "https://www.rakbank.ae/en/cards/credit-cards/world-credit-card"
     },
     "benefits": [

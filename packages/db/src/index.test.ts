@@ -59,7 +59,7 @@ describe("getAllCards", () => {
 
   it("preserves the fractional fee that forced Float over Int", async () => {
     const cards = await getAllCards();
-    const hsbc = cards.find((c) => c.id === "hsbc_liveplus");
+    const hsbc = cards.find((c) => c.id === "hsbc_live_plus");
     expect(hsbc?.fees.annual_fee_aed).toBe(313.95);
   });
 
