@@ -24,11 +24,11 @@ export interface Eligibility {
   min_age: number;
   /** Whether the applicant must route their salary to the issuing bank to qualify. */
   salary_transfer_required: boolean;
-  // why: null in all 51 cards today, so the source never reveals the non-null
-  // shape. Typed as string[] | null (a list of employer constraints, e.g. an
-  // approved-employer allowlist) so a real restriction can be captured later
-  // without a schema change. If it turns out to be free text, narrow to string.
-  employer_restrictions: string[] | null;
+  // Free-text eligibility caveat, or null when none. The 2026-07 data revealed this
+  // field IS free text ("AED 5,000 salary or AED 3,000 minimum assigned credit
+  // limit", "Maximum age 65 for UAE nationals"), so it's now typed `string` as the
+  // prior note anticipated. No engine logic branches on it — it's a display caveat.
+  employer_restrictions: string | null;
 }
 
 export interface Fees {
