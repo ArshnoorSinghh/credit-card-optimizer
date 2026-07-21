@@ -5,7 +5,7 @@ import { CATEGORY_META } from "@/lib/optimizer";
 import { aed } from "@/lib/format";
 
 /*
-  SpendSlider — one category's monthly-spend control. Gradient-filled track that
+  SpendSlider — one category's monthly-spend control. Solid-filled track that
   fills toward the thumb. Shared by onboarding and the live optimizer so the
   input feels identical everywhere (design-system consistency rule).
 */
@@ -40,7 +40,11 @@ export function SpendSlider({
         aria-label={meta.label}
         className="h-2 w-full cursor-pointer appearance-none rounded-full accent-[var(--color-flame)]"
         style={{
-          background: `linear-gradient(90deg, var(--color-sun) 0%, var(--color-flame) ${pct}%, var(--color-surface-2) ${pct}%)`,
+          // Two hard stops, no blend: solid flame up to the value, solid track
+          // after it. Still a linear-gradient() because that's the only way to
+          // split one element's background at an arbitrary %, but there's no
+          // colour transition — flame runs edge to edge of the filled portion.
+          background: `linear-gradient(90deg, var(--color-flame) 0%, var(--color-flame) ${pct}%, var(--color-surface-2) ${pct}%)`,
         }}
       />
     </div>

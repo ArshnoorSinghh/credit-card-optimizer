@@ -191,7 +191,7 @@ export default function PointsPage() {
           <div className="space-y-5">
             <Card glow>
               <p className="text-sm text-muted">Total realizable value ({GOALS.find((g) => g.key === goal)?.label})</p>
-              <CountTo value={total} format={aed} className="mt-1 block text-5xl font-semibold text-gradient" />
+              <CountTo value={total} format={aed} className="mt-1 block text-5xl font-semibold text-clay" />
             </Card>
 
             {burnRisks.length > 0 && (

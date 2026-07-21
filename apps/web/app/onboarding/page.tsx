@@ -47,7 +47,7 @@ export default function OnboardingPage() {
               <span
                 className={cn(
                   "grid h-8 w-8 place-items-center rounded-full text-sm font-semibold transition-colors",
-                  i <= step ? "bg-brand text-white" : "bg-surface-2 text-faint",
+                  i <= step ? "bg-flame text-white" : "bg-surface-2 text-faint",
                 )}
               >
                 {i < step ? <Check className="h-4 w-4" /> : i + 1}
@@ -90,7 +90,7 @@ export default function OnboardingPage() {
                       <span
                         className={cn(
                           "grid h-9 w-9 place-items-center rounded-lg",
-                          selected ? "bg-brand text-white" : "bg-surface-2 text-muted",
+                          selected ? "bg-flame text-white" : "bg-surface-2 text-muted",
                         )}
                       >
                         <Building2 className="h-4 w-4" />
@@ -127,7 +127,7 @@ export default function OnboardingPage() {
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-faint">Total / month</p>
-                  <p className="text-2xl font-semibold text-gradient">{aed(total)}</p>
+                  <p className="text-2xl font-semibold text-clay">{aed(total)}</p>
                 </div>
               </div>
 

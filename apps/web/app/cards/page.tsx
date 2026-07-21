@@ -67,7 +67,7 @@ export default function CardBrowserPage() {
                 onClick={() => setFee(f)}
                 className={cn(
                   "rounded-full px-3.5 py-1.5 text-sm capitalize transition-colors",
-                  fee === f ? "bg-brand text-white" : "text-muted hover:text-fg",
+                  fee === f ? "bg-flame text-white" : "text-muted hover:text-fg",
                 )}
               >
                 {f === "all" ? "All fees" : f}

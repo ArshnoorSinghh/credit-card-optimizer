@@ -25,7 +25,7 @@ export function AiEntry() {
             className="glass mb-3 w-72 rounded-[var(--radius-lg)] p-5 shadow-2xl"
           >
             <div className="flex items-center gap-2">
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand text-white">
+              <span className="grid h-8 w-8 place-items-center rounded-lg bg-flame text-white">
                 <Bot className="h-4 w-4" />
               </span>
               <p className="font-semibold text-fg">Ask Fils AI</p>
@@ -43,7 +43,7 @@ export function AiEntry() {
         whileTap={{ scale: 0.95 }}
         onClick={() => setOpen((v) => !v)}
         aria-label="Open Fils AI assistant"
-        className="grid h-14 w-14 place-items-center rounded-full bg-brand text-white shadow-glow-lg"
+        className="grid h-14 w-14 place-items-center rounded-full bg-flame text-white shadow-glow-lg"
       >
         {open ? <X className="h-6 w-6" /> : <Bot className="h-6 w-6" />}
       </motion.button>
