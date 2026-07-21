@@ -69,7 +69,8 @@ export default function OnboardingPage() {
             >
               <h1 className="text-3xl font-semibold md:text-4xl">Who do you bank with?</h1>
               <p className="mt-3 text-muted">
-                Pick your main bank to see its cards — or skip and we&apos;ll search all 12.
+                Pick your main bank to see its cards — or skip and we&apos;ll search all{" "}
+                {BANKS.length}.
               </p>
 
               <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
