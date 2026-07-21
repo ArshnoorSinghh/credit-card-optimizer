@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 
 /*
   Button — the primary interactive primitive. Variants:
-    - brand:   gradient fill, the main CTA (glows on hover)
+    - brand:   solid flame fill, the main CTA (glows on hover)
     - solid:   soft raised surface
     - outline: hairline border, ghost fill
     - ghost:   text-only, for low-emphasis actions
@@ -23,7 +23,7 @@ const base =
   "focus-visible:ring-flame/60 disabled:opacity-50 disabled:pointer-events-none select-none";
 
 const variants: Record<Variant, string> = {
-  brand: "bg-brand text-white shadow-glow hover:shadow-glow-lg",
+  brand: "bg-flame text-white shadow-glow hover:shadow-glow-lg",
   solid: "bg-surface-2 text-fg border border-line hover:border-line-strong",
   outline: "border border-line-strong text-fg hover:bg-black/[0.04]",
   ghost: "text-muted hover:text-fg hover:bg-black/[0.04]",

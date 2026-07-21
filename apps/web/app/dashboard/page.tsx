@@ -72,7 +72,7 @@ export default function DashboardPage() {
                 </h3>
                 {best && (
                   <p className="mt-1 text-muted">
-                    Nets you <span className="text-gradient font-semibold">{aed(best.netAnnualValue)}</span> / year.
+                    Nets you <span className="font-semibold text-clay">{aed(best.netAnnualValue)}</span> / year.
                   </p>
                 )}
               </div>

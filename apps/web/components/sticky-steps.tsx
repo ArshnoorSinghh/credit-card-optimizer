@@ -18,13 +18,15 @@ import { Badge } from "@/components/ui/badge";
 
     step 1 → the deck RIFFLE-SHUFFLES sideways.
     step 2 → the deck stands upright and SHAKES, with comic exaggeration lines.
-    step 3 → the other cards are BLOWN AWAY; the survivor FLIPS in place (still
-             vertical) to reveal a credit card (a regular landscape card, rotated).
+    step 3 → the other cards are BLOWN AWAY; the survivor FLIPS in place to
+             reveal a credit card — standing upright at first, matching the deck
+             it came from, then settling flat to its natural landscape.
 
   Each card is built as separate layers — POSITION (smoothly transitioned between
-  states) and a local SHAKE jitter — so scrubbing the scroll backwards replays
-  cleanly instead of teleporting (the shake never drives the card's position).
-  Reduced-motion renders the resolved vertical credit card statically.
+  states), a local SHAKE jitter, the FLIP, and the card's own ROTATION — so
+  scrubbing the scroll backwards replays cleanly instead of teleporting (no layer
+  drives another's transform). Reduced-motion renders the resolved landscape
+  credit card statically.
 */
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -285,20 +287,39 @@ function HeroCard({ active, reduce }: { active: number; reduce: boolean }) {
           <div className="absolute inset-0 [backface-visibility:hidden]">
             <CardBack />
           </div>
-          {/* The SAME regular landscape credit card — untouched, only ROTATED 90°
-              so it stands vertical inside the portrait footprint. Its box is
-              PH×PW (the landscape footprint); rotating about its own centre lands
-              it exactly on the PW×PH portrait footprint. +90° (not −90°) keeps the
-              "Fils" mark at the TOP of the standing card. */}
+          {/* The SAME regular landscape credit card — untouched, only ROTATED.
+              It reveals STANDING (90°, matching the portrait deck it came from),
+              then settles flat to landscape (0°) once the flip has finished.
+              Its box is PH×PW — the landscape footprint — and the wrapper centres
+              that box, so rotating about its own centre keeps the card pinned to
+              the same point at every angle. */}
           <div
             className="absolute inset-0 [backface-visibility:hidden]"
             style={{ transform: "rotateY(180deg)" }}
           >
             <div
               className="absolute left-1/2 top-1/2"
-              style={{ width: PH, height: PW, transform: "translate(-50%, -50%) rotate(90deg)" }}
+              style={{ width: PH, height: PW, transform: "translate(-50%, -50%)" }}
             >
-              <CreditFace />
+              <motion.div
+                className="h-full w-full"
+                animate={{ rotate: flipped ? 0 : 90 }}
+                transition={
+                  reduce
+                    ? { duration: 0 }
+                    : flipped
+                      // why: 1.15s = the blow-away (0.55) plus the flip's own
+                      // delay + duration (0.28 + 0.8 ≈ 1.08). The card is fully
+                      // revealed and face-on before it starts turning flat, so
+                      // the two moves read as beats instead of a single smear.
+                      ? { duration: 0.75, ease: EASE, delay: 1.15 }
+                      // reverse: snap back upright immediately, so the card is
+                      // portrait again by the time it re-enters the deck.
+                      : { duration: 0.3, ease: EASE }
+                }
+              >
+                <CreditFace />
+              </motion.div>
             </div>
           </div>
         </motion.div>
@@ -341,7 +362,7 @@ function Caption({ show }: { show: boolean }) {
       className="pointer-events-none absolute inset-x-0 bottom-5 flex flex-col items-center"
     >
       <p className="text-xs text-faint">Your best card, net of fees</p>
-      <p className="font-display text-2xl font-semibold text-gradient">+AED 3,100 / year</p>
+      <p className="font-display text-2xl font-semibold text-clay">+AED 3,100 / year</p>
     </motion.div>
   );
 }

@@ -12,7 +12,7 @@ import { cn } from "@/lib/cn";
 
 /*
   BurjSunrise — the signature hero moment: the low golden-hour sun cresting from
-  behind the Dubai skyline, the Burj Khalifa at its centre. Warm sky wash → a
+  behind the Dubai skyline, the Emirates Towers at its centre. Warm sky wash → a
   blooming sun disc → soft god-rays → a backlit skyline → drifting heat motes.
   The ONE cinematic surface — landing hero + auth pages only, never the working
   screens where it would fight the money math.
@@ -21,8 +21,9 @@ import { cn } from "@/lib/cn";
   atmospheric perspective (far = lighter, hazier, higher; near = darker, sharper,
   lower) and mouse parallax (near layers shift more than far), so it reads as a
   real skyline in 3D rather than one flat cut-out. Buildings have varied
-  silhouettes — setbacks, antennas, domes, the twin Emirates Towers, the Burj Al
-  Arab sail — with the Burj Khalifa as the tallest centrepiece.
+  silhouettes — setbacks, antennas, domes, the Burj Al Arab sail, and the twin
+  Emirates Towers, which sit in the row at the same height as their neighbours and
+  are marked out only by their raked tops.
 
   Discipline: plays IN once on load then settles. prefers-reduced-motion renders
   the final resting frame with no motion (and no parallax). Decorative backdrop:
@@ -40,98 +41,134 @@ type B = { x: number; w: number; top: number; cap?: Cap };
 
 // FAR row — short, hazy, high on the horizon. Reads as distant downtown.
 const FAR: B[] = [
-  { x: 30, w: 56, top: 404 }, { x: 96, w: 40, top: 384, cap: "antenna" },
-  { x: 150, w: 74, top: 410 }, { x: 236, w: 46, top: 390 },
-  { x: 300, w: 58, top: 372 }, { x: 372, w: 46, top: 400 },
-  { x: 436, w: 70, top: 410 }, { x: 520, w: 42, top: 388 },
-  { x: 576, w: 60, top: 398 }, { x: 700, w: 50, top: 378, cap: "antenna" },
-  { x: 792, w: 86, top: 410 }, { x: 892, w: 44, top: 392 },
-  { x: 1060, w: 54, top: 388 }, { x: 1128, w: 76, top: 410 },
-  { x: 1220, w: 46, top: 378 }, { x: 1286, w: 66, top: 400 },
-  { x: 1364, w: 60, top: 410 },
+  { x: 0, w: 56, top: 404 }, { x: 77, w: 40, top: 384, cap: "antenna" },
+  { x: 132, w: 74, top: 410 }, { x: 225, w: 46, top: 390 },
+  { x: 289, w: 58, top: 372 }, { x: 369, w: 46, top: 400 },
+  { x: 439, w: 70, top: 410 }, { x: 531, w: 42, top: 388 },
+  { x: 595, w: 60, top: 398 }, { x: 673, w: 38, top: 402 },
+  { x: 735, w: 50, top: 378, cap: "antenna" },
+  { x: 803, w: 86, top: 410 }, { x: 901, w: 44, top: 392 },
+  { x: 961, w: 44, top: 396 }, { x: 1017, w: 36, top: 384 },
+  { x: 1067, w: 54, top: 388 }, { x: 1134, w: 76, top: 410 },
+  { x: 1230, w: 46, top: 378 }, { x: 1298, w: 66, top: 400 },
+  { x: 1380, w: 60, top: 410 },
 ];
 
-// MID row — medium height, more character: the twin Emirates Towers (pitched),
-// a dome, a couple of setbacks.
+// MID row — medium height, more character: a pitched pair, a dome, a couple of
+// setbacks. (Generic downtown filler — the real Emirates Towers are the NEAR
+// centrepiece further along.)
 const MID: B[] = [
-  { x: 20, w: 50, top: 360 }, { x: 84, w: 64, top: 392 },
-  { x: 158, w: 70, top: 376 }, { x: 240, w: 48, top: 352 },
-  { x: 300, w: 34, top: 328, cap: "pitch" }, { x: 342, w: 34, top: 336, cap: "pitch" }, // Emirates Towers
-  { x: 414, w: 58, top: 384 }, { x: 486, w: 72, top: 392, cap: "step" },
-  { x: 600, w: 54, top: 356, cap: "dome" }, { x: 678, w: 60, top: 384 },
-  { x: 770, w: 82, top: 392 }, { x: 1082, w: 60, top: 358 },
-  { x: 1160, w: 70, top: 388, cap: "antenna" }, { x: 1250, w: 56, top: 372 },
-  { x: 1330, w: 84, top: 392 },
+  { x: 0, w: 50, top: 360 }, { x: 76, w: 64, top: 392 },
+  { x: 158, w: 70, top: 376 }, { x: 251, w: 48, top: 352 },
+  { x: 321, w: 34, top: 328, cap: "pitch" }, { x: 381, w: 34, top: 336, cap: "pitch" },
+  { x: 444, w: 58, top: 384 }, { x: 529, w: 72, top: 392, cap: "step" },
+  { x: 628, w: 54, top: 356, cap: "dome" }, { x: 704, w: 60, top: 384 },
+  { x: 795, w: 82, top: 392 }, { x: 899, w: 56, top: 374 },
+  { x: 969, w: 68, top: 386 }, { x: 1057, w: 42, top: 360, cap: "dome" },
+  { x: 1113, w: 60, top: 358 },
+  { x: 1190, w: 70, top: 388, cap: "antenna" }, { x: 1276, w: 56, top: 372 },
+  { x: 1356, w: 84, top: 392 },
 ];
 
-// NEAR row — foreground, tallest and darkest. Burj Khalifa + Burj Al Arab sail
-// are rendered separately (below); these are the chunky supporting towers.
+// NEAR row — foreground, tallest and darkest. The Emirates Towers + Burj Al Arab
+// sail are rendered separately (below); these are the chunky supporting towers.
 const NEAR: B[] = [
-  { x: 40, w: 78, top: 372, cap: "antenna" }, { x: 138, w: 96, top: 392 },
-  { x: 250, w: 70, top: 350, cap: "step" }, { x: 470, w: 88, top: 384, cap: "step" },
-  { x: 582, w: 76, top: 362 }, { x: 682, w: 96, top: 392, cap: "antenna" },
-  { x: 1240, w: 84, top: 368 }, { x: 1338, w: 96, top: 392 },
+  { x: 0, w: 78, top: 372, cap: "antenna" }, { x: 91, w: 96, top: 392 },
+  { x: 214, w: 70, top: 350, cap: "step" }, { x: 311, w: 62, top: 386 },
+  { x: 398, w: 42, top: 368, cap: "step" }, { x: 455, w: 88, top: 384, cap: "step" },
+  { x: 562, w: 76, top: 362 }, { x: 663, w: 96, top: 392, cap: "antenna" },
+  // 786–906 is the Emirates Towers pair (drawn separately, below)
+  { x: 937, w: 58, top: 384 }, { x: 1020, w: 70, top: 396 },
+  { x: 1120, w: 32, top: 376, cap: "antenna" },
+  // 1168–1214 is the Burj Al Arab sail (drawn separately, below)
+  { x: 1243, w: 84, top: 368 }, { x: 1344, w: 96, top: 392 },
 ];
 
-// Burj Khalifa — centred at x=980. The LEFT and RIGHT edges step in at DIFFERENT
-// heights and widths (below), so the setbacks are staggered/asymmetric — the real
-// tower's spiralling wings, not a mirrored cutout. A thin antenna rectangle stands
-// on top (rendered in JSX) for the tower's signature point.
-const BURJ_CX = 980;
+// ── Emirates Towers ─────────────────────────────────────────────────────────
+// The centrepiece: their own buildings, kept out of the FAR/MID/NEAR arrays
+// because those are plain rectangles with a cap.
+//
+// The whole silhouette is four straight lines per tower, which is exactly why
+// they work here — the form is genuinely angular, so there's nothing to
+// approximate. Each tower is a triangular-plan shaft whose roof is one steeply
+// raked plane: the shaft's two edges simply stop at DIFFERENT heights (a low
+// "eave" on one side, a high "apex" on the other) and a straight line connects
+// them, with a thin mast standing on the apex.
+//
+// The pair are mirror images, apex to the outside, so the slopes fall inward
+// toward the gap between them and the two read as a gateway. Flip `dir` on both
+// to rake them the other way.
+//
+// They carry NO surface detail — no fins, banding or lit windows. Everything here
+// is a flat silhouette, and giving one pair of buildings a texture nothing else
+// has would break the skyline's visual language. The raked roof does the work.
+const GROUND_Y = 520;
 
-// Global width scalar for the tower — the halfwidth tables below stay readable as
-// ratios and this one number sets the overall girth. At 1.26 the base spans
-// x≈930–1030, still clear of the NEAR tower ending at 778 and the sail at 1160.
-const BURJ_W = 1.26;
+type Tower = {
+  cx: number; // centre x at the base
+  halfW: number; // half-width at the base
+  eaveY: number; // where the low side of the raked roof meets the shaft
+  apexY: number; // the high corner of the raked roof
+  mastY: number; // top of the mast standing on the apex
+  dir: 1 | -1; // which side the apex sits on
+};
 
-// The spire. It starts at y=BURJ_SPIRE_TOP and runs down past the body's top
-// setback (y≈62) so it seats inside the mass with no seam — so the VISIBLE spire
-// is ~36 units against a ~458-unit body, roughly 7% of total height.
-const BURJ_SPIRE_TOP = 26;
-const BURJ_SPIRE_BOTTOM = 64;
-const BURJ_SPIRE_W = 3.2;
-
-// [halfWidth, yTop], bottom → top. Slender, finely tiered (concave taper), with
-// the two edges deliberately out of step so the setbacks stagger like the real
-// tower's spiralling wings.
-// why: the body stops at the last WIDE setback (~y=62) rather than tapering all the
-// way to a point — the final ~60px is the spire, drawn as one thin rectangle below,
-// which is what actually reads as "the Burj" at a glance.
-const BURJ_R: [number, number][] = [
-  [40, 520], [37, 470], [34, 430], [30, 388], [27, 352], [23, 314],
-  [20, 280], [17, 246], [14, 214], [11.5, 184], [9.5, 156], [7.5, 130],
-  [6, 106], [4.5, 84], [3.3, 62],
+// Heights sit in the NEAR layer's own band — those buildings top out at y=350–392
+// and their antennas reach y≈325, so the masts here stop at 322 and 348. The pair
+// belongs to the skyline rather than towering over it; their raked tops are what
+// distinguishes them, not their scale.
+//
+// why: the real towers are 354.6 m and 309 m — the shorter is 0.871 of the taller.
+// At 198 and 172 units to the mast tips that ratio is 0.869, so shrinking them to
+// fit the row keeps their true proportion to each other.
+const TOWERS: Tower[] = [
+  { cx: 812, halfW: 26, eaveY: 392, apexY: 352, mastY: 322, dir: -1 }, // Emirates Office Tower (taller)
+  { cx: 883, halfW: 23, eaveY: 406, apexY: 372, mastY: 348, dir: 1 }, // Jumeirah Emirates Towers Hotel
 ];
-const BURJ_L: [number, number][] = [
-  [39, 520], [36, 452], [33, 412], [29, 372], [26, 336], [22.5, 300],
-  [19.5, 266], [16.5, 232], [13.5, 202], [11, 172], [9, 146], [7, 120],
-  [5.6, 98], [4.2, 76], [3.1, 56],
-];
 
-// Points up one edge (bottom → top) with a stepped setback at each level.
-function edgePoints(levels: [number, number][], sign: 1 | -1): [number, number][] {
-  const cx = BURJ_CX;
-  const pts: [number, number][] = [];
-  const [hw0, y0] = levels[0]!;
-  pts.push([cx + sign * hw0 * BURJ_W, y0]);
-  for (let i = 1; i < levels.length; i++) {
-    const [hw, y] = levels[i]!;
-    const [hwPrev] = levels[i - 1]!;
-    pts.push([cx + sign * hwPrev * BURJ_W, y]); // rise at previous width
-    pts.push([cx + sign * hw * BURJ_W, y]); // step inward — the setback
-  }
-  return pts;
+const SHAFT_TAPER = 0.88; // top half-width as a fraction of the base — a subtle lean
+
+// Four points: up one edge, across the raked roof, down the other edge.
+function towerPath(t: Tower): string {
+  const topHalf = t.halfW * SHAFT_TAPER;
+  const leftTopY = t.dir === 1 ? t.eaveY : t.apexY;
+  const rightTopY = t.dir === 1 ? t.apexY : t.eaveY;
+  return [
+    `M ${t.cx - t.halfW} ${GROUND_Y}`,
+    `L ${t.cx - topHalf} ${leftTopY}`,
+    `L ${t.cx + topHalf} ${rightTopY}`,
+    `L ${t.cx + t.halfW} ${GROUND_Y}`,
+    "Z",
+  ].join(" ");
 }
 
-function buildBurjPath(): string {
-  const right = edgePoints(BURJ_R, 1); // bottom → top
-  const left = edgePoints(BURJ_L, -1); // bottom → top
-  const seg = (p: [number, number][]) => p.map(([x, y]) => `${x} ${y}`).join(" L ");
-  // up the right edge, across the flat top, down the left edge, close
-  return `M ${seg(right)} L ${seg([...left].reverse())} Z`;
+// The mast — one thin rectangle standing on the apex corner, its foot set below
+// the apex so it seats in the roof with no seam.
+const MAST_W = 3;
+function mastRect(t: Tower) {
+  const topHalf = t.halfW * SHAFT_TAPER;
+  const x = t.cx + t.dir * (topHalf - MAST_W * 1.6);
+  return { x: x - MAST_W / 2, y: t.mastY, width: MAST_W, height: t.apexY - t.mastY + 10 };
 }
 
-const BURJ_PATH = buildBurjPath();
+// Both towers: a shaft and a mast each, nothing more. Deliberately as plain as the
+// Building() rectangles around them — same flat fill, no surface detail — so what
+// sets them apart is purely the raked roofline, not a different visual language.
+function EmiratesTowers() {
+  return (
+    <g fill="url(#towersFill)">
+      {TOWERS.map((t, i) => {
+        const m = mastRect(t);
+        return (
+          <g key={i}>
+            <path d={towerPath(t)} />
+            <rect x={m.x} y={m.y} width={m.width} height={m.height} />
+          </g>
+        );
+      })}
+    </g>
+  );
+}
 
 // Per-layer vertical gradient fills. Warm, backlit brown; far is lightest/haziest
 // and near is darkest — atmospheric perspective doing the depth cue.
@@ -155,21 +192,21 @@ const GRAD_DEFS: Record<string, ReactElement> = {
       <stop offset="100%" stopColor="#5a3418" stopOpacity="0.82" />
     </linearGradient>
   ),
-  // The Burj's own fill — same construction as nearFill (one warm vertical ramp,
+  // The centrepiece fill — same construction as nearFill (one warm vertical ramp,
   // darkest at the top) so it stays in the skyline's visual language, with two
   // deliberate differences:
   //
   // 1. gradientUnits="userSpaceOnUse" over the full 0→520 viewBox. The others use
   //    the default objectBoundingBox, which fits the whole ramp to each element's
-  //    OWN box — that made the spire render its base in the ramp's lightest colour
-  //    right where it meets the tower's darkest, so the tip read as a detached
-  //    lighter stick. Anchoring to user space makes body + spire one continuous
-  //    shadow, which is the whole point of a silhouette.
-  // 2. A few steps deeper and more opaque throughout. why: the tower sits directly
-  //    in front of the sun (both at 68% width), so it's the most backlit object in
-  //    the frame and should read as the deepest shadow in it.
-  burjFill: (
-    <linearGradient id="burjFill" x1="0" y1="0" x2="0" y2="520" gradientUnits="userSpaceOnUse">
+  //    OWN box — that would make a mast render its base in the ramp's lightest
+  //    colour right where it meets the tower's darkest, so the tip would read as a
+  //    detached lighter stick. Anchoring to user space makes every piece of the
+  //    centrepiece share one continuous shadow, the whole point of a silhouette.
+  // 2. A few steps deeper and more opaque throughout. why: the centrepiece sits
+  //    directly in front of the sun (both at 68% width), so it's the most backlit
+  //    object in the frame and should read as the deepest shadow in it.
+  towersFill: (
+    <linearGradient id="towersFill" x1="0" y1="0" x2="0" y2="520" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stopColor="#1d1208" stopOpacity="0.98" />
       <stop offset="72%" stopColor="#33200f" stopOpacity="0.95" />
       <stop offset="100%" stopColor="#452710" stopOpacity="0.9" />
@@ -387,38 +424,35 @@ export function BurjSunrise({ className }: { className?: string }) {
               <svg
                 className={cn("absolute inset-0 h-full w-full", layer.blur)}
                 viewBox="0 0 1440 520"
-                preserveAspectRatio="xMidYMax meet"
+                // why: slice, not meet. The rows now run the full 0–1440 of the
+                // viewBox, but `meet` fits the whole box INSIDE the element — on a
+                // wide viewport (1920×~500) that scales to 1385px and leaves ~267px
+                // of blank sky at each edge no matter how the buildings are spaced.
+                // `slice` covers instead, and YMax anchors the crop to the ground so
+                // the overflow comes off the empty top, not the skyline.
+                preserveAspectRatio="xMidYMax slice"
               >
                 {/* Only this layer's gradient — keeps ids unique across the three
-                    SVGs. The near layer also carries the Burj's shadow fill. */}
+                    SVGs. The near layer also carries the centrepiece shadow fill. */}
                 <defs>
                   {GRAD_DEFS[layer.grad]}
-                  {layer.key === "near" && GRAD_DEFS.burjFill}
+                  {layer.key === "near" && GRAD_DEFS.towersFill}
                 </defs>
 
                 {layer.buildings.map((b, i) => (
                   <Building key={i} b={b} fill={`url(#${layer.grad})`} />
                 ))}
 
-                {/* Near layer also carries the two icons + the Burj centrepiece. */}
+                {/* Near layer also carries the sail + the Emirates Towers. */}
                 {layer.key === "near" && (
                   <>
-                    {/* Burj Al Arab — the sail, to the Burj Khalifa's right. */}
+                    {/* Burj Al Arab — the sail, out to the right (x 1168–1214). */}
                     <path
-                      d="M1206 520 L1206 300 Q1158 356 1160 520 Z"
+                      d="M1214 520 L1214 300 Q1166 356 1168 520 Z"
                       fill="url(#nearFill)"
                     />
-                    {/* Burj Khalifa — asymmetric setbacks + a standing antenna
-                        mast, read as one unbroken backlit shadow. */}
-                    <path d={BURJ_PATH} fill="url(#burjFill)" />
-                    {/* the tip — one thin rectangle seated on the last setback */}
-                    <rect
-                      x={BURJ_CX - BURJ_SPIRE_W / 2}
-                      y={BURJ_SPIRE_TOP}
-                      width={BURJ_SPIRE_W}
-                      height={BURJ_SPIRE_BOTTOM - BURJ_SPIRE_TOP}
-                      fill="url(#burjFill)"
-                    />
+                    {/* Emirates Towers — in the row, not above it. */}
+                    <EmiratesTowers />
                   </>
                 )}
               </svg>

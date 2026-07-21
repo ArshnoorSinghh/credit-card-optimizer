@@ -105,7 +105,7 @@ export function PortfolioResults({ result }: { result: PortfolioResult | null })
                   <CountTo
                     value={active.netAnnualValue}
                     format={aed}
-                    className="mt-1 block text-5xl font-semibold text-gradient"
+                    className="mt-1 block text-5xl font-semibold text-clay"
                   />
                 </div>
                 <div className="text-right text-sm text-muted">
