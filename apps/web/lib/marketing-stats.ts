@@ -12,19 +12,19 @@
   it stays wrong until a human happens to re-count. Now the test breaks instead.
 */
 
-export const CARD_COUNT = 54;
+export const CARD_COUNT = 53;
 
 export const BANK_COUNT = 12;
 
 /*
   Distinct 1-, 2- and 3-card portfolios over CARD_COUNT cards:
-  C(54,1) + C(54,2) + C(54,3) = 54 + 1,431 + 24,804 = 26,289.
+  C(53,1) + C(53,2) + C(53,3) = 53 + 1,378 + 23,426 = 24,857.
 
   Note this is the size of the SEARCH SPACE, not a measure of work done — it is
   the card count restated. It grows cubically, so adding a handful of cards moves
-  it a long way (51 cards gave 22,151).
+  it a long way (54 cards gave 26,289; 51 cards gave 22,151).
 */
-export const PORTFOLIO_COUNT = 26_289;
+export const PORTFOLIO_COUNT = 24_857;
 
 /** "26k+" — the rounded form used in the stat row. */
 export const PORTFOLIO_COUNT_K = Math.floor(PORTFOLIO_COUNT / 1000);
