@@ -142,9 +142,9 @@ export const DEFAULT_VALUATIONS: ValuationTable = {
   "360 Rewards Points": { aedPerUnit: 0.0075, confidence: "low", note: "NOT researched — new program (Standard Chartered 360 Rewards). Placeholder." },
   "AirRewards": { aedPerUnit: 0.0075, confidence: "low", note: "NOT researched — new program (Air Arabia AirRewards). Placeholder." },
   "Amazon Reward Points": { aedPerUnit: 0.0075, confidence: "low", note: "NOT researched — new program (EI Amazon). Placeholder; rates are percent-quoted so value is placeholder-invariant." },
-  // EI SmartMiles are quoted per-AED (unit counts matter), so the placeholder DOES
-  // affect value here — deliberately conservative to avoid an absurd implied return.
-  "EI SmartMiles": { aedPerUnit: 0.0075, confidence: "low", note: "NOT researched — new program (Emirates Islamic SmartMiles). Conservative placeholder; verify before trusting." },
+  // EI SmartMiles are quoted per-AED (unit counts matter), so the value bites
+  // directly. Researched 2026-07 to 0.010 AED/mile (was a 0.0075 placeholder).
+  "EI SmartMiles": { aedPerUnit: 0.01, confidence: "medium", note: "Emirates Islamic SmartMiles — researched 2026-07 (was 0.0075 placeholder)" },
   // Cashback-type currencies redeemed as statement credit / store credit at face value.
   "Cashback Points": { aedPerUnit: 1.0, confidence: "medium", note: "cashback redeemed as statement credit at face value" },
   "talabat credit": { aedPerUnit: 1.0, confidence: "medium", note: "talabat store credit, spent 1:1 at face value" },

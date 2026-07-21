@@ -263,6 +263,16 @@ function collectFlags(portfolio: CardData[], result: EarnResult): { flags: Score
     });
   }
 
+  // Overall reward cap bound on any contributing card (its gross was truncated).
+  result.overallCapBoundByCard.forEach((bound, i) => {
+    if (bound) {
+      flags.push({
+        level: "low",
+        message: `${result.cards[i]!.card.id}: overall reward cap reached — that card's total earnings were capped`,
+      });
+    }
+  });
+
   if (result.grossAnnualValue.max - result.grossAnnualValue.min > EPS) uncertain = true;
 
   return { flags, uncertain };

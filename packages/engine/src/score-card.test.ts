@@ -22,38 +22,35 @@ const PROFILE: SpendingProfile = {
 };
 
 /**
- * Case 1 — fab_cashback after the 2026-07 data (currency FAB Rewards @ 0.007,
- * min-spend gate AED 3,000, category caps in POINTS, overall_cap 1000 unmodeled).
+ * Case 1 — fab_cashback (currency FAB Rewards, cashback type, min-spend gate 3,000,
+ * overall_cap 1000 AED/mo). Its category caps are in AED (cashback convention), so
+ * "monthly_cap: 150" means AED 150/mo, NOT 150 FAB Rewards.
  *
- * NOTE on the tiny 5% bonuses: the supermarkets/fashion/dining categories quote
- * "5%" but their monthly_cap is 150 in FAB Rewards UNITS — worth only ~1 AED/mo at
- * 0.007 — so each bonus binds almost immediately and the over-cap spend reroutes to
- * the base rate. That is a data-shape question (is the 150 an AED cap or a points
- * cap?) flagged in the review notes, not a scorer bug: the scorer honours the cap
- * as the data states it, in the currency's units.
- *
- * Above the gate (PROFILE totals 16,500/mo >= 3,000) the bonuses are active:
- *   supermarkets/fashion/dining each: 5% capped to 150 units/mo -> 1800/yr
- *                                     -> *0.007 = 12.6 AED each  (cap binds monthly)
- *   non_aed_spend (international 1500): 3% -> 77,142.857 units/yr -> 540 AED
- *   base_rate 1% on the remaining ~14,937/mo -> 256,062.857 units/yr -> 1,792.44 AED
- *   Gross = 12.6*3 + 540 + 1792.44 = 2,370.24. Fee 300, no waiver.
+ * Above the gate (PROFILE totals 16,500/mo >= 3,000):
+ *   supermarkets (groceries 5000): 5% = 250/mo, capped to AED 150/mo -> 1,800/yr;
+ *                                  the AED 3,000 productive slice earns here, the
+ *                                  2,000 overflow reroutes to the base.
+ *   fashion (maps to `other`, 3000): 5% = 150/mo (at the cap) -> 1,800/yr.
+ *   dining (2000): 5% = 100/mo (< 150 cap) -> 1,200/yr.
+ *   non_aed (international 1500): 3% -> 540/yr.
+ *   base 1% on the remaining spend (fuel 1000 + travel 4000 + 2000 overflow) -> 840/yr.
+ *   Gross = 1,800 + 1,800 + 1,200 + 540 + 840 = 6,180. Fee 300, no waiver.
+ *   (overall_cap 1000 AED/mo = 12,000/yr is NOT reached at 6,180/yr.)
  */
-describe("scoreCard — points cashback with unit caps + min-spend gate (fab_cashback)", () => {
+describe("scoreCard — cashback with AED caps + min-spend gate (fab_cashback)", () => {
   const score = scoreCard(PROFILE, byId("fab_cashback"));
 
-  it("binds the (points) monthly cap on the 5% supermarket bonus", () => {
+  it("reads the 150 cap as AED 150/mo (not 150 FAB Rewards) and binds it", () => {
     const supermarkets = score.breakdown.find((b) => b.cardCategory === "supermarkets");
-    expect(supermarkets?.annualUnits.min).toBe(1800); // 150 units/mo cap * 12
-    expect(supermarkets?.annualValueAed.min).toBeCloseTo(12.6, 6); // 1800 * 0.007
+    expect(supermarkets?.annualValueAed.min).toBeCloseTo(1800, 6); // AED 150/mo * 12
     expect(supermarkets?.capBound).toBe("monthly");
   });
 
   it("matches the hand-computed gross/net above the gate", () => {
-    expect(score.grossAnnualValue.min).toBeCloseTo(2370.24, 2);
+    expect(score.grossAnnualValue.min).toBeCloseTo(6180, 6);
     expect(score.fees).toMatchObject({ annualFeeAed: 300, year1FeeAed: 300, ongoingFeeAed: 300 });
-    expect(score.netAnnualValue).toBeCloseTo(2070.24, 2); // 2370.24 - 300
-    expect(score.netAnnualValueYear1).toBeCloseTo(2070.24, 2); // no waiver
+    expect(score.netAnnualValue).toBeCloseTo(5880, 6); // 6180 - 300
+    expect(score.netAnnualValueYear1).toBeCloseTo(5880, 6); // no waiver
     expect(score.flags.some((f) => /cap reached/i.test(f.message))).toBe(true);
   });
 
@@ -139,6 +136,98 @@ describe("scoreCard — free-for-life points card (fab_rewards_indulge)", () => 
     expect(score.uncertain).toBe(true);
     expect(score.flags.some((f) => /Valuation of "FAB Rewards"/.test(f.message))).toBe(true);
     expect(score.flags.some((f) => /monthly_spend_bonus.*Threshold lump bonus/i.test(f.message))).toBe(true);
+  });
+});
+
+/**
+ * Cap-unit resolution + overall_cap, hand-computed on synthetic cards so the math
+ * is unambiguous. Cashback caps are AED; points/miles caps are reward units.
+ */
+function synthCard(over: Partial<Card> & { rewards: Card["rewards"] }): Card {
+  return {
+    id: "synth",
+    name: "Synth",
+    bank: "",
+    network: "",
+    tier: "",
+    eligibility: { min_monthly_salary_aed: 0, uae_resident_required: false, min_age: 0, salary_transfer_required: false, employer_restrictions: null },
+    fees: { annual_fee_aed: 0, waiver_conditions: null, joining_fee_aed: 0 },
+    redemption: { currency: "AED", primary_uses: [], redemption_url: "" },
+    benefits: [],
+    source_url: "",
+    ...over,
+  };
+}
+
+describe("scoreCard — cashback category caps are AED, not reward units", () => {
+  it("caps a 5% bonus at AED 150/mo even when the currency is valued below 1.0", () => {
+    // Currency valued 0.01. A "150" cap must mean AED 150/mo (cap ÷ 0.01 = 15,000
+    // units), NOT 150 units (= AED 1.50/mo). groceries 5,000 @ 5% = AED 250/mo,
+    // capped to AED 150/mo -> 1,800/yr. Without the AED interpretation this would be
+    // ~AED 18/yr — the fab_cashback bug this fixes.
+    const card = synthCard({
+      rewards: {
+        type: "cashback",
+        currency: "SynthCash",
+        base_rate: "0% on all spend",
+        categories: [{ category: "groceries", rate: "5%", monthly_cap: 150, annual_cap: null }],
+        overall_cap: null,
+        min_monthly_spend_required_aed: 0,
+      },
+    });
+    const vals = withValuations({ SynthCash: { aedPerUnit: 0.01, confidence: "low" } });
+    const score = scoreCard({ groceries: 5000 }, card, vals);
+    const groceries = score.breakdown.find((b) => b.cardCategory === "groceries");
+    expect(groceries?.annualValueAed.min).toBeCloseTo(1800, 6); // AED 150/mo * 12
+    expect(groceries?.capBound).toBe("monthly");
+  });
+});
+
+describe("scoreCard — overall_cap (card-level cap, applied before fees)", () => {
+  // Cashback card: base 10% on all spend, overall_cap AED 100/mo (= 1,200/yr).
+  const cashbackCard = synthCard({
+    rewards: {
+      type: "cashback",
+      currency: "AED",
+      base_rate: "10% on all spend",
+      categories: [],
+      overall_cap: 100,
+      min_monthly_spend_required_aed: 0,
+    },
+  });
+
+  it("does NOT cap below the overall cap", () => {
+    // 500/mo * 10% = 50/mo = 600/yr < 1,200/yr cap.
+    const score = scoreCard({ other: 500 }, cashbackCard);
+    expect(score.grossAnnualValue.min).toBeCloseTo(600, 6);
+    expect(score.flags.some((f) => /Overall reward cap reached/.test(f.message))).toBe(false);
+  });
+
+  it("caps gross at the overall cap above it, and flags it", () => {
+    // 2,000/mo * 10% = 200/mo = 2,400/yr, capped to AED 100/mo * 12 = 1,200/yr.
+    const score = scoreCard({ other: 2000 }, cashbackCard);
+    expect(score.grossAnnualValue.min).toBeCloseTo(1200, 6);
+    expect(score.netAnnualValue).toBeCloseTo(1200, 6); // no fee
+    expect(score.flags.some((f) => /Overall reward cap reached/.test(f.message))).toBe(true);
+  });
+
+  it("treats a points card's overall_cap as reward UNITS", () => {
+    // 1 point/AED, valued 0.5, overall_cap 100 points/mo. spend 1,000/mo -> 12,000
+    // points/yr -> AED 6,000 uncapped; cap 100 pts/mo * 0.5 * 12 = AED 600/yr.
+    const pointsCard = synthCard({
+      rewards: {
+        type: "points",
+        currency: "SynthPts",
+        base_rate: "1 point per AED 1",
+        categories: [],
+        overall_cap: 100,
+        min_monthly_spend_required_aed: 0,
+      },
+    });
+    const vals = withValuations({ SynthPts: { aedPerUnit: 0.5, confidence: "low" } });
+    const score = scoreCard({ other: 1000 }, pointsCard, vals);
+    expect(score.grossAnnualValue.min).toBeCloseTo(600, 6);
+    expect(score.flags.some((f) => /Overall reward cap reached/.test(f.message))).toBe(true);
   });
 });
 
