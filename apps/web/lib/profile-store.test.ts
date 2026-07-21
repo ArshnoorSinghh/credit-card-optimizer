@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { saveProfile, loadProfile, DEFAULT_STORED_PROFILE } from "./profile-store";
+import {
+  saveProfile,
+  loadProfile,
+  saveOwnedCards,
+  DEFAULT_STORED_PROFILE,
+} from "./profile-store";
 import { ALL_CARDS } from "./cards";
 import { DEFAULT_SPEND, DEFAULT_PROFILE } from "./optimizer";
 
@@ -59,6 +64,37 @@ describe("profile store", () => {
 
   it("falls back to an empty list when the stored value isn't an array", () => {
     sessionStorage.setItem(KEY, JSON.stringify({ ownedCardIds: "enbd_skywards" }));
+    expect(loadProfile().ownedCardIds).toEqual([]);
+  });
+
+  it("removes a card without disturbing the rest of the profile", () => {
+    const [a, b, c] = ALL_CARDS.slice(0, 3).map((x) => x.id);
+    saveProfile({
+      spending: { ...DEFAULT_SPEND, dining: 999 },
+      profile: { monthlySalaryAed: 31000, uaeResident: true },
+      bank: "ADCB",
+      ownedCardIds: [a!, b!, c!],
+    });
+
+    saveOwnedCards([a!, c!]); // drop the middle one
+
+    const after = loadProfile();
+    expect(after.ownedCardIds).toEqual([a, c]);
+    // the fields this screen never edits must survive untouched
+    expect(after.spending.dining).toBe(999);
+    expect(after.profile.monthlySalaryAed).toBe(31000);
+    expect(after.bank).toBe("ADCB");
+  });
+
+  it("supports removing the last card", () => {
+    const id = ALL_CARDS[0]!.id;
+    saveProfile({
+      spending: { ...DEFAULT_SPEND },
+      profile: { ...DEFAULT_PROFILE },
+      bank: null,
+      ownedCardIds: [id],
+    });
+    saveOwnedCards([]);
     expect(loadProfile().ownedCardIds).toEqual([]);
   });
 

@@ -1,16 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Show } from "@clerk/nextjs";
 import { motion } from "framer-motion";
-import { Coins, CreditCard, ArrowRight, Sparkles } from "lucide-react";
+import { Coins, CreditCard, ArrowRight, Sparkles, X } from "lucide-react";
 import { Aurora } from "@/components/aurora";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { AiEntry } from "@/components/ai-entry";
-import { useStoredProfile } from "@/lib/profile-store";
+import { useStoredProfile, saveOwnedCards } from "@/lib/profile-store";
 import { runOptimize } from "@/lib/optimizer";
 import { ALL_CARDS } from "@/lib/cards";
 import { aed } from "@/lib/format";
@@ -29,14 +29,28 @@ export default function DashboardPage() {
   // The cards the user actually told us they hold. This used to be the first
   // three cards of their chosen bank, which looked like a wallet but was
   // fabricated — nobody had ever been asked which cards they own.
+  //
+  // Held in local state, not read straight from `stored`, because removing a
+  // card has to re-render immediately; useStoredProfile only snapshots on mount.
+  const [myCardIds, setMyCardIds] = useState<string[]>([]);
+  useEffect(() => {
+    if (ready) setMyCardIds(stored.ownedCardIds);
+  }, [ready, stored.ownedCardIds]);
+
+  function removeCard(id: string) {
+    const next = myCardIds.filter((x) => x !== id);
+    setMyCardIds(next);
+    saveOwnedCards(next);
+  }
+
   const myCards = useMemo(
-    () => stored.ownedCardIds.map((id) => BY_ID.get(id)).filter((c) => c !== undefined),
-    [stored.ownedCardIds],
+    () => myCardIds.map((id) => BY_ID.get(id)).filter((c) => c !== undefined),
+    [myCardIds],
   );
 
   // Recommended cards the user already holds — so the recommendation reads
   // "keep this" rather than "go get this".
-  const ownedIds = useMemo(() => new Set(stored.ownedCardIds), [stored.ownedCardIds]);
+  const ownedIds = useMemo(() => new Set(myCardIds), [myCardIds]);
   const alreadyHeld = best?.cardIds.filter((id) => ownedIds.has(id)) ?? [];
 
   return (
@@ -139,19 +153,39 @@ export default function DashboardPage() {
                 </Link>
               </div>
             ) : (
+              <>
               <ul className="space-y-2">
                 {myCards.map((c) => (
-                  <li key={c.id}>
+                  // why: the remove control is a SIBLING of the link, not inside
+                  // it — a button nested in an anchor is invalid HTML, and the
+                  // click would navigate as well as remove.
+                  <li
+                    key={c.id}
+                    className="flex items-stretch gap-2 rounded-[var(--radius-md)] border border-line bg-surface-2/40 transition-colors hover:border-line-strong"
+                  >
                     <Link
                       href={`/cards/${c.id}`}
-                      className="flex items-center justify-between rounded-[var(--radius-md)] border border-line bg-surface-2/40 px-3 py-2.5 text-sm transition-colors hover:border-line-strong"
+                      className="flex min-w-0 flex-1 items-center justify-between gap-3 px-3 py-2.5 text-sm"
                     >
-                      <span className="font-medium text-fg">{c.name}</span>
-                      <span className="text-faint">{c.bank}</span>
+                      <span className="truncate font-medium text-fg">{c.name}</span>
+                      <span className="shrink-0 text-faint">{c.bank}</span>
                     </Link>
+                    <button
+                      onClick={() => removeCard(c.id)}
+                      aria-label={`Remove ${c.name} from your cards`}
+                      title="Remove"
+                      className="grid w-9 shrink-0 place-items-center rounded-r-[var(--radius-md)] text-faint transition-colors hover:bg-black/[0.04] hover:text-danger"
+                    >
+                      <X className="h-4 w-4" aria-hidden />
+                    </button>
                   </li>
                 ))}
               </ul>
+              <p className="mt-4 text-xs text-faint">
+                Removing a card here only updates your wallet — it doesn&apos;t affect the
+                recommendation.
+              </p>
+              </>
             )}
           </Card>
 

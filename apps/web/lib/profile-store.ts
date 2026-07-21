@@ -57,6 +57,19 @@ export function loadProfile(): StoredProfile {
   }
 }
 
+/**
+ * Replace just the owned-card list, leaving the rest of the profile alone.
+ *
+ * why: the dashboard lets you remove a card without touching spending, salary or
+ * bank. Writing a whole StoredProfile from there would mean reconstructing
+ * fields that screen never edits — the same mistake that would have let the
+ * optimizer's slider wipe this list.
+ */
+export function saveOwnedCards(ids: string[]): void {
+  if (typeof window === "undefined") return;
+  saveProfile({ ...loadProfile(), ownedCardIds: ids });
+}
+
 /** Hook that reads the stored profile on mount (client-only, SSR-safe). */
 export function useStoredProfile(): [StoredProfile, boolean] {
   const [profile, setProfile] = useState<StoredProfile>(DEFAULTS);

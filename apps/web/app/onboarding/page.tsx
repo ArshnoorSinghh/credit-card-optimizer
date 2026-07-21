@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, ArrowLeft, Check, Building2, CreditCard } from "lucide-react";
 import type { SpendCategory } from "@fils/engine";
@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ALL_CARDS, BANKS, cardsByBank } from "@/lib/cards";
 import { CATEGORIES, DEFAULT_SPEND, totalSpend } from "@/lib/optimizer";
-import { saveProfile } from "@/lib/profile-store";
+import { loadProfile, saveProfile } from "@/lib/profile-store";
 import { SpendSlider } from "@/components/spend-slider";
 import { aed } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -27,6 +27,19 @@ export default function OnboardingPage() {
   const [owned, setOwned] = useState<string[]>([]);
   const [spend, setSpend] = useState<Record<SpendCategory, number>>({ ...DEFAULT_SPEND });
   const [salary, setSalary] = useState(20000);
+
+  // Seed from anything already saved, so arriving here from the dashboard's
+  // "Edit" is genuinely an edit. Without this the screen starts blank and
+  // finishing it would replace the user's cards AND reset their spending,
+  // salary and bank to defaults. Runs after mount, so the server and first
+  // client render still agree (no hydration mismatch).
+  useEffect(() => {
+    const seed = loadProfile();
+    setBank(seed.bank);
+    setOwned(seed.ownedCardIds);
+    setSpend(seed.spending);
+    setSalary(seed.profile.monthlySalaryAed);
+  }, []);
 
   function finish() {
     saveProfile({
