@@ -84,8 +84,8 @@ function toEngineCard(row: CardRowWithCategories): Card {
       min_age: row.eligMinAge,
       salary_transfer_required: row.eligSalaryTransferRequired,
       // why the cast: Prisma types JSON columns as the broad `JsonValue`. The seed
-      // writes exactly `string[] | null` here, and cards.json is the only writer.
-      employer_restrictions: row.eligEmployerRestrictions as string[] | null,
+      // writes exactly `string | null` here (free-text caveat), cards.json the only writer.
+      employer_restrictions: row.eligEmployerRestrictions as string | null,
     },
     fees: {
       annual_fee_aed: row.feesAnnualFeeAed,

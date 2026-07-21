@@ -117,6 +117,37 @@ export const DEFAULT_VALUATIONS: ValuationTable = {
     confidence: "low",
     note: "NOT researched — currency is user-customizable; genuinely unknown. Needs valuation.",
   },
+
+  // ── 2026-07 dataset: currency labels renamed + new programs added ──────────────
+  // The hand-verified 2026-07 data relabeled several currencies and introduced new
+  // ones. RENAMES below inherit the SAME reviewed AED value as their prior label
+  // (that value was researched; only the string changed). NEW programs get a
+  // conservative, flagged placeholder — never a confident value we didn't research.
+  // NOTE: most of the new cards quote rates as a PERCENT ("% back in <points>"),
+  // and for a percent rate the AED value is invariant to aedPerUnit (the unit
+  // conversion cancels), so a placeholder only affects unit COUNTS/caps, not value.
+
+  // Renames of currencies with an existing researched value.
+  "Emirates Skywards Miles": { aedPerUnit: 0.037, confidence: "high", note: "economy-flight value (research 2026-07); was 'Skywards Miles'" },
+  "ADCB TouchPoints": { aedPerUnit: 0.005, confidence: "high", note: "in-store instant redemption (research 2026-07); was 'TouchPoints (convertible to miles)'" },
+  "Citi ThankYou Points": { aedPerUnit: 0.03, confidence: "medium", note: "Citi UAE pay-with-points (research 2026-07); was 'ThankYou Points'" },
+  "DIB Wala’a Rewards": { aedPerUnit: 0.005, confidence: "medium", note: "DIB Wala'a base redemption (research 2026-07); was 'DIB Points'" },
+  "HSBC Rewards Points": { aedPerUnit: 0.0075, confidence: "low", note: "was 'HSBC Reward Points'" },
+  // UPoints: the card data itself states "10 UPoints = AED 1", so 0.1 is issuer-
+  // stated, not guessed. Medium (label was previously unresearched at 0.0075).
+  "UPoints": { aedPerUnit: 0.1, confidence: "medium", note: "issuer-stated 10 UPoints = AED 1 (card data 2026-07); was 'U By Emaar Points'" },
+
+  // NEW programs — conservative flagged placeholders. NEEDS RESEARCH before trusting.
+  "Mashreq Vantage": { aedPerUnit: 0.0075, confidence: "low", note: "NOT researched — new program (Mashreq Vantage). Placeholder; needs valuation." },
+  "360 Rewards Points": { aedPerUnit: 0.0075, confidence: "low", note: "NOT researched — new program (Standard Chartered 360 Rewards). Placeholder." },
+  "AirRewards": { aedPerUnit: 0.0075, confidence: "low", note: "NOT researched — new program (Air Arabia AirRewards). Placeholder." },
+  "Amazon Reward Points": { aedPerUnit: 0.0075, confidence: "low", note: "NOT researched — new program (EI Amazon). Placeholder; rates are percent-quoted so value is placeholder-invariant." },
+  // EI SmartMiles are quoted per-AED (unit counts matter), so the placeholder DOES
+  // affect value here — deliberately conservative to avoid an absurd implied return.
+  "EI SmartMiles": { aedPerUnit: 0.0075, confidence: "low", note: "NOT researched — new program (Emirates Islamic SmartMiles). Conservative placeholder; verify before trusting." },
+  // Cashback-type currencies redeemed as statement credit / store credit at face value.
+  "Cashback Points": { aedPerUnit: 1.0, confidence: "medium", note: "cashback redeemed as statement credit at face value" },
+  "talabat credit": { aedPerUnit: 1.0, confidence: "medium", note: "talabat store credit, spent 1:1 at face value" },
 };
 
 /**

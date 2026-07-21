@@ -165,12 +165,17 @@ describe("normalizeRate — cards.json sweep", () => {
   });
 
   it("matches the reviewed tier counts", () => {
-    // Locked to the manual review of the 2026-07 dataset. Update deliberately if
-    // the data changes — a diff here means a rate string changed tier.
-    expect(byTier(2).length).toBe(2); // "10% on Emaar purchases", "5% on dnata travel"
-    // was 4; enbd_visa_flexi's "Up to 5%" + "Customizable..." were removed by the
-    // 2026-07 data fix (flat-rate points card). Remaining: ei_flex_elite "Variable" x2.
-    expect(byTier(3).length).toBe(2);
+    // Locked to the 2026-07 hand-verified dataset (53 cards, 193 rate strings), after
+    // the normalizer was extended for branded currencies ("5 FAB Rewards per AED 1"),
+    // per-AED-N denominators ("3.5 miles per AED 10") and bounded "up to" ceilings.
+    // Update deliberately if the data changes — a diff here means a rate changed tier.
+    //   tier 1 (clean/high):  126
+    //   tier 2 (verify/low):   46  — scoped/conditional rates that parse to a number
+    //   tier 3 (unresolved):   21  — unpublished rates, threshold/quarter lump bonuses,
+    //                                "up to" ceilings, and the DIB Prime "0 Wala'a" EEA line
+    expect(byTier(1).length).toBe(126);
+    expect(byTier(2).length).toBe(46);
+    expect(byTier(3).length).toBe(21);
   });
 
   it("never assigns a numeric value to a tier-3 rate", () => {

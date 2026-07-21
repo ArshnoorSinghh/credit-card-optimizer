@@ -27,12 +27,11 @@ describe("cards.json conforms to the Card type", () => {
   // amex_platinum, amex_ddf) plus mashreq_solitaire_amex (Mashreq-issued but on the
   // Amex network) — Amex is niche in the UAE and not worth maintaining.
   //
-  // 54 after the card-data verification pass added three corroborated "safe lane"
-  // cards: citi_rewards, adcb_365_cashback and sc_simply_cash. Verified before
-  // changing this number that the additions are intentional — no duplicate ids, no
-  // card removed, and the Amex cleanup still holds.
-  it("has all 54 cards", () => {
-    expect(cards).toHaveLength(54);
+  // 53 after the 2026-07 hand-verified data pass: adib_booking_signature was
+  // removed (product discontinued Dec 2023, closed to new applicants). Verified the
+  // removal is intentional — no duplicate ids, no other card dropped.
+  it("has all 53 cards", () => {
+    expect(cards).toHaveLength(53);
   });
 
   it("gives every card the required nested blocks", () => {
@@ -45,12 +44,14 @@ describe("cards.json conforms to the Card type", () => {
     }
   });
 
-  it("gives every card 0-3 reward categories", () => {
-    // Lower bound was 1, relaxed to 0 by the 2026-07 enbd_visa_flexi fix: a flat-
-    // rate card legitimately has NO bonus categories and earns via base_rate only.
+  it("gives every card 0-7 reward categories", () => {
+    // Lower bound 0: a flat-rate card (enbd_visa_flexi) legitimately has NO bonus
+    // categories and earns via base_rate only. Upper bound raised 3 -> 7 by the
+    // 2026-07 data: several cards (e.g. dib_consumer_platinum, ei_switch_cashback)
+    // now enumerate up to 7 compound reward categories.
     for (const card of cards) {
       expect(card.rewards.categories.length).toBeGreaterThanOrEqual(0);
-      expect(card.rewards.categories.length).toBeLessThanOrEqual(3);
+      expect(card.rewards.categories.length).toBeLessThanOrEqual(7);
     }
   });
 

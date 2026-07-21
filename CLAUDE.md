@@ -1,4 +1,4 @@
-# Fils — Claude Code Briefing
+# Fils - Claude Code Briefing
 
 ## What this is
 Fils is a UAE credit-card optimization platform. Two engines:
