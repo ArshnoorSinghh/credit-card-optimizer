@@ -395,14 +395,39 @@ export function computeFees(card: Card): FeeBreakdown {
 export interface EarnOption {
   cardCategory: string;
   rate: NormalizedRate;
+  /**
+   * Reward caps as they appear in the data. THEIR UNIT DEPENDS ON THE CARD:
+   *  - cashback cards (`rewards.type === "cashback"`) quote caps in AED ("max
+   *    AED 150/mo") — `capsInAed` is true, and the cap math divides by aedPerUnit
+   *    to compare against reward-currency units.
+   *  - points/miles cards quote caps in reward-currency UNITS ("3,000 points/cycle")
+   *    — `capsInAed` is false and the cap is already in units.
+   * This distinction is load-bearing: a cashback card whose currency is valued below
+   * 1.0 (e.g. fab_cashback's "FAB Rewards" @ 0.007) would otherwise read a "150" AED
+   * cap as 150 points ≈ AED 1 and wrongly zero the bonus. See `resolveCapUnits`.
+   */
   monthlyCap: number | null;
   annualCap: number | null;
+  /** True when this card's caps are denominated in AED (cashback), not reward units. */
+  capsInAed: boolean;
   rule: MatchRule;
+}
+
+/**
+ * Resolve a stored cap into reward-currency UNITS, the unit the cap math works in.
+ * For a cashback card the stored cap is AED, so we divide by the AED/unit value;
+ * for a points/miles card it is already in units. null stays null (uncapped).
+ */
+function resolveCapUnits(rawCap: number | null, capsInAed: boolean, aedPerUnit: number): number | null {
+  if (rawCap === null) return null;
+  return capsInAed && aedPerUnit > 0 ? rawCap / aedPerUnit : rawCap;
 }
 
 /** Build the list of ways this card can earn, incl. a virtual base-rate fallback. */
 export function buildEarnOptions(card: Card): { options: EarnOption[]; flags: ScoreFlag[] } {
   const flags: ScoreFlag[] = [];
+  // Cashback cards quote their caps in AED; points/miles cards in reward units.
+  const capsInAed = card.rewards.type === "cashback";
   const options: EarnOption[] = card.rewards.categories.map((cat: RewardCategory) => {
     const rule = MATCH_TABLE[cat.category] ?? {
       kind: "unmatched" as const,
@@ -416,6 +441,7 @@ export function buildEarnOptions(card: Card): { options: EarnOption[]; flags: Sc
       rate: normalizeRate(cat.rate, { monthlyCap: cat.monthly_cap, annualCap: cat.annual_cap }),
       monthlyCap: cat.monthly_cap,
       annualCap: cat.annual_cap,
+      capsInAed,
       rule,
     };
   });
@@ -431,6 +457,7 @@ export function buildEarnOptions(card: Card): { options: EarnOption[]; flags: Sc
       rate: normalizeRate(card.rewards.base_rate),
       monthlyCap: null,
       annualCap: null,
+      capsInAed,
       rule: { kind: "catchall" },
     });
   }
@@ -477,17 +504,21 @@ export function earnOnOption(
   const lo = rate.value ?? rate.range?.min ?? 0;
   const hi = rate.value ?? rate.range?.max ?? null; // null => unbounded upper
 
+  // Caps in reward-currency UNITS (converted from AED for cashback cards).
+  const monthlyCap = resolveCapUnits(option.monthlyCap, option.capsInAed, aedPerUnit);
+  const annualCap = resolveCapUnits(option.annualCap, option.capsInAed, aedPerUnit);
+
   const earn = (v: number): { units: number; aed: number; cap?: "monthly" | "annual" } => {
     const rawMonthly = monthlyUnits(v, rate.unit, monthlySpendAed, aedPerUnit);
     let cap: "monthly" | "annual" | undefined;
     let capped = rawMonthly;
-    if (option.monthlyCap !== null && capped > option.monthlyCap) {
-      capped = option.monthlyCap; // why: caps are in reward-currency units; monthly first
+    if (monthlyCap !== null && capped > monthlyCap) {
+      capped = monthlyCap; // monthly first
       cap = "monthly";
     }
     let annual = capped * 12;
-    if (option.annualCap !== null && annual > option.annualCap) {
-      annual = option.annualCap;
+    if (annualCap !== null && annual > annualCap) {
+      annual = annualCap;
       cap = "annual";
     }
     return { units: annual, aed: annual * aedPerUnit, cap };
@@ -592,9 +623,12 @@ function optionCapacityAnnualAed(option: EarnOption, aedPerUnit: number): number
   // A zero-yield option (unresolved/0% rate) earns nothing regardless, so its cap
   // is immaterial — leave it uncapped for the flow and let earnOnOption report 0.
   if (unitsPerAed <= 0) return null;
+  // Caps in reward-currency UNITS (converted from AED for cashback cards).
+  const mCap = resolveCapUnits(option.monthlyCap, option.capsInAed, aedPerUnit);
+  const aCap = resolveCapUnits(option.annualCap, option.capsInAed, aedPerUnit);
   const capUnits = Math.min(
-    option.monthlyCap !== null ? option.monthlyCap * 12 : Infinity,
-    option.annualCap !== null ? option.annualCap : Infinity,
+    mCap !== null ? mCap * 12 : Infinity,
+    aCap !== null ? aCap : Infinity,
   );
   return capUnits / unitsPerAed;
 }
@@ -843,12 +877,33 @@ export interface EarnResult {
   optionOutcomes: OptionOutcome[];
   /** Only (category, option) slices that received spend. */
   slices: SliceOutcome[];
-  /** Gross AED/year each card contributes (parallel to `cards`). */
+  /** Gross AED/year each card contributes (parallel to `cards`), AFTER any overall cap. */
   perCardGross: AedRange[];
   /** Gross AED/year across all cards, before fees. */
   grossAnnualValue: AedRange;
   /** Monthly AED that earns nothing because every eligible option's cap is full. */
   unearnedMonthlyAed: number;
+  /**
+   * Parallel to `cards`: true when the card's overall reward cap (rewards.overall_cap)
+   * truncated its gross. Set so the receipt can flag "total capped" per card.
+   */
+  overallCapBoundByCard: boolean[];
+}
+
+/**
+ * A card's overall reward cap (rewards.overall_cap) as an ANNUAL AED ceiling on its
+ * total earnings, or null when uncapped.
+ *
+ * The cap is a MONTHLY figure (cbd_one's own rate string says "up to AED 135
+ * monthly"), denominated like the card's category caps: AED for cashback cards,
+ * reward-currency units otherwise. We convert to a monthly AED value, then annualize.
+ */
+function overallCapAnnualAed(card: Card, aedPerUnit: number): number | null {
+  const cap = card.rewards.overall_cap;
+  if (cap === null || cap === undefined) return null;
+  const capsInAed = card.rewards.type === "cashback";
+  const monthlyAed = capsInAed ? cap : cap * aedPerUnit;
+  return monthlyAed * 12;
 }
 
 /**
@@ -963,12 +1018,29 @@ export function earnAcrossCards(spending: SpendingProfile, inputCards: CardData[
     };
   });
 
-  // Per-card gross and portfolio gross.
+  // Per-card gross (pre-cap), summed from its options.
   const perCardGross: AedRange[] = cards.map(() => ({ min: 0, max: 0 }));
   flat.forEach((po, oi) => {
     perCardGross[po.cardIndex]!.min += optionValue[oi]!.min;
     perCardGross[po.cardIndex]!.max += optionValue[oi]!.max;
   });
+
+  // Overall reward cap (rewards.overall_cap): applied AFTER per-category earning,
+  // BEFORE fees, as a ceiling on each card's total gross. why post-hoc rather than
+  // inside the flow: the cap constrains the SUM across categories, not any single
+  // option, so it can't be expressed as an edge capacity; capping the aggregate is
+  // the faithful model and, for a single card, exact. In a multi-card portfolio the
+  // allocator doesn't re-route around a bound overall cap — a documented simplification.
+  const overallCapBoundByCard: boolean[] = cards.map((cd, i) => {
+    const capAed = overallCapAnnualAed(cd.card, cd.aedPerUnit);
+    if (capAed === null) return false;
+    const g = perCardGross[i]!;
+    const bound = g.max > capAed + EPS || g.min > capAed + EPS;
+    g.min = Math.min(g.min, capAed);
+    g.max = Math.min(g.max, capAed);
+    return bound;
+  });
+
   const grossAnnualValue = perCardGross.reduce(
     (acc, g) => ({ min: acc.min + g.min, max: acc.max + g.max }),
     { min: 0, max: 0 },
@@ -981,6 +1053,7 @@ export function earnAcrossCards(spending: SpendingProfile, inputCards: CardData[
     perCardGross,
     grossAnnualValue,
     unearnedMonthlyAed: sol.unearnedAnnualAed / 12,
+    overallCapBoundByCard,
   };
 }
 
@@ -1089,6 +1162,15 @@ export function scoreCard(
     flags.push({
       level: "low",
       message: `${result.unearnedMonthlyAed.toFixed(0)} AED/mo of spend exceeds this card's caps and earns nothing`,
+    });
+  }
+
+  // Overall reward cap truncated total earnings (category lines above are pre-cap).
+  if (result.overallCapBoundByCard[0]) {
+    const capAed = overallCapAnnualAed(card, valuation.aedPerUnit)!;
+    flags.push({
+      level: "low",
+      message: `Overall reward cap reached — total earnings capped at AED ${(capAed / 12).toFixed(0)}/mo (AED ${capAed.toFixed(0)}/yr); the per-category lines above are before this cap`,
     });
   }
 
