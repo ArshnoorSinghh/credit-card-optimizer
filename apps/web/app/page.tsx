@@ -201,7 +201,7 @@ export default function LandingPage() {
                   transition={{ type: "spring", stiffness: 300, damping: 24 }}
                   className="h-full rounded-[var(--radius-lg)] border border-white/10 bg-white/[0.06] p-6 backdrop-blur-sm transition-colors hover:border-white/20"
                 >
-                  <span className="mb-5 inline-grid h-11 w-11 place-items-center rounded-[0.8rem] bg-brand text-white shadow-glow">
+                  <span className="mb-5 inline-grid h-11 w-11 place-items-center rounded-[0.8rem] bg-flame text-white shadow-glow">
                     <f.icon className="h-5 w-5" />
                   </span>
                   <h3 className="text-xl font-semibold">{f.title}</h3>

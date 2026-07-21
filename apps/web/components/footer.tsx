@@ -25,9 +25,12 @@ const COLS = [
   {
     title: "Legal",
     links: [
-      { href: "/", label: "Privacy" },
-      { href: "/", label: "Terms" },
-      { href: "/", label: "Disclosures" },
+      { href: "/legal/privacy", label: "Privacy" },
+      { href: "/legal/terms", label: "Terms" },
+      { href: "/legal/cookies", label: "Cookies" },
+      { href: "/legal/disclaimer", label: "Financial disclaimer" },
+      { href: "/legal/complaints", label: "Complaints" },
+      { href: "/legal", label: "All policies" },
     ],
   },
 ];
@@ -61,7 +64,9 @@ export function Footer() {
       <div className="border-t border-line">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-5 py-6 text-xs text-faint sm:flex-row">
           <span>© {new Date().getFullYear()} Fils. Built in the UAE.</span>
-          <span>Rates are modelled estimates — verify with the issuer before applying.</span>
+          <Link href="/legal/disclaimer" className="transition-colors hover:text-fg">
+            Rates are modelled estimates — verify with the issuer before applying.
+          </Link>
         </div>
       </div>
     </footer>
