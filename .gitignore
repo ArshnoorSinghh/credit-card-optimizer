@@ -8,3 +8,6 @@ dist/
 .vercel/
 .vercel
 .env*
+# ...but templates must be committable — they're the only in-repo record of which
+# vars a deploy needs, and `.env*` above would otherwise swallow them.
+!.env.example
