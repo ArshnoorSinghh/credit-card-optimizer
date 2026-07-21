@@ -38,6 +38,28 @@ fils/
   CLAUDE.md
 ```
 
+## Databases (PROD and DEV are separate — keep it that way)
+Two independent Postgres databases:
+- **PRODUCTION** — Neon endpoint `ep-twilight-voice-at5pi2e5`. Holds live cards +
+  real users. Used ONLY by the deployed site on Vercel (Production + Preview). Its
+  connection string lives in **Vercel env vars only** — never in local files.
+- **DEVELOPMENT** — a separate Neon database (its own endpoint/host). Used by local
+  `pnpm dev`, all tests, and `seed`. Safe to reset/reseed/experiment on. Its
+  connection string lives in local `.env` files only:
+  - `packages/db/.env`, `apps/web/.env.local`, root `.env` → `DATABASE_URL`
+    (pooled DEV) and `DIRECT_URL` (direct DEV). (root `.env.local` has no DB vars.)
+
+**Guard:** `packages/db/src/guard.ts` (`assertDatabaseSafe`) throws if any
+non-production context (local dev, `vitest`, local `seed`) is pointed at the
+production host. The prod DB is permitted only when `NODE_ENV === "production"`
+(Vercel runtime) or with an explicit `FILS_ALLOW_PROD_DB=1` opt-in for a deliberate,
+reviewed prod operation. This is wired into the DB client and the seed script, and
+regression-locked by `packages/db/src/guard.test.ts`.
+
+To change PRODUCTION card data or schema: run migrations via `prisma migrate deploy`
+against prod, or a one-off `FILS_ALLOW_PROD_DB=1 DATABASE_URL=<prod> pnpm --filter
+@fils/db seed`. Never a plain local `seed` (the guard blocks it).
+
 ## Data
 - Source of truth: `finaldata_creditcard.json` (~55 UAE cards). Contains messy,
   inconsistent rate strings.

@@ -21,6 +21,7 @@
 import { PrismaClient, type Card as CardRow, type RewardCategory as CategoryRow } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import type { Card, Redemption } from "@fils/engine";
+import { assertDatabaseSafe } from "./guard";
 
 // why an adapter: Prisma 7 no longer takes a connection URL from schema.prisma —
 // the runtime connection is supplied by a driver adapter. We give it the POOLED
@@ -33,6 +34,8 @@ function createClient(): PrismaClient {
     // Fail loudly at construction rather than with an opaque error on first query.
     throw new Error("DATABASE_URL is not set — cannot connect to Postgres.");
   }
+  // Never let local dev / tests touch the production database (see guard.ts).
+  assertDatabaseSafe(connectionString);
   return new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
 }
 
