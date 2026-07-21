@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { Coins, Bot, SlidersHorizontal, ArrowRight } from "lucide-react";
+import { Coins, SlidersHorizontal, ArrowRight } from "lucide-react";
 import { Aurora } from "@/components/aurora";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Reveal } from "@/components/ui/reveal";
 import { PortfolioResults } from "@/components/portfolio-results";
+import { RafiqChat } from "@/components/rafiq-chat";
 import { useStoredProfile } from "@/lib/profile-store";
 import { runOptimize } from "@/lib/optimizer";
 
@@ -57,17 +58,22 @@ export default function ResultsPage() {
           )}
         </motion.div>
 
-        {/* Next steps: Points Optimizer + AI bot placeholder */}
-        <div className="mt-12 grid gap-5 sm:grid-cols-2">
-          <Card hover glow>
-            <span className="mb-4 inline-grid h-11 w-11 place-items-center rounded-[0.8rem] border border-line bg-surface-2 text-clay">
-              <Coins className="h-5 w-5" />
-            </span>
-            <h3 className="text-xl font-semibold">Points Optimizer</h3>
-            <p className="mt-2 text-muted">
-              Already holding miles or points? See what they&apos;re worth and when to burn them.
-            </p>
-            <Link href="/points" className="mt-5 inline-block">
+        {/* Next steps */}
+        <div className="mt-12 space-y-5">
+          {/* Points Optimizer — full-width CTA */}
+          <Card hover glow className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-4">
+              <span className="inline-grid h-11 w-11 shrink-0 place-items-center rounded-[0.8rem] border border-line bg-surface-2 text-clay">
+                <Coins className="h-5 w-5" />
+              </span>
+              <div>
+                <h3 className="text-xl font-semibold">Points Optimizer</h3>
+                <p className="mt-1 text-muted">
+                  Already holding miles or points? See what they&apos;re worth and when to burn them.
+                </p>
+              </div>
+            </div>
+            <Link href="/points" className="shrink-0 sm:self-center">
               <Button variant="solid" size="sm">
                 Open Points Optimizer
                 <ArrowRight className="h-4 w-4" />
@@ -75,20 +81,8 @@ export default function ResultsPage() {
             </Link>
           </Card>
 
-          {/* AI bot entry point — placeholder space for Arshnoor to wire later */}
-          <Card className="border-dashed">
-            <span className="mb-4 inline-grid h-11 w-11 place-items-center rounded-[0.8rem] border border-line bg-surface-2 text-faint">
-              <Bot className="h-5 w-5" />
-            </span>
-            <div className="flex items-center gap-2">
-              <h3 className="text-xl font-semibold text-muted">Ask Fils AI</h3>
-              <Badge tone="neutral">Coming soon</Badge>
-            </div>
-            <p className="mt-2 text-muted">
-              A chat assistant that explains your recommendation and answers card questions. Entry
-              point reserved — wiring lands after the frontend.
-            </p>
-          </Card>
+          {/* Rafiq — the AI assistant, grounded in the engine */}
+          <RafiqChat spending={stored.spending} profile={stored.profile} />
         </div>
       </div>
     </main>

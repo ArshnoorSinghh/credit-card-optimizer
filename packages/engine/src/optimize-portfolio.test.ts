@@ -184,6 +184,34 @@ describe("optimizePortfolio — cap overflow reroutes to the next-best card", ()
 });
 
 /**
+ * Regression: a card with TWO reward sub-categories that map to the same canonical
+ * category (cinemas + video_streaming → entertainment) must produce ONE allocation
+ * row for that (category, card), not two. The flow fills both caps (two slices);
+ * the receipt merges them so the results page doesn't render "Entertainment" twice.
+ *   cinemas 5% cap AED 100/mo -> 2000 AED/mo productive -> 1200/yr
+ *   video_streaming 5% cap AED 100/mo -> 2000 AED/mo productive -> 1200/yr
+ *   entertainment 4000/mo fills both -> ONE row: 4000/mo spend, 2400/yr value.
+ */
+describe("optimizePortfolio — merges same-category slices on one card into a single row", () => {
+  const card = mkCard("E", {
+    categories: [
+      { category: "cinemas", rate: "5%", monthly_cap: 100 },
+      { category: "video_streaming", rate: "5%", monthly_cap: 100 },
+    ],
+  });
+  const result = optimizePortfolio({ entertainment: 4000 }, OPEN_PROFILE, [card], undefined, {
+    maxCards: 1,
+  });
+
+  it("shows entertainment ONCE for the card, with spend and value summed", () => {
+    const ent = result.best1!.allocations.filter((a) => a.spendCategory === "entertainment");
+    expect(ent).toHaveLength(1);
+    expect(ent[0]).toMatchObject({ cardId: "E", monthlySpendAed: 4000 });
+    expect(ent[0]!.annualValueAed).toEqual({ min: 2400, max: 2400 });
+  });
+});
+
+/**
  * Case 4 — a high-fee card wins gross but loses net; the optimizer picks the
  * cheaper portfolio.
  *   H: groceries 12%, annual fee 5000 (no waiver).  L: groceries 5%, no fee.
