@@ -24,12 +24,17 @@ export default function OptimizerPage() {
   const [spend, setSpend] = useState<Record<SpendCategory, number>>({ ...DEFAULT_SPEND });
   const [salary, setSalary] = useState(DEFAULT_PROFILE.monthlySalaryAed);
   const [bank, setBank] = useState<string | null>(null);
+  // why: this screen doesn't edit the user's owned cards, but it re-saves the
+  // whole profile on every slider move. Without carrying them through, adjusting
+  // one slider would erase the cards they picked during onboarding.
+  const [ownedCardIds, setOwnedCardIds] = useState<string[]>([]);
 
   useEffect(() => {
     const seed = loadProfile();
     setSpend(seed.spending);
     setSalary(seed.profile.monthlySalaryAed);
     setBank(seed.bank);
+    setOwnedCardIds(seed.ownedCardIds);
   }, []);
 
   const result = useMemo(
@@ -40,7 +45,12 @@ export default function OptimizerPage() {
   function update(cat: SpendCategory, v: number) {
     const next = { ...spend, [cat]: v };
     setSpend(next);
-    saveProfile({ spending: next, profile: { monthlySalaryAed: salary, uaeResident: true }, bank });
+    saveProfile({
+      spending: next,
+      profile: { monthlySalaryAed: salary, uaeResident: true },
+      bank,
+      ownedCardIds,
+    });
   }
 
   return (

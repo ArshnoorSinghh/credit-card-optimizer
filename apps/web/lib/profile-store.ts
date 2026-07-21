@@ -16,12 +16,19 @@ export interface StoredProfile {
   spending: Record<SpendCategory, number>;
   profile: UserProfile;
   bank: string | null;
+  /**
+   * Card ids the user says they ALREADY HOLD — not a recommendation, and not
+   * derived from the bank. Before this existed the dashboard had no way to know,
+   * so it showed the first few cards of the chosen bank as if they were yours.
+   */
+  ownedCardIds: string[];
 }
 
 const DEFAULTS: StoredProfile = {
   spending: { ...DEFAULT_SPEND },
   profile: { ...DEFAULT_PROFILE },
   bank: null,
+  ownedCardIds: [],
 };
 
 export function saveProfile(p: StoredProfile): void {
@@ -39,6 +46,11 @@ export function loadProfile(): StoredProfile {
       spending: { ...DEFAULTS.spending, ...(parsed.spending ?? {}) },
       profile: { ...DEFAULTS.profile, ...(parsed.profile ?? {}) },
       bank: parsed.bank ?? null,
+      // why: no version bump for adding this field. A payload written before
+      // ownedCardIds existed is still perfectly valid — it just has no cards —
+      // so defaulting is enough, and bumping KEY would silently discard a
+      // returning user's spending profile to gain nothing.
+      ownedCardIds: Array.isArray(parsed.ownedCardIds) ? parsed.ownedCardIds : [],
     };
   } catch {
     return DEFAULTS;

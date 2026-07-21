@@ -12,10 +12,11 @@ import { Card } from "@/components/ui/card";
 import { AiEntry } from "@/components/ai-entry";
 import { useStoredProfile } from "@/lib/profile-store";
 import { runOptimize } from "@/lib/optimizer";
-import { ALL_CARDS, cardsByBank } from "@/lib/cards";
+import { ALL_CARDS } from "@/lib/cards";
 import { aed } from "@/lib/format";
 
 const NAME = new Map(ALL_CARDS.map((c) => [c.id, c.name]));
+const BY_ID = new Map(ALL_CARDS.map((c) => [c.id, c]));
 
 export default function DashboardPage() {
   const [stored, ready] = useStoredProfile();
@@ -24,7 +25,19 @@ export default function DashboardPage() {
     [ready, stored],
   );
   const best = result?.overallBest ?? null;
-  const savedCards = stored.bank ? cardsByBank(stored.bank).slice(0, 3) : ALL_CARDS.slice(0, 3);
+
+  // The cards the user actually told us they hold. This used to be the first
+  // three cards of their chosen bank, which looked like a wallet but was
+  // fabricated — nobody had ever been asked which cards they own.
+  const myCards = useMemo(
+    () => stored.ownedCardIds.map((id) => BY_ID.get(id)).filter((c) => c !== undefined),
+    [stored.ownedCardIds],
+  );
+
+  // Recommended cards the user already holds — so the recommendation reads
+  // "keep this" rather than "go get this".
+  const ownedIds = useMemo(() => new Set(stored.ownedCardIds), [stored.ownedCardIds]);
+  const alreadyHeld = best?.cardIds.filter((id) => ownedIds.has(id)) ?? [];
 
   return (
     <main className="relative min-h-[calc(100vh-4rem)] overflow-hidden">
@@ -75,6 +88,16 @@ export default function DashboardPage() {
                     Nets you <span className="font-semibold text-clay">{aed(best.netAnnualValue)}</span> / year.
                   </p>
                 )}
+                {/* why: presentation only — the optimizer is not told what you
+                    own, so this cannot change the ranking. Preferring cards a
+                    user already holds is a modelling decision and belongs to the
+                    engine's owner, not to this screen. */}
+                {alreadyHeld.length > 0 && (
+                  <p className="mt-1 text-sm text-faint">
+                    You already hold {alreadyHeld.length} of these —{" "}
+                    {alreadyHeld.map((id) => NAME.get(id) ?? id).join(", ")}.
+                  </p>
+                )}
               </div>
               <Link href="/results">
                 <Button size="sm">
@@ -85,25 +108,51 @@ export default function DashboardPage() {
             </div>
           </Card>
 
-          {/* Saved cards */}
+          {/* Cards you already hold */}
           <Card>
-            <div className="mb-4 flex items-center gap-2">
-              <CreditCard className="h-5 w-5 text-clay" />
-              <h3 className="text-lg font-semibold">Saved cards</h3>
+            <div className="mb-4 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-clay" />
+                <h3 className="text-lg font-semibold">Cards you have</h3>
+              </div>
+              {myCards.length > 0 && (
+                <Link
+                  href="/onboarding"
+                  className="text-sm text-muted transition-colors hover:text-fg"
+                >
+                  Edit
+                </Link>
+              )}
             </div>
-            <ul className="space-y-2">
-              {savedCards.map((c) => (
-                <li key={c.id}>
-                  <Link
-                    href={`/cards/${c.id}`}
-                    className="flex items-center justify-between rounded-[var(--radius-md)] border border-line bg-surface-2/40 px-3 py-2.5 text-sm transition-colors hover:border-line-strong"
-                  >
-                    <span className="font-medium text-fg">{c.name}</span>
-                    <span className="text-faint">{c.bank}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+
+            {myCards.length === 0 ? (
+              <div>
+                <p className="text-sm text-muted">
+                  You haven&apos;t told us which cards you carry yet. Add them and we&apos;ll
+                  show what you already hold against what we&apos;d recommend.
+                </p>
+                <Link href="/onboarding" className="mt-4 inline-block">
+                  <Button variant="solid" size="sm">
+                    Add your cards
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <ul className="space-y-2">
+                {myCards.map((c) => (
+                  <li key={c.id}>
+                    <Link
+                      href={`/cards/${c.id}`}
+                      className="flex items-center justify-between rounded-[var(--radius-md)] border border-line bg-surface-2/40 px-3 py-2.5 text-sm transition-colors hover:border-line-strong"
+                    >
+                      <span className="font-medium text-fg">{c.name}</span>
+                      <span className="text-faint">{c.bank}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
           </Card>
 
           {/* Points snapshot */}

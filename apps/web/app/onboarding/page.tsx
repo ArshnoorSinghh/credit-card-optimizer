@@ -3,13 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, ArrowLeft, Check, Building2 } from "lucide-react";
+import { ArrowRight, ArrowLeft, Check, Building2, CreditCard } from "lucide-react";
 import type { SpendCategory } from "@fils/engine";
 import { Aurora } from "@/components/aurora";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { BANKS, cardsByBank } from "@/lib/cards";
+import { ALL_CARDS, BANKS, cardsByBank } from "@/lib/cards";
 import { CATEGORIES, DEFAULT_SPEND, totalSpend } from "@/lib/optimizer";
 import { saveProfile } from "@/lib/profile-store";
 import { SpendSlider } from "@/components/spend-slider";
@@ -18,10 +18,13 @@ import { cn } from "@/lib/cn";
 
 const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
+const STEP_LABELS = ["Your bank", "Your cards", "Your spending"];
+
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [bank, setBank] = useState<string | null>(null);
+  const [owned, setOwned] = useState<string[]>([]);
   const [spend, setSpend] = useState<Record<SpendCategory, number>>({ ...DEFAULT_SPEND });
   const [salary, setSalary] = useState(20000);
 
@@ -30,9 +33,19 @@ export default function OnboardingPage() {
       spending: spend,
       profile: { monthlySalaryAed: salary, uaeResident: true },
       bank,
+      ownedCardIds: owned,
     });
     router.push("/results");
   }
+
+  function toggleOwned(id: string) {
+    setOwned((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }
+
+  // The cards we offer on step 2. Picking a bank narrows this — which is the
+  // whole point of asking for the bank in the first place. Skipping it shows
+  // everything rather than a dead end.
+  const cardChoices = bank ? cardsByBank(bank) : ALL_CARDS;
 
   const total = totalSpend(spend);
 
@@ -42,18 +55,20 @@ export default function OnboardingPage() {
       <div className="relative mx-auto max-w-2xl px-5 py-14">
         {/* Progress */}
         <div className="mb-8 flex items-center gap-3">
-          {["Your bank", "Your spending"].map((s, i) => (
+          {STEP_LABELS.map((s, i) => (
             <div key={s} className="flex flex-1 items-center gap-3">
               <span
                 className={cn(
-                  "grid h-8 w-8 place-items-center rounded-full text-sm font-semibold transition-colors",
+                  "grid h-8 w-8 shrink-0 place-items-center rounded-full text-sm font-semibold transition-colors",
                   i <= step ? "bg-flame text-white" : "bg-surface-2 text-faint",
                 )}
               >
                 {i < step ? <Check className="h-4 w-4" /> : i + 1}
               </span>
-              <span className={cn("text-sm", i <= step ? "text-fg" : "text-faint")}>{s}</span>
-              {i === 0 && <span className="h-px flex-1 bg-line" />}
+              <span className={cn("hidden text-sm sm:inline", i <= step ? "text-fg" : "text-faint")}>
+                {s}
+              </span>
+              {i < STEP_LABELS.length - 1 && <span className="h-px flex-1 bg-line" />}
             </div>
           ))}
         </div>
@@ -113,6 +128,88 @@ export default function OnboardingPage() {
                 </Button>
               </div>
             </motion.div>
+          ) : step === 1 ? (
+            <motion.div
+              key="cards"
+              initial={{ opacity: 0, x: 24 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -24 }}
+              transition={{ duration: 0.4, ease: EASE }}
+            >
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <h1 className="text-3xl font-semibold md:text-4xl">
+                    Which cards do you have?
+                  </h1>
+                  <p className="mt-3 text-muted">
+                    {bank
+                      ? `Your ${bank} cards. Pick the ones already in your wallet.`
+                      : "Pick the cards already in your wallet."}{" "}
+                    Skip if you&apos;re starting fresh.
+                  </p>
+                </div>
+                {owned.length > 0 && (
+                  <div className="hidden text-right sm:block">
+                    <p className="text-xs text-faint">Selected</p>
+                    <p className="text-2xl font-semibold text-clay">{owned.length}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                {cardChoices.map((c) => {
+                  const selected = owned.includes(c.id);
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => toggleOwned(c.id)}
+                      aria-pressed={selected}
+                      className={cn(
+                        "flex items-start gap-3 rounded-[var(--radius-md)] border p-4 text-left transition-all",
+                        selected
+                          ? "border-flame/60 bg-flame/10"
+                          : "border-line bg-surface hover:border-line-strong",
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "grid h-9 w-9 shrink-0 place-items-center rounded-lg",
+                          selected ? "bg-flame text-white" : "bg-surface-2 text-muted",
+                        )}
+                      >
+                        {selected ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <CreditCard className="h-4 w-4" />
+                        )}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-sm font-medium text-fg">{c.name}</span>
+                        <span className="block text-xs text-faint">{c.bank}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {!bank && (
+                <p className="mt-5 text-sm text-faint">
+                  Showing all {cardChoices.length} cards. Go back and pick a bank to narrow
+                  this down.
+                </p>
+              )}
+
+              <div className="mt-10 flex items-center justify-between">
+                <Button variant="ghost" onClick={() => setStep(0)}>
+                  <ArrowLeft className="h-4 w-4" />
+                  Back
+                </Button>
+                <Button onClick={() => setStep(2)}>
+                  {owned.length > 0 ? "Continue" : "I don't have any yet"}
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </motion.div>
           ) : (
             <motion.div
               key="spend"
@@ -158,7 +255,7 @@ export default function OnboardingPage() {
               </div>
 
               <div className="mt-10 flex items-center justify-between">
-                <Button variant="ghost" onClick={() => setStep(0)}>
+                <Button variant="ghost" onClick={() => setStep(1)}>
                   <ArrowLeft className="h-4 w-4" />
                   Back
                 </Button>
