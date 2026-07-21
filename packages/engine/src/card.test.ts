@@ -23,11 +23,16 @@ const REWARD_TYPES = [
 ] as const satisfies readonly RewardType[];
 
 describe("cards.json conforms to the Card type", () => {
-  // 51 since the 2026-07 Amex cleanup: the 3 American Express UAE cards (amex_gold,
+  // 51 after the 2026-07 Amex cleanup: the 3 American Express UAE cards (amex_gold,
   // amex_platinum, amex_ddf) plus mashreq_solitaire_amex (Mashreq-issued but on the
   // Amex network) — Amex is niche in the UAE and not worth maintaining.
-  it("has all 51 cards", () => {
-    expect(cards).toHaveLength(51);
+  //
+  // 54 after the card-data verification pass added three corroborated "safe lane"
+  // cards: citi_rewards, adcb_365_cashback and sc_simply_cash. Verified before
+  // changing this number that the additions are intentional — no duplicate ids, no
+  // card removed, and the Amex cleanup still holds.
+  it("has all 54 cards", () => {
+    expect(cards).toHaveLength(54);
   });
 
   it("gives every card the required nested blocks", () => {
