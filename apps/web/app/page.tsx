@@ -23,13 +23,21 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Reveal, Stagger, StaggerItem } from "@/components/ui/reveal";
 import { Footer } from "@/components/footer";
+import {
+  CARD_COUNT,
+  BANK_COUNT,
+  PORTFOLIO_COUNT_K,
+  PORTFOLIO_COUNT_ROUNDED,
+} from "@/lib/marketing-stats";
 
 const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
+// why: sourced from lib/marketing-stats, which is asserted against the real card
+// dataset in a test. Hardcoding these inline is how they went stale last time.
 const STATS = [
-  { value: 51, suffix: "", label: "UAE cards modelled" },
-  { value: 12, suffix: "", label: "banks covered" },
-  { value: 22, suffix: "k+", label: "portfolios searched" },
+  { value: CARD_COUNT, suffix: "", label: "UAE cards modelled" },
+  { value: BANK_COUNT, suffix: "", label: "banks covered" },
+  { value: PORTFOLIO_COUNT_K, suffix: "k+", label: "portfolios searched" },
   { value: 2, suffix: "", label: "optimization engines" },
 ];
 
@@ -42,7 +50,7 @@ const STEPS = [
   {
     icon: Calculator,
     title: "We search every combination",
-    body: "The engine scores 22,000+ one-, two-, and three-card portfolios against your exact spend and caps.",
+    body: `The engine scores ${PORTFOLIO_COUNT_ROUNDED}+ one-, two-, and three-card portfolios against your exact spend and caps.`,
   },
   {
     icon: TrendingUp,
@@ -143,7 +151,7 @@ export default function LandingPage() {
               transition={{ duration: 0.8, delay: 0.4 }}
               className="mt-6 text-sm text-faint"
             >
-              51 cards · 12 banks · no card details required
+              {CARD_COUNT} cards · {BANK_COUNT} banks · no card details required
             </motion.p>
           </div>
 
