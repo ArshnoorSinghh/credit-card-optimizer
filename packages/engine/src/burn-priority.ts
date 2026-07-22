@@ -24,6 +24,7 @@
  */
 
 import type { PointsInventory, PointsHolding } from "./points-inventory";
+import { PROGRAM_EXPIRY_DEFAULTS, type ProgramExpiryDefault } from "./expiry-policy";
 import {
   bestRoute,
   supportedClasses,
@@ -37,44 +38,11 @@ export type BurnUrgency = "urgent" | "soon" | "later" | "unknown";
 const URGENT_DAYS = 90;
 const SOON_DAYS = 180;
 
-export interface ProgramExpiryDefault {
-  /** Currency key (matches cards.json / valuations.ts). */
-  currency: string;
-  /** Validity window in months. */
-  months: number;
-  /** What the clock counts from. */
-  basis: "from_earning" | "from_last_activity";
-  note: string;
-}
-
-// why these are flagged estimates: they're program marketing policy, not a per-user
-// confirmed expiry. We surface them to inform, never to manufacture urgency.
-export const PROGRAM_EXPIRY_DEFAULTS: ProgramExpiryDefault[] = [
-  {
-    currency: "Etihad Guest Miles",
-    months: 18,
-    basis: "from_earning",
-    note: "estimated from program policy (18 months, extendable ONLY by flight activity — not purchases/transfers — since June 2024), not user-confirmed",
-  },
-  {
-    currency: "Skywards Miles",
-    months: 36,
-    basis: "from_earning",
-    note: "estimated from program policy (~3 years), not user-confirmed",
-  },
-  {
-    currency: "Smiles Points",
-    months: 24,
-    basis: "from_earning",
-    note: "estimated from program policy, not user-confirmed",
-  },
-  {
-    currency: "Marriott Bonvoy Points",
-    months: 24,
-    basis: "from_last_activity",
-    note: "estimated from program policy (expire after 24 months of inactivity), not user-confirmed",
-  },
-];
+// The expiry table moved to expiry-policy.ts so Engine 1 can flag "these rewards
+// expire" without importing the whole burn engine. Re-exported here so this
+// module's public surface is unchanged.
+export { PROGRAM_EXPIRY_DEFAULTS } from "./expiry-policy";
+export type { ProgramExpiryDefault } from "./expiry-policy";
 
 export interface Devaluation {
   currency: string;

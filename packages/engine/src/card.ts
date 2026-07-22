@@ -18,6 +18,44 @@
  */
 export type RewardType = "cashback" | "points" | "miles";
 
+/**
+ * What happens to rewards when monthly spend falls below
+ * `Rewards.min_monthly_spend_required_aed`.
+ *
+ *  - "degrade" (default): bonus category rates switch off, base rate still earns.
+ *    This is how most threshold cards work (fab_cashback, cbd_one, …), and it was
+ *    the engine's only modelled behaviour.
+ *  - "forfeit": ALL cashback earned in that statement cycle is lost — not reduced
+ *    to base, zeroed. The DIB consumer cards state this explicitly.
+ *
+ * why a mode rather than a boolean: "forfeit" vs "degrade" reads at the call site,
+ * and a boolean named something like `forfeits_below_threshold` inverts awkwardly.
+ * Default is "degrade" so every existing card keeps its current behaviour.
+ */
+export type GateMode = "degrade" | "forfeit";
+
+/**
+ * A segment of spend that earns NOTHING on a particular card, regardless of the
+ * card's advertised rates. Distinct from a 0% rate: the spend is not merely
+ * unrewarded here, it must not be routed to this card at all when another card
+ * could earn on it.
+ *
+ * why this exists: some issuers strip earning from a geography or channel rather
+ * than a merchant category — DIB pays zero Wala'a Rewards on European Economic
+ * Area transactions to offset interchange. That rule is invisible to a rate table.
+ */
+export interface ExcludedSpend {
+  /**
+   * The canonical spend category this exclusion zeroes out on this card. Typed
+   * loosely as `string` here to keep card.ts free of engine imports; the scorer
+   * validates it against its own SpendCategory union and flags an unknown value
+   * rather than silently ignoring the exclusion.
+   */
+  category: string;
+  /** Why the spend earns nothing — surfaced verbatim as a score flag. */
+  reason: string;
+}
+
 export interface Eligibility {
   min_monthly_salary_aed: number;
   uae_resident_required: boolean;
@@ -64,6 +102,11 @@ export interface Rewards {
   overall_cap: number | null;
   /** Minimum monthly spend before any rewards accrue (0 = no minimum). */
   min_monthly_spend_required_aed: number;
+  /**
+   * What falling below `min_monthly_spend_required_aed` costs. Absent = "degrade",
+   * which is the behaviour every card had before this field existed.
+   */
+  gate_mode?: GateMode;
 }
 
 export interface Redemption {
@@ -104,4 +147,7 @@ export interface Card {
   // this as a loud flag on every score so the number is never trusted blindly.
   // Distinct from excluded_from_scoring: the card still ranks, just with a warning.
   data_caveat?: string;
+  // why optional: only a handful of cards strip earning from a whole segment of
+  // spend. Absent = the card earns on everything its rates cover.
+  excluded_spend?: ExcludedSpend[];
 }

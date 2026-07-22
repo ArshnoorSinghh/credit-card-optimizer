@@ -865,7 +865,8 @@
         }
       ],
       "overall_cap": 1000,
-      "min_monthly_spend_required_aed": 4000
+      "min_monthly_spend_required_aed": 4000,
+      "gate_mode": "forfeit"
     },
     "redemption": {
       "currency": "AED cashback",
@@ -947,7 +948,8 @@
         }
       ],
       "overall_cap": 1000,
-      "min_monthly_spend_required_aed": 3000
+      "min_monthly_spend_required_aed": 3000,
+      "gate_mode": "forfeit"
     },
     "redemption": {
       "currency": "AED cashback",
@@ -1052,7 +1054,7 @@
     },
     "rewards": {
       "type": "cashback",
-      "currency": "AED",
+      "currency": "AED (RAKBANK cashback)",
       "base_rate": "Up to 2% standard cashback on eligible worldwide spend",
       "categories": [
         {
@@ -1114,7 +1116,7 @@
     },
     "rewards": {
       "type": "cashback",
-      "currency": "AED",
+      "currency": "AED (RAKBANK cashback)",
       "base_rate": "1% when eligible monthly spend is AED 1,000 to AED 2,999; 1.5% when eligible monthly spend is AED 3,000 or more",
       "categories": [],
       "overall_cap": 300,
@@ -2288,7 +2290,13 @@
       "Visa Infinite travel and lifestyle benefits"
     ],
     "source_url": "https://www.dib.ae/personal/cards/prime-infinite-card",
-    "data_caveat": "All transactions executed within the European Economic Area earn zero Wala'a Rewards; DIB strips point generation on EEA spend to offset interchange margins."
+    "data_caveat": "All transactions executed within the European Economic Area earn zero Wala'a Rewards; DIB strips point generation on EEA spend to offset interchange margins.",
+    "excluded_spend": [
+      {
+        "category": "international",
+        "reason": "DIB pays zero Wala'a Rewards on European Economic Area transactions. Our spend taxonomy has no EEA segment (EEA spend is a subset of 'international'), so this models the conservative bound: ALL international spend on this card earns nothing. Non-EEA foreign spend really would earn 3.5/AED, so this understates the card. Needs a distinct EEA spend segment to model exactly."
+      }
+    ]
   },
   {
     "id": "dib_skywards_infinite",
@@ -2363,7 +2371,7 @@
     },
     "rewards": {
       "type": "cashback",
-      "currency": "AED",
+      "currency": "AED (RAKBANK cashback)",
       "base_rate": "Up to 3% on eligible retail spend",
       "categories": [
         {
