@@ -9,6 +9,7 @@ import { ALL_CARDS } from "@/lib/cards";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CountTo } from "@/components/count-to";
+import { groupAllocationsByCategory, type AllocationGroup } from "@/lib/allocation-groups";
 import { aed, aedRange, label } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
@@ -17,6 +18,91 @@ const BANK = new Map(ALL_CARDS.map((c) => [c.id, c.bank]));
 const nameOf = (id: string) => NAME.get(id) ?? id;
 
 type SizeKey = 1 | 2 | 3;
+
+/**
+ * One category in the "which card for what" receipt.
+ *
+ * The engine can route a single category across two cards (a cap fills and the
+ * overflow goes to the next-best card), which it reports as separate rows. Here
+ * that's one summary row — category, total spend, total earned — with the
+ * per-card split, and its cap flags, revealed on click. Presentation only: every
+ * number shown is a sum of what the engine already returned.
+ */
+function AllocationRow({ group }: { group: AllocationGroup }) {
+  const [open, setOpen] = useState(false);
+  const split = group.parts.length > 1;
+  // Surface a bound cap on the summary too — it explains the split, and a warning
+  // shouldn't be hidden behind a collapsed row.
+  const capBound = group.parts.find((p) => p.capBound)?.capBound;
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="grid w-full grid-cols-[6rem_1fr_auto] items-center gap-3 px-4 py-3 text-left text-sm transition-colors hover:bg-black/[0.04]"
+      >
+        <span className="font-medium text-fg">{label(group.spendCategory)}</span>
+        <span className="text-muted">
+          <span className="tabular-nums">{aed(group.monthlySpendAed)}</span>/mo →{" "}
+          <span className="text-fg">
+            {split ? `${group.parts.length} cards` : nameOf(group.parts[0]!.cardId)}
+          </span>
+        </span>
+        <span className="flex items-center justify-end gap-2 text-right">
+          <span className="tabular-nums text-fg">
+            {aedRange(group.annualValueAed.min, group.annualValueAed.max)}/yr
+          </span>
+          {capBound && (
+            <Badge tone="warning" className="hidden sm:inline-flex">
+              {capBound} cap
+            </Badge>
+          )}
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 shrink-0 text-faint transition-transform",
+              open && "rotate-180",
+            )}
+          />
+        </span>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22 }}
+            className="overflow-hidden"
+          >
+            <ul className="border-t border-line bg-surface-2 px-4 py-2">
+              {group.parts.map((p, i) => (
+                <li
+                  key={`${p.cardId}-${i}`}
+                  className="grid grid-cols-[1fr_auto] items-center gap-3 py-2 text-sm"
+                >
+                  <span className="text-muted">
+                    <span className="text-fg">{nameOf(p.cardId)}</span>{" "}
+                    <span className="text-faint">{BANK.get(p.cardId)}</span> ·{" "}
+                    <span className="tabular-nums">{aed(p.monthlySpendAed)}</span>/mo
+                  </span>
+                  <span className="flex items-center justify-end gap-2 text-right">
+                    <span className="tabular-nums text-muted">
+                      {aedRange(p.annualValueAed.min, p.annualValueAed.max)}/yr
+                    </span>
+                    {p.capBound && <Badge tone="warning">{p.capBound} cap</Badge>}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export function PortfolioResults({ result }: { result: PortfolioResult | null }) {
   const [size, setSize] = useState<SizeKey>(result?.overallBest?.size ?? 1);
@@ -140,27 +226,8 @@ export function PortfolioResults({ result }: { result: PortfolioResult | null })
                   Which card for what
                 </h4>
                 <div className="divide-y divide-line overflow-hidden rounded-[var(--radius-md)] border border-line">
-                  {active.allocations.map((a, i) => (
-                    <div
-                      key={i}
-                      className="grid grid-cols-[6rem_1fr_auto] items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-black/[0.04]"
-                    >
-                      <span className="font-medium text-fg">{label(a.spendCategory)}</span>
-                      <span className="text-muted">
-                        <span className="tabular-nums">{aed(a.monthlySpendAed)}</span>/mo →{" "}
-                        <span className="text-fg">{nameOf(a.cardId)}</span>
-                      </span>
-                      <span className="flex items-center justify-end gap-2 text-right">
-                        <span className="tabular-nums text-fg">
-                          {aedRange(a.annualValueAed.min, a.annualValueAed.max)}/yr
-                        </span>
-                        {a.capBound && (
-                          <Badge tone="warning" className="hidden sm:inline-flex">
-                            {a.capBound} cap
-                          </Badge>
-                        )}
-                      </span>
-                    </div>
+                  {groupAllocationsByCategory(active.allocations).map((g) => (
+                    <AllocationRow key={g.spendCategory} group={g} />
                   ))}
                 </div>
               </div>
