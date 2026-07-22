@@ -23,6 +23,9 @@ import {
   type ValuationEntry,
   type ValuationTable,
 } from "./valuations";
+// Expiry policy is shared with Engine 2's burn engine. Engine 1 only FLAGS it —
+// it never discounts value for expiry. See expiry-policy.ts for why.
+import { PROGRAM_EXPIRY_DEFAULTS } from "./expiry-policy";
 
 /** AED per USD. Fixed peg used to convert "per USD" reward rates to AED spend. */
 export const AED_PER_USD = 3.6725;
@@ -1284,6 +1287,23 @@ export function scoreCard(
       message: `Valuation of "${card.rewards.currency}" is ${valuation.confidence} confidence${
         valuation.note ? ` (${valuation.note})` : ""
       }`,
+    });
+  }
+
+  // --- Reward expiry: state the term, don't price it. ---
+  // why this does NOT set `uncertain` and does NOT reduce the value: the expiry is a
+  // CERTAIN product term, not a soft estimate — the value is exactly what we say it
+  // is, provided the user redeems within the window. What we can't know is their
+  // redemption cadence, so we surface the constraint and let Engine 2's burn engine
+  // rank it against the user's real dates. Marking this "uncertain" would wrongly
+  // dilute the uncertainty signal that flags genuinely unresearched numbers.
+  const expiry = PROGRAM_EXPIRY_DEFAULTS.find((e) => e.currency === card.rewards.currency);
+  if (expiry) {
+    flags.push({
+      level: "low",
+      message: `Rewards expire ${expiry.months} months ${
+        expiry.basis === "from_earning" ? "after being earned" : "after your last account activity"
+      } — redeem within that window or the value is lost (${expiry.note})`,
     });
   }
 

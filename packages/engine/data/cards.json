@@ -1054,7 +1054,7 @@
     },
     "rewards": {
       "type": "cashback",
-      "currency": "AED",
+      "currency": "AED (RAKBANK cashback)",
       "base_rate": "Up to 2% standard cashback on eligible worldwide spend",
       "categories": [
         {
@@ -1116,7 +1116,7 @@
     },
     "rewards": {
       "type": "cashback",
-      "currency": "AED",
+      "currency": "AED (RAKBANK cashback)",
       "base_rate": "1% when eligible monthly spend is AED 1,000 to AED 2,999; 1.5% when eligible monthly spend is AED 3,000 or more",
       "categories": [],
       "overall_cap": 300,
@@ -2371,7 +2371,7 @@
     },
     "rewards": {
       "type": "cashback",
-      "currency": "AED",
+      "currency": "AED (RAKBANK cashback)",
       "base_rate": "Up to 3% on eligible retail spend",
       "categories": [
         {
