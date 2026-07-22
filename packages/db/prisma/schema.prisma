@@ -71,6 +71,15 @@ enum RewardType {
   miles
 }
 
+/// What falling below rewards.min_monthly_spend_required_aed costs: "degrade" drops
+/// to the base rate, "forfeit" loses the whole cycle's rewards. Mirrors the engine's
+/// GateMode union. An enum (like RewardType) so the DB rejects an unknown value
+/// rather than letting it fall back to "degrade" and quietly overstate a card.
+enum GateMode {
+  degrade
+  forfeit
+}
+
 /// A UAE credit card — a faithful 1:1 mirror of one entry in cards.json.
 model Card {
   /// Natural key carried over from the source data, e.g. "fab_cashback".
@@ -113,8 +122,12 @@ model Card {
   rewardsBaseRate                   String     @map("rewards_base_rate")
   rewardsOverallCap                 Float?     @map("rewards_overall_cap")
   rewardsMinMonthlySpendRequiredAed Float      @map("rewards_min_monthly_spend_required_aed")
+  /// Nullable (not defaulted to "degrade") so a card that omits the field in
+  /// cards.json round-trips back out omitted, same rule as excludedFromScoring.
+  rewardsGateMode                   GateMode?  @map("rewards_gate_mode")
 
-  categories RewardCategory[]
+  categories    RewardCategory[]
+  excludedSpend ExcludedSpend[]
 
   // --- Display-only blobs. JSON because the engine never reads them: Engine 1 scores
   // off rewards.*, and Engine 2 keys its valuation model off rewards.currency, not
@@ -164,4 +177,31 @@ model RewardCategory {
   @@index([cardId])
   @@index([category])
   @@map("reward_categories")
+}
+
+/// A segment of spend that earns NOTHING on this card, whatever its advertised
+/// rates say (e.g. DIB pays zero Wala'a Rewards on European Economic Area
+/// transactions).
+///
+/// Relational rather than a JSON blob for the same reason as RewardCategory: the
+/// ENGINE reads this and zeroes earning on it, so it is not display-only, and the
+/// schema's rule is that JSON is reserved for blobs the engine never branches on.
+/// Real rows also make "which cards exclude international spend?" a query.
+model ExcludedSpend {
+  id     Int    @id @default(autoincrement())
+  cardId String @map("card_id")
+  card   Card   @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  /// Preserves the cards.json array order so the DB round-trips the source exactly.
+  position Int
+  /// Canonical spend category, validated against the engine's SpendCategory union
+  /// by the engine (which flags an unknown value rather than ignoring it).
+  category String
+  /// Why the spend earns nothing. Surfaced verbatim as a score flag.
+  reason   String
+
+  @@unique([cardId, position])
+  @@index([cardId])
+  @@index([category])
+  @@map("excluded_spend")
 }

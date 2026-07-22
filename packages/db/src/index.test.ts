@@ -68,6 +68,27 @@ describe("getAllCards", () => {
     const withCategories = cards.find((c) => c.rewards.categories.length > 0)!;
     expect(typeof withCategories.rewards.categories[0]!.rate).toBe("string");
   });
+
+  // The DB is what production reads, so these two engine mechanics only work in the
+  // deployed app if they survive the DB round-trip. The whole-array check above
+  // already proves it; these name the fields so a regression points straight at them.
+  it("carries gate_mode through, and omits it where absent", async () => {
+    const cards = await getAllCards();
+    expect(cards.find((c) => c.id === "dib_consumer_platinum")!.rewards.gate_mode).toBe("forfeit");
+    expect(cards.find((c) => c.id === "dib_consumer_reward")!.rewards.gate_mode).toBe("forfeit");
+    // A card without the field must come back without it, not as gate_mode: null.
+    const plain = cards.find((c) => c.id === "fab_cashback")!;
+    expect("gate_mode" in plain.rewards).toBe(false);
+  });
+
+  it("carries excluded_spend through in order, and omits it where absent", async () => {
+    const cards = await getAllCards();
+    const dib = cards.find((c) => c.id === "dib_prime_infinite")!;
+    expect(dib.excluded_spend).toEqual([
+      { category: "international", reason: expect.stringContaining("European Economic Area") },
+    ]);
+    expect("excluded_spend" in cards.find((c) => c.id === "fab_cashback")!).toBe(false);
+  });
 });
 
 describe("getCardById", () => {
