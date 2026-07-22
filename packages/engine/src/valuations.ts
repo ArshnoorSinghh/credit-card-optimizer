@@ -138,7 +138,12 @@ export const DEFAULT_VALUATIONS: ValuationTable = {
   "UPoints": { aedPerUnit: 0.1, confidence: "medium", note: "issuer-stated 10 UPoints = AED 1 (card data 2026-07); was 'U By Emaar Points'" },
 
   // NEW programs — conservative flagged placeholders. NEEDS RESEARCH before trusting.
-  "Mashreq Vantage": { aedPerUnit: 0.0075, confidence: "low", note: "NOT researched — new program (Mashreq Vantage). Placeholder; needs valuation." },
+  // RESEARCH PRIORITY. Sensitivity analysis (assessValuationFragility, 2026-07)
+  // shows this placeholder is not harmless: for a mid-range profile the recommended
+  // 3-card portfolio is stable only within about -8%/+17% of this number, so an
+  // error we cannot currently rule out changes which cards we recommend. Highest-
+  // value valuation to research next.
+  "Mashreq Vantage": { aedPerUnit: 0.0075, confidence: "low", note: "NOT researched — new program (Mashreq Vantage). Placeholder; needs valuation. Recommendation measurably sensitive to it (stable only within ~±8%)." },
   "360 Rewards Points": { aedPerUnit: 0.0075, confidence: "low", note: "NOT researched — new program (Standard Chartered 360 Rewards). Placeholder." },
   "AirRewards": { aedPerUnit: 0.0075, confidence: "low", note: "NOT researched — new program (Air Arabia AirRewards). Placeholder." },
   "Amazon Reward Points": { aedPerUnit: 0.0075, confidence: "low", note: "NOT researched — new program (EI Amazon). Placeholder; rates are percent-quoted so value is placeholder-invariant." },

@@ -88,6 +88,27 @@ export type {
   CardContribution,
 } from "./optimize-portfolio";
 
+// Sensitivity analysis: how the recommendation responds as one input is varied,
+// and the break-even points where it changes. Built ON TOP of optimizePortfolio.
+export {
+  valuationSensitivity,
+  spendingSensitivity,
+  assessValuationFragility,
+  withFragilityFlags,
+} from "./sensitivity";
+export type {
+  SensitivityCurve,
+  SensitivitySample,
+  SensitivityVariable,
+  FlipPoint,
+  SweepOptions,
+  ValuationSensitivityOptions,
+  SpendingSensitivityOptions,
+  ValuationFragility,
+  FragilityOptions,
+  FragilityAssessment,
+} from "./sensitivity";
+
 // ── Engine 2: Points & Redemption Optimizer ─────────────────────────────────
 
 // Points inventory: the user's manually-entered holdings.
