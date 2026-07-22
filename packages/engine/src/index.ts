@@ -160,6 +160,10 @@ export type {
   RedemptionPlan,
 } from "./recommend-redemptions";
 
+// Reward-expiry policy: shared by Engine 1 (flags the term) and Engine 2 (dates it).
+export { PROGRAM_EXPIRY_DEFAULTS as REWARD_EXPIRY_POLICY } from "./expiry-policy";
+export type { ProgramExpiryDefault as RewardExpiryPolicy } from "./expiry-policy";
+
 // Burn engine: expiry-driven burn priority with flagged program defaults.
 export { burnPriority, PROGRAM_EXPIRY_DEFAULTS, DEVALUATIONS } from "./burn-priority";
 export type {
