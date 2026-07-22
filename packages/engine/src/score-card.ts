@@ -634,8 +634,77 @@ function optionCapacityAnnualAed(option: EarnOption, aedPerUnit: number): number
 }
 
 /** Precompute the portfolio-independent data for one card. */
+/**
+ * Apply a card's `excluded_spend` list: spend in an excluded category earns
+ * NOTHING on this card.
+ *
+ * Implemented by narrowing each option's match rule so no option can claim the
+ * excluded category — a catchall becomes an explicit list of every category
+ * EXCEPT the excluded ones, and a categories rule that ends up empty becomes
+ * "unmatched".
+ *
+ * why narrow the rules instead of zeroing the rate: a 0-rate option is still an
+ * edge the min-cost flow may route spend down. Spend parked on a zero-yield edge
+ * is spend another card in the portfolio could have earned on. Removing the card's
+ * claim to that category makes the allocator route around it, which is the real
+ * behaviour — the issuer doesn't pay, and the user would simply use another card.
+ *
+ * Runs BEFORE scoring (in precomputeCardData), so every consumer — scoreCard,
+ * which-card, the portfolio optimizer — sees the same narrowed options.
+ */
+function applyExcludedSpend(
+  card: Card,
+  options: EarnOption[],
+): { options: EarnOption[]; flags: ScoreFlag[] } {
+  const excluded = card.excluded_spend;
+  if (!excluded || excluded.length === 0) return { options, flags: [] };
+
+  const flags: ScoreFlag[] = [];
+  const known = new Set<string>();
+  for (const e of excluded) {
+    // why flag instead of ignore: a typo'd category would silently disable the
+    // exclusion and quietly overstate the card — the exact failure this models away.
+    if (!(SPEND_CATEGORIES as readonly string[]).includes(e.category)) {
+      flags.push({
+        level: "unknown",
+        message: `Unknown excluded_spend category "${e.category}" on ${card.id} — exclusion NOT applied`,
+      });
+      continue;
+    }
+    known.add(e.category);
+    flags.push({ level: "low", message: `${label(e.category)} earns nothing on this card: ${e.reason}` });
+  }
+  if (known.size === 0) return { options, flags };
+
+  const narrowed = options.map((o): EarnOption => {
+    if (o.rule.kind === "catchall") {
+      return {
+        ...o,
+        rule: { kind: "categories", categories: SPEND_CATEGORIES.filter((c) => !known.has(c)) },
+      };
+    }
+    if (o.rule.kind === "categories") {
+      const kept = o.rule.categories.filter((c) => !known.has(c));
+      return kept.length === 0
+        ? { ...o, rule: { kind: "unmatched", reason: `all categories excluded on ${card.id}` } }
+        : { ...o, rule: { kind: "categories", categories: kept } };
+    }
+    return o; // already unmatched
+  });
+
+  return { options: narrowed, flags };
+}
+
+/** Title-case a category key for a human-readable flag ("international" -> "International"). */
+function label(category: string): string {
+  return category.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export function precomputeCardData(card: Card, valuations: ValuationTable = DEFAULT_VALUATIONS): CardData {
-  const { options, flags } = buildEarnOptions(card);
+  const built = buildEarnOptions(card);
+  const excludedResult = applyExcludedSpend(card, built.options);
+  const options = excludedResult.options;
+  const flags = [...built.flags, ...excludedResult.flags];
   const valuation = resolveValuation(card.rewards.currency, valuations);
   return {
     card,
@@ -932,6 +1001,35 @@ function applySpendGate(cards: CardData[], spending: SpendingProfile): CardData[
   return cards.map((cd) => {
     const threshold = cd.card.rewards.min_monthly_spend_required_aed ?? 0;
     if (threshold <= 0 || totalMonthly >= threshold - EPS) return cd; // no gate, or met
+
+    // --- Forfeiture: the whole cycle's rewards are lost, not reduced to base. ---
+    // why drop EVERY option rather than zero the rates: an option with a 0 rate is
+    // still an edge the flow can route spend down, which would silently strand
+    // spend on a card earning nothing while another card in the portfolio could
+    // have earned on it. Removing the options makes the card unable to claim the
+    // spend at all, so the allocator correctly routes elsewhere — and for a lone
+    // forfeiting card the spend goes unearned, which is exactly the real outcome.
+    //
+    // NOTE the same total-spend simplification as below applies, and it bites
+    // harder here: this is all-or-nothing, so in a multi-card portfolio where only
+    // part of the spend lands on this card, the real cycle spend could be below
+    // threshold even when the profile total clears it. Flagged, not silent.
+    if ((cd.card.rewards.gate_mode ?? "degrade") === "forfeit") {
+      return {
+        ...cd,
+        options: [],
+        yields: [],
+        capacities: [],
+        buildFlags: [
+          ...cd.buildFlags,
+          {
+            level: "low",
+            message: `Below the AED ${threshold}/mo minimum spend (spending ${totalMonthly.toFixed(0)}/mo) — this card FORFEITS all rewards for the cycle, earning nothing`,
+          },
+        ],
+      };
+    }
+
     // Below threshold: keep only catchall (base-rate) options; drop bonus options.
     const keep = cd.options
       .map((o, i) => (o.rule.kind === "catchall" ? i : -1))

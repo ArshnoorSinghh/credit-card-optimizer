@@ -1,13 +1,15 @@
 import { describe, it, expect } from "vitest";
 import cardsData from "../data/cards.json";
-import type { Card, RewardType } from "./card";
+import type { Card, GateMode, RewardType } from "./card";
+import { SPEND_CATEGORIES } from "./score-card";
 
 // The Card shape as TypeScript actually infers it from the JSON import: identical
-// to Card, except `rewards.type` is widened to `string`. TS drops string-literal
-// types when inferring large JSON arrays, so it can't see that every value is one
-// of RewardType's three members — a compiler limitation, not a data mismatch.
+// to Card, except the string-literal union fields are widened to `string`. TS drops
+// string-literal types when inferring large JSON arrays, so it can't see that every
+// value is one of the union's members — a compiler limitation, not a data mismatch.
+// Both widened fields are re-checked at RUNTIME below, so nothing is lost.
 type JsonCard = Omit<Card, "rewards"> & {
-  rewards: Omit<Card["rewards"], "type"> & { type: string };
+  rewards: Omit<Card["rewards"], "type" | "gate_mode"> & { type: string; gate_mode?: string };
 };
 
 // Compile-time proof (no `as` cast, which would mask a mismatch): this forces
@@ -21,6 +23,8 @@ const REWARD_TYPES = [
   "points",
   "miles",
 ] as const satisfies readonly RewardType[];
+
+const GATE_MODES = ["degrade", "forfeit"] as const satisfies readonly GateMode[];
 
 describe("cards.json conforms to the Card type", () => {
   // 51 after the 2026-07 Amex cleanup: the 3 American Express UAE cards (amex_gold,
@@ -59,6 +63,27 @@ describe("cards.json conforms to the Card type", () => {
   it("uses only known reward types", () => {
     for (const card of cards) {
       expect(REWARD_TYPES).toContain(card.rewards.type);
+    }
+  });
+
+  // Recovers the type safety the JsonCard widening gives up: an unknown gate_mode
+  // would silently fall back to "degrade" in the scorer and quietly overstate a
+  // forfeiting card, so it must fail here instead.
+  it("uses only known gate_mode values, where present", () => {
+    for (const card of cards) {
+      if (card.rewards.gate_mode === undefined) continue;
+      expect(GATE_MODES).toContain(card.rewards.gate_mode);
+    }
+  });
+
+  // Same reasoning for excluded_spend: a category the scorer doesn't recognise
+  // means the exclusion never applies.
+  it("declares excluded_spend against real spend categories with a stated reason", () => {
+    for (const card of cards) {
+      for (const excluded of card.excluded_spend ?? []) {
+        expect(SPEND_CATEGORIES).toContain(excluded.category);
+        expect(excluded.reason.length).toBeGreaterThan(0);
+      }
     }
   });
 });
