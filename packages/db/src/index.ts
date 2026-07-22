@@ -18,7 +18,12 @@
  * write path yet — this layer is read-only by design.
  */
 
-import { PrismaClient, type Card as CardRow, type RewardCategory as CategoryRow } from "@prisma/client";
+import {
+  PrismaClient,
+  type Card as CardRow,
+  type RewardCategory as CategoryRow,
+  type ExcludedSpend as ExcludedSpendRow,
+} from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import type { Card, Redemption } from "@fils/engine";
 import { assertDatabaseSafe } from "./guard";
@@ -60,11 +65,17 @@ export function getPrisma(): PrismaClient {
   return cached;
 }
 
-/** A card row with its category rows joined — what the mapper consumes. */
-type CardRowWithCategories = CardRow & { categories: CategoryRow[] };
+/** A card row with its child rows joined — what the mapper consumes. */
+type CardRowWithCategories = CardRow & {
+  categories: CategoryRow[];
+  excludedSpend: ExcludedSpendRow[];
+};
 
-// Always fetch categories, and always in source order.
-const cardInclude = { categories: { orderBy: { position: "asc" } } } as const;
+// Always fetch the child rows, and always in source order.
+const cardInclude = {
+  categories: { orderBy: { position: "asc" } },
+  excludedSpend: { orderBy: { position: "asc" } },
+} as const;
 
 /**
  * Rebuild the engine's nested `Card` shape from the flattened row + JSON columns.
@@ -108,6 +119,9 @@ function toEngineCard(row: CardRowWithCategories): Card {
       })),
       overall_cap: row.rewardsOverallCap,
       min_monthly_spend_required_aed: row.rewardsMinMonthlySpendRequiredAed,
+      // Omitted (not null) when absent, so the mapped object matches the source JSON
+      // exactly — same rule as notes / excluded_from_scoring below.
+      ...(row.rewardsGateMode !== null ? { gate_mode: row.rewardsGateMode } : {}),
     },
     // why the casts: same as employer_restrictions — opaque JSON the engine never
     // branches on, written only by the seed straight from cards.json.
@@ -123,6 +137,14 @@ function toEngineCard(row: CardRowWithCategories): Card {
   if (row.notes !== null) card.notes = row.notes;
   if (row.excludedFromScoring !== null) card.excluded_from_scoring = row.excludedFromScoring;
   if (row.dataCaveat !== null) card.data_caveat = row.dataCaveat;
+  // Rows arrive ordered by `position`. An empty list means the card has no
+  // exclusions, which in cards.json is the field being absent entirely.
+  if (row.excludedSpend.length > 0) {
+    card.excluded_spend = row.excludedSpend.map((e) => ({
+      category: e.category,
+      reason: e.reason,
+    }));
+  }
 
   return card;
 }

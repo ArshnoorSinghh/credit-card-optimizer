@@ -68,6 +68,7 @@ async function main(): Promise<void> {
         rewardsBaseRate: card.rewards.base_rate,
         rewardsOverallCap: card.rewards.overall_cap,
         rewardsMinMonthlySpendRequiredAed: card.rewards.min_monthly_spend_required_aed,
+        rewardsGateMode: card.rewards.gate_mode ?? null,
         redemption: card.redemption,
         benefits: card.benefits,
         sourceUrl: card.source_url,
@@ -76,33 +77,55 @@ async function main(): Promise<void> {
         dataCaveat: card.data_caveat ?? null,
       };
 
-      // why a transaction + delete-then-recreate for categories: upserting them
-      // individually would leave STALE rows behind if a category is removed from
-      // cards.json. Replacing the set wholesale makes the DB converge exactly on
-      // the source, and the transaction keeps a card and its rates consistent.
-      await prisma.$transaction([
-        prisma.card.upsert({
-          where: { id: card.id },
-          create: { id: card.id, ...data },
-          update: data,
-        }),
-        prisma.rewardCategory.deleteMany({ where: { cardId: card.id } }),
-        prisma.rewardCategory.createMany({
-          data: card.rewards.categories.map((c, position) => ({
-            cardId: card.id,
-            position,
-            category: c.category,
-            rate: c.rate,
-            monthlyCap: c.monthly_cap,
-            annualCap: c.annual_cap,
-          })),
-        }),
-      ]);
+      // why a transaction + delete-then-recreate for the child rows: upserting them
+      // individually would leave STALE rows behind if a category or an exclusion is
+      // removed from cards.json. Replacing the set wholesale makes the DB converge
+      // exactly on the source, and the transaction keeps a card and its rows consistent.
+      //
+      // why interactive (callback) form with explicit timeouts rather than the array
+      // form: Neon's serverless endpoint goes cold between runs, and a cold BEGIN can
+      // take longer than the array form's fixed 2s maxWait, which surfaces as an
+      // intermittent P2028 "unable to start a transaction in the given time". The
+      // callback form lets us set generous maxWait/timeout so a slow first connection
+      // doesn't fail the whole seed.
+      await prisma.$transaction(
+        async (tx) => {
+          await tx.card.upsert({
+            where: { id: card.id },
+            create: { id: card.id, ...data },
+            update: data,
+          });
+          await tx.rewardCategory.deleteMany({ where: { cardId: card.id } });
+          await tx.rewardCategory.createMany({
+            data: card.rewards.categories.map((c, position) => ({
+              cardId: card.id,
+              position,
+              category: c.category,
+              rate: c.rate,
+              monthlyCap: c.monthly_cap,
+              annualCap: c.annual_cap,
+            })),
+          });
+          await tx.excludedSpend.deleteMany({ where: { cardId: card.id } });
+          const exclusions = card.excluded_spend ?? [];
+          if (exclusions.length > 0) {
+            await tx.excludedSpend.createMany({
+              data: exclusions.map((e, position) => ({
+                cardId: card.id,
+                position,
+                category: e.category,
+                reason: e.reason,
+              })),
+            });
+          }
+        },
+        { maxWait: 15_000, timeout: 30_000 },
+      );
     }
 
     // Prune cards that no longer exist in cards.json (e.g. a discontinued product
     // like adib_booking_signature). Upsert alone never deletes, so without this the
-    // DB would keep stale rows and drift from the source. RewardCategory rows cascade
+    // DB would keep stale rows and drift from the source. Child rows cascade
     // on card delete (schema onDelete: Cascade). Nothing else references Card, so this
     // touches only card REFERENCE data — never user rows.
     const jsonIds = new Set(cards.map((c) => c.id));
