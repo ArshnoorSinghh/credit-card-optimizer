@@ -326,6 +326,13 @@ export const REDEMPTION_VALUATIONS: RedemptionValuationTable = {
     primary: "statement_credit",
     routes: [route("statement_credit", "card_bill", 1.0, "medium", "functionally cashback (statement credit at face value)")],
   },
+  // Face value like any cashback; the 15-month expiry is modelled by the burn
+  // engine (expiry-policy.ts), not by discounting the rate here.
+  "AED (RAKBANK cashback)": {
+    cashCapable: true,
+    primary: "statement_credit",
+    routes: [route("statement_credit", "card_bill", 1.0, "high", "cashback — face value; expires 15 months after earning")],
+  },
   "AED (Nol points)": {
     cashCapable: false, // Nol fare credit, not a card-bill route
     primary: "nol_topup",

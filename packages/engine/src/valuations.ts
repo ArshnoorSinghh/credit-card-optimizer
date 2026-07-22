@@ -93,6 +93,21 @@ export const DEFAULT_VALUATIONS: ValuationTable = {
     note: "card data conflicts with issuer's current published structure — this currency may not exist; full card re-verification required (adib_booking_signature).",
   },
 
+  // RAKBANK cashback: face value like any cashback, but it EXPIRES 15 months after
+  // earning, which plain "AED" cashback does not. Split into its own currency so the
+  // expiry policy can be scoped to RAKBANK — keying it to "AED" would impose the
+  // window on every cashback card in the dataset. See expiry-policy.ts.
+  //
+  // why the value is NOT discounted for expiry: how much a 15-month window costs
+  // depends on how often the user redeems, which this table cannot see. Discounting
+  // here would invent an average user. Engine 1 flags the term; Engine 2's burn
+  // engine models the timing against the user's real dates.
+  "AED (RAKBANK cashback)": {
+    aedPerUnit: 1.0,
+    confidence: "high",
+    note: "Cashback — face value; expires 15 months after earning (see expiry-policy.ts)",
+  },
+
   // Nol fare credit: transit fares are paid from Nol balance at face, so 1 unit
   // redeems for 1 AED of travel. Medium — face-value mechanics are clear, but
   // it's usable only for transit, so it's not fully cash-equivalent.
