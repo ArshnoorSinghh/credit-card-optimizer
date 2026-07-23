@@ -40,7 +40,7 @@ export const SYSTEM_INSTRUCTION = `You are Rafiq, the AI assistant for Fils, a U
 YOUR ROLE: you are a translator and a mouth, not a source of knowledge. The Fils engine is the brain. Your job is to (1) understand a messy, informal, or typo-ridden question, (2) call the correct tool with the right arguments, (3) phrase the tool's real result conversationally.
 
 ABSOLUTE RULES:
-- NEVER state a card name, rate, fee, cap, reward, or point value from your own knowledge. Every such fact MUST come from a tool result. You have no card data except what a tool returns.
+- NEVER state a card name, rate, fee, cap, reward, benefit, or point value from your own knowledge. Every such fact MUST come from a tool result. You have no card data except what a tool returns. Never invent a benefit that is not in the tool result.
 - If a factual question can be answered by a tool, you MUST call the tool. Do not guess or approximate numbers.
 - Only use numbers and card names that appear in the tool result you were given. Do not add, round differently, or invent figures.
 - If a tool result says data is missing (needsSpending, needsProfile, needsPoints, unrecognized, unknownCards), ask the user ONE concise clarifying question or tell them plainly what you'd need. Do not fabricate an answer.
@@ -51,9 +51,13 @@ WHAT YOU HANDLE:
 - "What are my points worth / how to redeem?" -> recommend_redemptions
 - "What's expiring / should I convert?" -> burn_priority
 - "Compare card A vs card B for me" -> compare_cards
+- "What are the benefits of card X?", "Break down how card X earns", "Explain card X's rewards", "What's the fee / minimum spend / eligibility on card X?" -> card_details. This is the ONLY way to state a card's benefits, rates, caps, fees or structure. For a benefits question, list the actual benefits from the result in plain language, not a wall of text. For a breakdown question, walk through the base rate and each category rate with its caps, and mention the annual fee, so the user understands the real earning structure rather than a headline rate. If the card_details result has a dataCaveat, you MUST mention it.
+
+CARD LINKS: whenever you name a specific card in a reply, render it as a markdown link to its detail page using the id from the tool result, like [ADCB 365 Cashback](/cards/adcb_365_cashback). This applies to card_details answers AND to the cards you name in recommendations and comparisons. Use the detailUrl / cardLinks / cardId fields the tool result gives you. After a card lookup, recommendation, or comparison, end with a link such as "See the full breakdown for [ADCB 365 Cashback](/cards/adcb_365_cashback)". Never invent an id; only link ids that appear in the tool result.
 
 WHAT YOU REFUSE (politely, briefly, no tool call):
-- Cards not in our dataset: say "I don't have data on that card yet."
+- Cards not in our dataset: when card_details says unknownCard, tell the user plainly that card is not in our data. Do NOT describe it from your own knowledge.
+- When card_details says ambiguous, ask the user which card they mean, listing the candidates it returned (each as a link).
 - Non-UAE-credit-card questions: politely redirect to what Fils can help with.
 - General financial or life advice beyond credit-card rewards optimization.
 
@@ -124,13 +128,20 @@ function historyToContents(history: RafiqTurn[]): GeminiContent[] {
   return history.map((t) => ({ role: t.role, parts: [{ text: t.text }] }));
 }
 
+/** A markdown link the chat UI renders as a real, clickable link to a card page. */
+function cardLink(name: string, id: string): string {
+  return `[${name}](/cards/${id})`;
+}
+
 /**
  * Deterministic phrasing used when Gemini can't do the final phrasing step but we
- * DID get a real engine result. Numbers here still come straight from the engine.
+ * DID get a real engine result. Numbers here still come straight from the engine, and
+ * every card named is rendered as a link to its detail page (same rule the live model
+ * follows), so a degraded reply is still grounded and still navigable.
  */
 function fallbackReplyFor(dispatch: DispatchResult, suggestion?: ProactiveSuggestion): string {
   if (!dispatch.ok) {
-    // A "needs more info" result — surface the ask plainly.
+    // A "needs more info" / ambiguous / unknown result — surface the ask plainly.
     const fm = dispatch.forModel as { message?: string };
     return fm.message ?? "I need a bit more information to answer that.";
   }
@@ -138,16 +149,19 @@ function fallbackReplyFor(dispatch: DispatchResult, suggestion?: ProactiveSugges
   const suffix = suggestion ? ` ${suggestion.message}` : "";
   switch (dispatch.tool) {
     case "which_card": {
-      const best = fm.bestOwnedCard as { cardName?: string; annualEarningsAed?: number } | null;
-      if (best?.cardName) {
-        return `Use your ${best.cardName} here. It earns about ${best.annualEarningsAed} AED/year on this spend.${suffix}`;
+      const best = fm.bestOwnedCard as { cardId?: string; cardName?: string; annualEarningsAed?: number } | null;
+      if (best?.cardName && best.cardId) {
+        return `Use your ${cardLink(best.cardName, best.cardId)} here. It earns about ${best.annualEarningsAed} AED/year on this spend.${suffix}`;
       }
       return `${(fm.noOwnedCardReason as string) ?? "None of your cards earns extra here."}${suffix}`;
     }
     case "optimize_portfolio": {
-      const rec = fm.recommended as { cardNames?: string[]; netAnnualValueAed?: number } | null;
-      if (rec?.cardNames) {
-        return `Best for you: ${rec.cardNames.join(" + ")}, about ${rec.netAnnualValueAed} AED/year net.`;
+      const rec = fm.recommended as
+        | { cardLinks?: { id: string; name: string }[]; netAnnualValueAed?: number }
+        | null;
+      if (rec?.cardLinks?.length) {
+        const names = rec.cardLinks.map((c) => cardLink(c.name, c.id)).join(" + ");
+        return `Best for you: ${names}, about ${rec.netAnnualValueAed} AED/year net.`;
       }
       return "I couldn't find an eligible portfolio for that profile.";
     }
@@ -158,7 +172,25 @@ function fallbackReplyFor(dispatch: DispatchResult, suggestion?: ProactiveSugges
     case "burn_priority":
       return "Here's your points burn priority. See the list for what's most urgent.";
     case "compare_cards": {
-      return `For your spending, ${fm.winnerOngoing as string} comes out ahead by about ${fm.ongoingDeltaAed as number} AED/year (ongoing).`;
+      const cards = (fm.cards as { cardId: string; cardName: string }[]) ?? [];
+      const winner = fm.winnerOngoing as string;
+      const won = cards.find((c) => c.cardName === winner);
+      const winnerText = won ? cardLink(won.cardName, won.cardId) : winner;
+      return `For your spending, ${winnerText} comes out ahead by about ${fm.ongoingDeltaAed as number} AED/year (ongoing).`;
+    }
+    case "card_details": {
+      const name = fm.cardName as string;
+      const id = fm.cardId as string;
+      const baseRate = fm.baseRate as string;
+      const fee = (fm.fees as { annualFeeAed?: number } | undefined)?.annualFeeAed ?? 0;
+      const benefits = (fm.benefits as string[] | undefined) ?? [];
+      const caveat = fm.dataCaveat as string | null;
+      const feeText = fee > 0 ? `${fee} AED annual fee` : "no annual fee";
+      const benefitText = benefits.length
+        ? ` Benefits include ${benefits.slice(0, 3).join("; ")}.`
+        : "";
+      const caveatText = caveat ? ` Note: ${caveat}` : "";
+      return `The ${cardLink(name, id)} earns ${baseRate}, with ${feeText}.${benefitText} See the full breakdown for ${cardLink(name, id)}.${caveatText}`;
     }
     default:
       return "Here's what I found.";
