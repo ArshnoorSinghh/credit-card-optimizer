@@ -40,6 +40,23 @@ export interface RafiqRequest {
   history?: RafiqTurn[];
 }
 
+/**
+ * Why a turn degraded, when it did. Non-sensitive (no keys, no raw provider text) so
+ * it is safe to return to the client and log. `undefined` when the turn did not
+ * degrade.
+ *  - "missing_key"   no GEMINI_API_KEY configured
+ *  - "rate_limited"  provider quota/rate limit (HTTP 429)
+ *  - "model_error"   provider rejected the request or returned nothing (4xx/5xx/empty)
+ *  - "network_error" the request never reached the provider (DNS/TLS/reset)
+ *  - "timeout"       the provider didn't answer within our timeout
+ */
+export type RafiqDegradedReason =
+  | "missing_key"
+  | "rate_limited"
+  | "model_error"
+  | "network_error"
+  | "timeout";
+
 /** POST /api/rafiq success response. */
 export interface RafiqResponse {
   /** Rafiq's conversational reply. */
@@ -57,6 +74,8 @@ export interface RafiqResponse {
    * and the reply is a deterministic fallback. The rest of the app keeps working.
    */
   degraded: boolean;
+  /** When `degraded` is true, a non-sensitive classification of why. */
+  degradedReason?: RafiqDegradedReason;
 }
 
 /** Error response shape (4xx). */

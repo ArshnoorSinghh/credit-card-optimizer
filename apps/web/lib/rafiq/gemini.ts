@@ -34,7 +34,9 @@ export interface GeminiPart {
 }
 
 export interface GeminiContent {
-  role: "user" | "model" | "function";
+  // Only "user" and "model" — the current models reject "function"/"tool" roles.
+  // A functionResponse part rides on a "user"-role turn (see rafiq.ts).
+  role: "user" | "model";
   parts: GeminiPart[];
 }
 
@@ -51,18 +53,36 @@ export interface GeminiClient {
   generateContent(req: GeminiGenerateRequest): Promise<GeminiContent>;
 }
 
+/**
+ * How a Gemini call failed, so callers can react without string-matching messages:
+ *  - "http"    the API responded with a non-2xx status (see `status`)
+ *  - "timeout" our own AbortController fired (REQUEST_TIMEOUT_MS)
+ *  - "network" fetch threw before any response (DNS, TLS, connection reset)
+ *  - "empty"   a 200 with no usable content (e.g. a safety block)
+ */
+export type GeminiErrorKind = "http" | "timeout" | "network" | "empty";
+
 export class GeminiError extends Error {
   constructor(
     message: string,
     /** HTTP status when the API responded, else undefined (network/timeout). */
     readonly status?: number,
+    readonly kind: GeminiErrorKind = "http",
   ) {
     super(message);
     this.name = "GeminiError";
   }
 }
 
-const DEFAULT_MODEL = "gemini-2.0-flash";
+// why a floating "-latest" alias, and why it's overridable: Google rotates which
+// models the generateContent endpoint actually serves, independently of what
+// ListModels advertises. Pinned ids rot silently — verified July 2026 against this
+// key: gemini-2.0-flash returns 429 (free-tier request quota 0), gemini-2.5-flash
+// returns 404 NOT_FOUND despite appearing in ListModels, while gemini-flash-latest
+// returns 200. The "-latest" alias tracks a currently-served model, so it survives
+// Google's rotation; GEMINI_MODEL overrides it without a deploy if we ever need to
+// pin a specific version.
+const DEFAULT_MODEL = "gemini-flash-latest";
 const REQUEST_TIMEOUT_MS = 12_000;
 
 interface RawCandidate {
@@ -77,10 +97,13 @@ interface RawResponse {
  * A live client backed by Google's Generative Language API.
  *
  * @param apiKey  server-side GEMINI_API_KEY
- * @param model   model id (default gemini-2.0-flash — free tier, supports tool use)
+ * @param model   model id from GEMINI_MODEL; falls back to DEFAULT_MODEL. An empty
+ *                or whitespace value is treated as unset (a blank env var shouldn't
+ *                produce a `/models/:generateContent` URL with no model).
  */
-export function createGeminiClient(apiKey: string, model: string = DEFAULT_MODEL): GeminiClient {
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+export function createGeminiClient(apiKey: string, model?: string): GeminiClient {
+  const resolvedModel = model && model.trim() !== "" ? model.trim() : DEFAULT_MODEL;
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${resolvedModel}:generateContent`;
 
   return {
     async generateContent(req: GeminiGenerateRequest): Promise<GeminiContent> {
@@ -107,10 +130,13 @@ export function createGeminiClient(apiKey: string, model: string = DEFAULT_MODEL
           signal: controller.signal,
         });
       } catch (err) {
+        const timedOut = err instanceof Error && err.name === "AbortError";
         throw new GeminiError(
-          err instanceof Error && err.name === "AbortError"
-            ? "Gemini request timed out"
+          timedOut
+            ? `Gemini request timed out after ${REQUEST_TIMEOUT_MS}ms`
             : `Gemini request failed: ${String(err)}`,
+          undefined,
+          timedOut ? "timeout" : "network",
         );
       } finally {
         clearTimeout(timer);
@@ -118,14 +144,18 @@ export function createGeminiClient(apiKey: string, model: string = DEFAULT_MODEL
 
       if (!res.ok) {
         const detail = await res.text().catch(() => "");
-        throw new GeminiError(`Gemini API error ${res.status}: ${detail.slice(0, 300)}`, res.status);
+        throw new GeminiError(`Gemini API error ${res.status}: ${detail.slice(0, 300)}`, res.status, "http");
       }
 
       const json = (await res.json()) as RawResponse;
       const parts = json.candidates?.[0]?.content?.parts;
       if (!parts || parts.length === 0) {
         const reason = json.promptFeedback?.blockReason;
-        throw new GeminiError(reason ? `Gemini returned no content (blocked: ${reason})` : "Gemini returned no content");
+        throw new GeminiError(
+          reason ? `Gemini returned no content (blocked: ${reason})` : "Gemini returned no content",
+          undefined,
+          "empty",
+        );
       }
       return { role: "model", parts };
     },
