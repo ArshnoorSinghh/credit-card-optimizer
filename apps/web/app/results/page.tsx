@@ -8,6 +8,7 @@ import { Aurora } from "@/components/aurora";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Reveal } from "@/components/ui/reveal";
 import { PortfolioResults } from "@/components/portfolio-results";
 import { RafiqChat } from "@/components/rafiq-chat";
@@ -54,7 +55,15 @@ export default function ResultsPage() {
           {ready ? (
             <PortfolioResults result={result} />
           ) : (
-            <Card className="animate-pulse text-muted">Crunching 22,000+ portfolios…</Card>
+            <div aria-busy="true" aria-label="Crunching portfolios">
+              <div className="flex gap-2">
+                {[0, 1, 2].map((i) => (
+                  <Skeleton key={i} className="h-9 w-24 rounded-full" />
+                ))}
+              </div>
+              <Skeleton className="mt-6 h-40 rounded-[var(--radius-lg)]" />
+              <Skeleton className="mt-4 h-64 rounded-[var(--radius-lg)]" />
+            </div>
           )}
         </motion.div>
 
