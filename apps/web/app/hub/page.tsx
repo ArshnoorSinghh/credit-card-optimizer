@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Layers, Coins, Search, CreditCard, Bot, ArrowRight } from "lucide-react";
+import { Layers, Coins, CreditCard, Bot, ArrowRight } from "lucide-react";
 import { Aurora } from "@/components/aurora";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -24,11 +24,11 @@ const PATHS = [
     cta: "Open Points Optimizer",
   },
   {
-    icon: Search,
-    title: "Which card should I use?",
-    body: "Name a purchase or a merchant and we tell you which of your cards earns the most on it. Every figure comes from the engine.",
-    href: "/ask?for=purchase",
-    cta: "Ask about a purchase",
+    icon: Bot,
+    title: "Ask Rafiq",
+    body: "Which card to use for a purchase, a head to head comparison, or what your points are worth. Ask in plain language, and every number comes from the engine, never made up ones.",
+    href: "/ask",
+    cta: "Chat with Rafiq",
   },
   {
     icon: CreditCard,
@@ -36,13 +36,6 @@ const PATHS = [
     body: "Search and filter all the cards we model, then open any one for its full rate, cap and fee breakdown.",
     href: "/cards",
     cta: "Browse all cards",
-  },
-  {
-    icon: Bot,
-    title: "Ask Rafiq",
-    body: "A plain language assistant for anything above. It only answers with numbers from the engine, never made up ones.",
-    href: "/ask",
-    cta: "Chat with Rafiq",
   },
 ];
 
