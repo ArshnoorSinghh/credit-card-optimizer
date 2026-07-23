@@ -13,7 +13,7 @@ export function aedCompact(n: number): string {
 
 /** A range, collapsing to a single value when min === max. */
 export function aedRange(min: number, max: number): string {
-  return max - min > 0.5 ? `${aed(min)}–${aed(max)}` : aed(min);
+  return max - min > 0.5 ? `${aed(min)} to ${aed(max)}` : aed(min);
 }
 
 /** Title-case a snake/lower category key: "international" → "International". */

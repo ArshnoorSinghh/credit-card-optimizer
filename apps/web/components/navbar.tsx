@@ -16,6 +16,7 @@ import { cn } from "@/lib/cn";
 */
 
 const LINKS = [
+  { href: "/hub", label: "Home" },
   { href: "/cards", label: "Cards" },
   { href: "/optimizer", label: "Card Optimizer" },
   { href: "/points", label: "Points" },
@@ -64,7 +65,7 @@ export function Navbar() {
                 Log in
               </Button>
             </Link>
-            <Link href="/onboarding">
+            <Link href="/hub">
               <Button size="sm">Try the demo</Button>
             </Link>
           </Show>

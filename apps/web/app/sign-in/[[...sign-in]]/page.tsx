@@ -8,7 +8,7 @@ export default function SignInPage() {
       <div className="relative flex flex-col items-center">
         <h1 className="mb-2 text-2xl font-semibold">Welcome back</h1>
         <p className="mb-8 text-sm text-muted">Log in to your Fils wallet</p>
-        <SignIn signUpUrl="/sign-up" fallbackRedirectUrl="/dashboard" />
+        <SignIn signUpUrl="/sign-up" fallbackRedirectUrl="/hub" />
       </div>
     </main>
   );

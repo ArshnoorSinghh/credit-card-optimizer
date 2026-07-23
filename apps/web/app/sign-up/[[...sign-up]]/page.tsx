@@ -8,7 +8,7 @@ export default function SignUpPage() {
       <div className="relative flex flex-col items-center">
         <h1 className="mb-2 text-2xl font-semibold">Create your account</h1>
         <p className="mb-8 text-sm text-muted">Find your best UAE cards in a minute</p>
-        <SignUp signInUrl="/sign-in" fallbackRedirectUrl="/dashboard" />
+        <SignUp signInUrl="/sign-in" fallbackRedirectUrl="/hub" />
       </div>
     </main>
   );

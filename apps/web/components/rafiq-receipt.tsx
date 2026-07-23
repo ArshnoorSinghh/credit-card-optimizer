@@ -59,7 +59,7 @@ function WhichCardReceipt({ d }: { d: Record<string, unknown> }) {
               {typeof best.bank === "string" && <span className="text-faint"> · {best.bank}</span>}
             </span>
           }
-          value={bestAnnual !== null ? `${aed(bestAnnual)}/yr` : "—"}
+          value={bestAnnual !== null ? `${aed(bestAnnual)}/yr` : "n/a"}
           strong
         />
       ) : (
@@ -127,11 +127,11 @@ function CompareReceipt({ d }: { d: Record<string, unknown> }) {
             label={
               <span className={isWinner ? "text-fg" : ""}>
                 {isWinner && <span className="mr-1.5 text-clay">★</span>}
-                {typeof c.cardName === "string" ? c.cardName : "—"}
+                {typeof c.cardName === "string" ? c.cardName : "n/a"}
                 {num(c.annualFeeAed) !== null && <span className="text-faint"> · fee {aed(num(c.annualFeeAed)!)}</span>}
               </span>
             }
-            value={num(c.netAnnualValueAed) !== null ? `${aed(num(c.netAnnualValueAed)!)}/yr` : "—"}
+            value={num(c.netAnnualValueAed) !== null ? `${aed(num(c.netAnnualValueAed)!)}/yr` : "n/a"}
             strong={isWinner}
           />
         );

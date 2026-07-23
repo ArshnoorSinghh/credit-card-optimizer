@@ -4,11 +4,11 @@
   STATUS: every document here is an UNREVIEWED DRAFT. Nothing in this file has
   been checked by a qualified UAE-licensed lawyer, and none of it should be
   treated as being in force until it has. The `status` field drives a banner that
-  says so on every rendered page — do not remove it to "clean up" the design.
+  says so on every rendered page, do not remove it to "clean up" the design.
 
   Structure mirrors Revolut's /legal hub (Terms, Privacy, Cookies, Complaints,
   Website Terms, Accessibility), minus the documents that exist only because of
-  UK statute, plus one Revolut doesn't need — see FINANCIAL DISCLAIMER below.
+  UK statute, plus one Revolut doesn't need, see FINANCIAL DISCLAIMER below.
 
   Placeholders are written as [BRACKETED CAPITALS] and render highlighted, so an
   unfilled one is impossible to miss in review. Never invent an entity name,
@@ -26,7 +26,7 @@ export type LegalDoc = {
   title: string;
   /** One line for the hub index and page subtitle. */
   summary: string;
-  /** Date this DRAFT was written — not a date it took effect. */
+  /** Date this DRAFT was written, not a date it took effect. */
   drafted: string;
   intro: string[];
   sections: LegalSection[];
@@ -53,7 +53,7 @@ const terms: LegalDoc = {
       ],
     },
     {
-      heading: "2. What Fils is — and what it is not",
+      heading: "2. What Fils is, and what it is not",
       body: [
         "Fils is an information and modelling tool. It estimates what combination of UAE credit cards would earn you the most, based on spending figures you enter yourself.",
         "Fils is not a bank, a finance company, a payment service provider, a credit broker, or an insurance or securities intermediary. It is not licensed by the Central Bank of the UAE, the Securities and Commodities Authority, the DFSA or the FSRA. We do not issue cards, arrange credit, or submit applications on your behalf.",
@@ -108,14 +108,14 @@ const terms: LegalDoc = {
     {
       heading: "9. Limitation of liability",
       body: [
-        "To the fullest extent permitted by UAE law, we are not liable for any loss arising from a financial decision you make on the basis of Fils output — including any card you apply for, any card you close, any fee you incur, or any reward you do not receive.",
-        "Nothing in these terms limits liability that cannot be limited under UAE law, including liability for fraud or for death or personal injury caused by negligence. [LIABILITY CAP — TO BE SET WITH COUNSEL].",
+        "To the fullest extent permitted by UAE law, we are not liable for any loss arising from a financial decision you make on the basis of Fils output, including any card you apply for, any card you close, any fee you incur, or any reward you do not receive.",
+        "Nothing in these terms limits liability that cannot be limited under UAE law, including liability for fraud or for death or personal injury caused by negligence. [LIABILITY CAP, TO BE SET WITH COUNSEL].",
       ],
     },
     {
       heading: "10. Governing law and jurisdiction",
       body: [
-        "These terms are governed by the federal laws of the United Arab Emirates and the laws of the Emirate of [EMIRATE], and the courts of [COURT — e.g. Dubai Courts / DIFC Courts / ADGM Courts] have exclusive jurisdiction.",
+        "These terms are governed by the federal laws of the United Arab Emirates and the laws of the Emirate of [EMIRATE], and the courts of [COURT, e.g. Dubai Courts / DIFC Courts / ADGM Courts] have exclusive jurisdiction.",
         "[NOTE FOR COUNSEL: if the entity is incorporated in DIFC or ADGM, the free-zone courts and that zone's own data protection regime apply instead of the onshore position assumed across these drafts.]",
       ],
     },
@@ -142,10 +142,10 @@ const privacy: LegalDoc = {
     {
       heading: "2. What we collect",
       list: [
-        "Spending inputs — the monthly figures you enter per category, and your stated monthly salary",
-        "Preferences — the bank you select, and cards you save to your wallet",
-        "Account data — email address and authentication identifiers, handled by our authentication provider",
-        "Technical data — IP address, device and browser type, and pages viewed",
+        "Spending inputs, the monthly figures you enter per category, and your stated monthly salary",
+        "Preferences, the bank you select, and cards you save to your wallet",
+        "Account data, email address and authentication identifiers, handled by our authentication provider",
+        "Technical data, IP address, device and browser type, and pages viewed",
       ],
     },
     {
@@ -158,8 +158,8 @@ const privacy: LegalDoc = {
     {
       heading: "4. Why we process it, and on what basis",
       body: [
-        "We process spending and preference data to produce your recommendations — this is necessary to provide the service you have asked for. We process account data to operate your login. We process technical data on the basis of our legitimate interest in keeping the service secure and working.",
-        "Where we rely on your consent — for non-essential analytics, and for any marketing email — you can withdraw it at any time without affecting processing already carried out.",
+        "We process spending and preference data to produce your recommendations, this is necessary to provide the service you have asked for. We process account data to operate your login. We process technical data on the basis of our legitimate interest in keeping the service secure and working.",
+        "Where we rely on your consent, for non-essential analytics, and for any marketing email, you can withdraw it at any time without affecting processing already carried out.",
       ],
     },
     {
@@ -168,15 +168,15 @@ const privacy: LegalDoc = {
         "We do not sell your personal data. We share it only with processors who help us run the service, under contract and only on our instructions:",
       ],
       list: [
-        "[AUTHENTICATION PROVIDER] — account creation and login",
-        "[HOSTING PROVIDER] — application hosting and database",
-        "[ANALYTICS PROVIDER, IF ANY] — aggregate usage measurement",
+        "[AUTHENTICATION PROVIDER], account creation and login",
+        "[HOSTING PROVIDER], application hosting and database",
+        "[ANALYTICS PROVIDER, IF ANY], aggregate usage measurement",
       ],
     },
     {
       heading: "6. Transfers outside the UAE",
       body: [
-        "Some of these providers store or process data outside the UAE. Under Articles 22 and 23 of the PDPL, personal data may be transferred abroad where the destination has an adequate level of protection, or where an appropriate safeguard — such as a contractual clause binding the recipient — is in place.",
+        "Some of these providers store or process data outside the UAE. Under Articles 22 and 23 of the PDPL, personal data may be transferred abroad where the destination has an adequate level of protection, or where an appropriate safeguard, such as a contractual clause binding the recipient, is in place.",
         "[TO BE COMPLETED WITH COUNSEL: confirm the transfer mechanism relied on for each processor above, and the hosting regions actually in use.]",
       ],
     },
@@ -199,7 +199,7 @@ const privacy: LegalDoc = {
         "withdraw consent where processing is based on it",
         "object to automated processing that produces a legal effect for you",
       ],
-      // why: the last item matters more here than in a typical product — the
+      // why: the last item matters more here than in a typical product, the
       // optimizer IS automated decision-making, even though it only advises.
     },
     {
@@ -212,7 +212,7 @@ const privacy: LegalDoc = {
       heading: "10. Security and breaches",
       body: [
         "We use technical and organisational measures appropriate to the sensitivity of the data, including encryption in transit and access controls on our database.",
-        "If a breach occurs that poses a risk to your privacy or security, we will notify the UAE Data Office and, where the law requires it, you — without undue delay.",
+        "If a breach occurs that poses a risk to your privacy or security, we will notify the UAE Data Office and, where the law requires it, you, without undue delay.",
       ],
     },
     {
@@ -250,13 +250,13 @@ const cookies: LegalDoc = {
     {
       heading: "2. Preferences",
       body: [
-        "These remember choices you have made — the bank you selected, the spending figures you entered — so you do not have to re-enter them.",
+        "These remember choices you have made, the bank you selected, the spending figures you entered, so you do not have to re-enter them.",
       ],
     },
     {
       heading: "3. Analytics",
       body: [
-        "These help us understand which parts of Fils people use, in aggregate. We ask for your consent before setting them, and you can withdraw it at any time. [CONFIRM WHETHER ANALYTICS ARE IN USE — REMOVE THIS SECTION IF NOT.]",
+        "These help us understand which parts of Fils people use, in aggregate. We ask for your consent before setting them, and you can withdraw it at any time. [CONFIRM WHETHER ANALYTICS ARE IN USE, REMOVE THIS SECTION IF NOT.]",
       ],
     },
     {
@@ -290,7 +290,7 @@ const disclaimer: LegalDoc = {
       heading: "1. Not financial advice",
       body: [
         "Fils does not provide financial, investment, credit, tax or legal advice, and does not make personal recommendations within the meaning of any UAE financial services regulation. Output is generic information produced by a model from figures you supplied.",
-        "Your circumstances — your other debts, your plans, your risk tolerance — are not known to us and are not modelled. Consider taking independent advice before making a decision.",
+        "Your circumstances, your other debts, your plans, your risk tolerance, are not known to us and are not modelled. Consider taking independent advice before making a decision.",
       ],
     },
     {
@@ -329,7 +329,7 @@ const disclaimer: LegalDoc = {
     {
       heading: "7. Our commercial relationships",
       body: [
-        "Fils is not paid by any bank or card issuer to feature, rank or recommend a card, and rankings are produced solely by the model. [IF THIS CHANGES, THIS SECTION MUST BE UPDATED AND COMMISSION DISCLOSED PROMINENTLY — a paid ranking presented as a neutral one is a consumer protection issue under Federal Law No. 15 of 2020.]",
+        "Fils is not paid by any bank or card issuer to feature, rank or recommend a card, and rankings are produced solely by the model. [IF THIS CHANGES, THIS SECTION MUST BE UPDATED AND COMMISSION DISCLOSED PROMINENTLY, a paid ranking presented as a neutral one is a consumer protection issue under Federal Law No. 15 of 2020.]",
       ],
     },
   ],
@@ -364,7 +364,7 @@ const complaints: LegalDoc = {
       heading: "3. If you are not satisfied",
       body: [
         "Tell us, and a different person will review the outcome.",
-        "If you remain unsatisfied, you may take the matter to the consumer protection authorities — the Ministry of Economy, or the Department of Economy and Tourism in the relevant emirate.",
+        "If you remain unsatisfied, you may take the matter to the consumer protection authorities, the Ministry of Economy, or the Department of Economy and Tourism in the relevant emirate.",
       ],
     },
     {
@@ -412,7 +412,7 @@ const accessibility: LegalDoc = {
     {
       heading: "3. Known gaps",
       body: [
-        "[TO BE COMPLETED AFTER AN AUDIT. Do not claim conformance that has not been tested — an untested claim is itself a compliance risk.]",
+        "[TO BE COMPLETED AFTER AN AUDIT. Do not claim conformance that has not been tested, an untested claim is itself a compliance risk.]",
       ],
     },
     {

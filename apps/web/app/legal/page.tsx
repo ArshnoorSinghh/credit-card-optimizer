@@ -5,7 +5,7 @@ import { LEGAL_DOCS, LEGAL_DRAFTED } from "@/lib/legal";
 import { DraftBanner } from "@/components/legal-shell";
 
 export const metadata: Metadata = {
-  title: "Legal — Fils",
+  title: "Legal | Fils",
   description: "Terms, privacy, cookies and disclosures for Fils.",
 };
 
