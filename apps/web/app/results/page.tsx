@@ -32,7 +32,7 @@ export default function ResultsPage() {
               <Badge tone="brand">Card Optimizer</Badge>
               <h1 className="mt-4 text-4xl font-semibold md:text-5xl">Your best cards</h1>
               <p className="mt-3 text-muted">
-                {stored.bank ? `Focused on ${stored.bank} and beyond — ` : ""}
+                {stored.bank ? `Focused on ${stored.bank} and beyond, ` : ""}
                 the portfolios that net you the most for how you actually spend.
               </p>
             </div>
@@ -54,7 +54,7 @@ export default function ResultsPage() {
           {ready ? (
             <PortfolioResults result={result} />
           ) : (
-            <Card className="animate-pulse text-muted">Crunching 22,000+ portfolios…</Card>
+            <Card className="animate-pulse text-muted">Searching every 1, 2, and 3-card combination…</Card>
           )}
         </motion.div>
 

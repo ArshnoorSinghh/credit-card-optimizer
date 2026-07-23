@@ -69,7 +69,7 @@ export default function OnboardingPage() {
             >
               <h1 className="text-3xl font-semibold md:text-4xl">Who do you bank with?</h1>
               <p className="mt-3 text-muted">
-                Pick your main bank to see its cards — or skip and we&apos;ll search all{" "}
+                Pick your main bank to see its cards, or skip and we&apos;ll search all{" "}
                 {BANKS.length}.
               </p>
 
@@ -124,7 +124,7 @@ export default function OnboardingPage() {
               <div className="flex items-end justify-between">
                 <div>
                   <h1 className="text-3xl font-semibold md:text-4xl">How do you spend?</h1>
-                  <p className="mt-3 text-muted">Monthly, in AED. Rough is fine — drag the sliders.</p>
+                  <p className="mt-3 text-muted">Monthly, in AED. Rough is fine. Drag the sliders.</p>
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-faint">Total / month</p>

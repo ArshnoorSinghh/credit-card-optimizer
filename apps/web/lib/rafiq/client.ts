@@ -17,7 +17,7 @@ export async function sendRafiqMessage(req: RafiqRequest): Promise<RafiqResponse
     });
     if (!res.ok) {
       return {
-        reply: "Sorry — I couldn't process that just now. Please try again.",
+        reply: "Sorry, I couldn't process that just now. Please try again.",
         tool: null,
         data: null,
         degraded: true,

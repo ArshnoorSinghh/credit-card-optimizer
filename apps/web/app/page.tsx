@@ -45,17 +45,17 @@ const STEPS = [
   {
     icon: Wallet,
     title: "Tell us how you spend",
-    body: "A minute of sliders — groceries, dining, fuel, travel, salary. No account needed to try it.",
+    body: "A minute of sliders: groceries, dining, fuel, travel, salary. No account needed to try it.",
   },
   {
     icon: Calculator,
     title: "We search every combination",
-    body: `The engine scores ${PORTFOLIO_COUNT_ROUNDED}+ one-, two-, and three-card portfolios against your exact spend and caps.`,
+    body: `The engine scores every 1, 2, and 3-card portfolio (over ${PORTFOLIO_COUNT_ROUNDED} of them) against your exact spend, and respects every monthly and annual cap.`,
   },
   {
     icon: TrendingUp,
     title: "See your best cards",
-    body: "Get the portfolio that nets you the most — with which card to swipe for which category, fees included.",
+    body: "Get the portfolio that nets you the most, with which card to swipe for which category, and every annual fee already subtracted.",
   },
 ];
 
@@ -63,7 +63,7 @@ const FEATURES = [
   {
     icon: Layers,
     title: "Card Optimizer",
-    body: "The best 1, 2, or 3-card mix for your life — net of every annual fee and reward cap. Not the flashiest card, the most profitable one.",
+    body: "The best 1, 2, or 3-card mix for your life, net of every annual fee and reward cap. Not the flashiest card, the most profitable one.",
     span: "md:col-span-2",
   },
   {
@@ -75,7 +75,7 @@ const FEATURES = [
   {
     icon: ShieldCheck,
     title: "Honest about uncertainty",
-    body: "When a reward rate is ambiguous, we show a range and flag it — never a confident fabricated number.",
+    body: "When a reward rate is ambiguous, we show a range and flag it. Never a confident fabricated number.",
     span: "",
   },
   {
@@ -123,7 +123,7 @@ export default function LandingPage() {
               className="mt-6 max-w-md text-lg text-muted"
             >
               Fils models your spending across every UAE credit card and tells you the exact
-              portfolio that earns you the most — then how to spend the points you already have.
+              portfolio that earns you the most, then how to spend the points you already have.
             </motion.p>
 
             <motion.div
@@ -132,7 +132,7 @@ export default function LandingPage() {
               transition={{ duration: 0.75, ease: EASE, delay: 0.24 }}
               className="mt-9 flex flex-wrap items-center gap-3"
             >
-              <Link href="/onboarding">
+              <Link href="/hub">
                 <Button size="lg">
                   Try the demo
                   <ArrowRight className="h-4 w-4" />
@@ -284,7 +284,7 @@ export default function LandingPage() {
                 No card details. No spam. Just the numbers on which UAE cards actually pay you back.
               </p>
               <div className="mt-9 flex flex-wrap justify-center gap-3">
-                <Link href="/onboarding">
+                <Link href="/hub">
                   <Button size="lg">
                     Try the demo
                     <ArrowRight className="h-4 w-4" />

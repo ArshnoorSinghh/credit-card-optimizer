@@ -16,8 +16,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const doc = getLegalDoc(slug);
-  if (!doc) return { title: "Legal — Fils" };
-  return { title: `${doc.title} — Fils`, description: doc.summary };
+  if (!doc) return { title: "Legal | Fils" };
+  return { title: `${doc.title} | Fils`, description: doc.summary };
 }
 
 export default async function LegalDocPage({

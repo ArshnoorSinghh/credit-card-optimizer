@@ -65,7 +65,7 @@ export function Footer() {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-5 py-6 text-xs text-faint sm:flex-row">
           <span>© {new Date().getFullYear()} Fils. Built in the UAE.</span>
           <Link href="/legal/disclaimer" className="transition-colors hover:text-fg">
-            Rates are modelled estimates — verify with the issuer before applying.
+            Rates are modelled estimates. Verify with the issuer before applying.
           </Link>
         </div>
       </div>

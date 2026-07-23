@@ -54,7 +54,7 @@ export function DraftBanner() {
       <div className="flex gap-3">
         <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-warning" aria-hidden />
         <div className="text-sm">
-          <p className="font-semibold text-fg">Unreviewed draft — not in force</p>
+          <p className="font-semibold text-fg">Unreviewed draft, not in force</p>
           <p className="mt-1.5 text-muted">
             This document was drafted as a starting point and has{" "}
             <strong className="font-semibold text-fg">not</strong> been reviewed by a

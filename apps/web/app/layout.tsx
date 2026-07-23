@@ -22,9 +22,9 @@ const sans = Hanken_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Fils — Smarter UAE credit cards",
+  title: "Fils - Smarter UAE credit cards",
   description:
-    "Model your spending, find your best 1–3 card portfolio, and make every point count. UAE credit-card optimization.",
+    "Find the best 1 to 3 UAE credit card combination for how you actually spend, net of every annual fee and reward cap. See the maths behind every recommendation, and know what your points are worth.",
 };
 
 // Light "Gulf Golden Hour" theme for Clerk's hosted UI so sign-in/sign-up match

@@ -34,9 +34,9 @@ const PROGRAMS: Record<string, { flights: number; cash: number; cashCapable: boo
   "Skywards Miles": { flights: 0.037, cash: 0.02, cashCapable: false, note: "Best as economy Saver flights", expiry: 36 },
   "Etihad Guest Miles": { flights: 0.036, cash: 0.02, cashCapable: false, note: "Extendable only by flight activity", expiry: 18 },
   "Mashreq TouchPoints": { flights: 0.006, cash: 0.006, cashCapable: true, note: "Pay down card bill or Max vouchers", expiry: null },
-  "ADCB TouchPoints": { flights: 0.006, cash: 0.005, cashCapable: false, note: "Voucher / bill-pay only — no card-bill cash", expiry: null },
+  "ADCB TouchPoints": { flights: 0.006, cash: 0.005, cashCapable: false, note: "Voucher or bill-pay only, no card-bill cash", expiry: null },
   "FAB Rewards": { flights: 0.007, cash: 0.007, cashCapable: true, note: "Statement credit at face value", expiry: 36 },
-  "Etisalat Smiles": { flights: 0.01, cash: 0.01, cashCapable: false, note: "Vouchers / bill-pay only — cashback not permitted", expiry: 24 },
+  "Etisalat Smiles": { flights: 0.01, cash: 0.01, cashCapable: false, note: "Vouchers or bill-pay only, cashback not permitted", expiry: 24 },
 };
 
 const CURRENCIES = Object.keys(PROGRAMS);

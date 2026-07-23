@@ -368,7 +368,7 @@ function toolCompareCards(args: Record<string, unknown>, ctx: RafiqEngineContext
       forModel: {
         needsSpending: true,
         message:
-          "Comparison must be personalized to spending, and none is on file. Ask the user for their monthly spend by category before comparing — do not assume it.",
+          "Comparison must be personalized to spending, and none is on file. Ask the user for their monthly spend by category before comparing. Do not assume it.",
       },
     };
   }
@@ -523,7 +523,7 @@ export const TOOL_DECLARATIONS = [
   {
     name: "which_card",
     description:
-      "Recommend which of the user's cards to USE for a specific purchase. Handles a spend category (groceries, dining, fuel, utilities, education, travel, transport, entertainment, international, other) OR a merchant name (Carrefour, Talabat, ADNOC, Emirates, ...). Use for 'which card should I use for X', 'best card for <merchant>'. Tolerate typos and informal phrasing — map them to the right category or merchant.",
+      "Recommend which of the user's cards to USE for a specific purchase. Handles a spend category (groceries, dining, fuel, utilities, education, travel, transport, entertainment, international, other) OR a merchant name (Carrefour, Talabat, ADNOC, Emirates, ...). Use for 'which card should I use for X', 'best card for <merchant>'. Tolerate typos and informal phrasing, and map them to the right category or merchant.",
     parameters: {
       type: "OBJECT",
       properties: {

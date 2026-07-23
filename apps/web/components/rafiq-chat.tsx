@@ -28,20 +28,29 @@ interface ChatMessage {
   degraded?: boolean;
 }
 
-const SUGGESTIONS = [
+const DEFAULT_SUGGESTIONS = [
   "Which card should I use for Carrefour?",
   "Which cards should I get?",
   "Compare FAB Cashback and ADCB 365",
 ];
 
+const DEFAULT_INTRO =
+  "I can recommend a card for a purchase, build your best portfolio, compare two cards for how you spend, or value your points. Try one of these:";
+
 export function RafiqChat({
   spending,
   profile,
   className,
+  suggestions = DEFAULT_SUGGESTIONS,
+  intro = DEFAULT_INTRO,
 }: {
   spending: SpendingProfile;
   profile: UserProfile;
   className?: string;
+  /** Prompt chips shown in the empty state. Defaults to a general set. */
+  suggestions?: string[];
+  /** The empty-state lead line. Defaults to the general description. */
+  intro?: string;
 }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -99,12 +108,9 @@ export function RafiqChat({
       >
         {empty ? (
           <div className="py-2">
-            <p className="text-sm text-muted">
-              I can recommend a card for a purchase, build your best portfolio, compare two cards for
-              how <span className="text-fg">you</span> spend, or value your points — try:
-            </p>
+            <p className="text-sm text-muted">{intro}</p>
             <div className="mt-4 flex flex-wrap gap-2">
-              {SUGGESTIONS.map((s) => (
+              {suggestions.map((s) => (
                 <button
                   key={s}
                   onClick={() => void send(s)}
