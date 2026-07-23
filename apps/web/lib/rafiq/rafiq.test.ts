@@ -232,6 +232,12 @@ describe("degradedReason classification", () => {
     expect(out.degradedReason).toBe("model_error");
   });
 
+  it("a 2xx with a non-JSON body -> parse_error", async () => {
+    const out = await run(new GeminiError("not valid JSON", 200, "parse"));
+    expect(out.degraded).toBe(true);
+    expect(out.degradedReason).toBe("parse_error");
+  });
+
   it("an unexpected non-Gemini error still classifies as model_error, never throws", async () => {
     const out = await run(new Error("something odd"));
     expect(out.degraded).toBe(true);

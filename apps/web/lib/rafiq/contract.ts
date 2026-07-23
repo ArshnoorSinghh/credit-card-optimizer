@@ -49,13 +49,15 @@ export interface RafiqRequest {
  *  - "model_error"   provider rejected the request or returned nothing (4xx/5xx/empty)
  *  - "network_error" the request never reached the provider (DNS/TLS/reset)
  *  - "timeout"       the provider didn't answer within our timeout
+ *  - "parse_error"   a 2xx response whose body wasn't the JSON we expected
  */
 export type RafiqDegradedReason =
   | "missing_key"
   | "rate_limited"
   | "model_error"
   | "network_error"
-  | "timeout";
+  | "timeout"
+  | "parse_error";
 
 /** POST /api/rafiq success response. */
 export interface RafiqResponse {
