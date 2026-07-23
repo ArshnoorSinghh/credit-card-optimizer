@@ -16,10 +16,10 @@ const COLS = [
   {
     title: "Company",
     links: [
-      { href: "/", label: "About" },
-      { href: "/", label: "How it works" },
-      { href: "/", label: "Careers" },
-      { href: "/", label: "Contact" },
+      { href: "/#features", label: "About" },
+      { href: "/#how", label: "How it works" },
+      { href: "/onboarding", label: "Try the demo" },
+      { href: "/sign-up", label: "Create account" },
     ],
   },
   {

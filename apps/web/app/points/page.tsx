@@ -23,6 +23,7 @@ import { Reveal } from "@/components/ui/reveal";
 import { CountTo } from "@/components/count-to";
 import { aed } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { useToast } from "@/components/ui/toast";
 import {
   AVAILABLE_CURRENCIES,
   DEFAULT_HOLDINGS,
@@ -85,6 +86,8 @@ export default function PointsPage() {
   const [draftBal, setDraftBal] = useState(10000);
   const [draftExpiry, setDraftExpiry] = useState("");
 
+  const { toast } = useToast();
+
   const result = useMemo(() => {
     // Strip the UI `id` before handing the engine a clean PointsHolding[].
     const inventory: PointsHolding[] = rows.map(({ id: _id, ...h }) => h);
@@ -97,6 +100,12 @@ export default function PointsPage() {
     if (draftExpiry) holding.expiryDate = draftExpiry;
     setRows((r) => [...r, { ...holding, id: nextId++ }]);
     setDraftExpiry("");
+    toast(`Added ${draftCur}`);
+  }
+
+  function removeRow(row: Row) {
+    setRows((rs) => rs.filter((x) => x.id !== row.id));
+    toast(`Removed ${row.currency}`, "info");
   }
 
   const goalLabel = GOAL_META[goal].label;
@@ -142,7 +151,7 @@ export default function PointsPage() {
                         </p>
                       </div>
                       <button
-                        onClick={() => setRows((rs) => rs.filter((x) => x.id !== h.id))}
+                        onClick={() => removeRow(h)}
                         className="rounded-full p-1.5 text-faint transition-colors hover:bg-black/[0.04] hover:text-danger"
                         aria-label={`Remove ${h.currency}`}
                       >
@@ -239,7 +248,18 @@ export default function PointsPage() {
 
           {/* ── Right: results ──────────────────────────────────────────────── */}
           <div className="space-y-5">
-            {result === null ? (
+            {rows.length === 0 ? (
+              <Card className="flex flex-col items-center gap-3 py-12 text-center">
+                <span className="grid h-12 w-12 place-items-center rounded-full border border-line bg-surface-2 text-clay">
+                  <Coins className="h-6 w-6" />
+                </span>
+                <h3 className="text-lg font-semibold">Add a holding to begin</h3>
+                <p className="max-w-xs text-sm text-muted">
+                  Tell us which reward currencies you hold and how many points — we&apos;ll show the
+                  best way to redeem them and what&apos;s at risk of expiring.
+                </p>
+              </Card>
+            ) : result === null ? (
               <Card>
                 <p className="text-sm text-muted">
                   We couldn&apos;t compute redemptions for this inventory. Try removing the last

@@ -33,6 +33,8 @@ export function CreditCardArt({
 
   return (
     <div
+      role="img"
+      aria-label={`${bank} ${name}${tier ? `, ${tier}` : ""} credit card`}
       className={cn(
         "relative aspect-[1.586/1] w-full overflow-hidden rounded-[var(--radius-lg)] p-5 text-white",
         "border border-white/15 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.9)]",
