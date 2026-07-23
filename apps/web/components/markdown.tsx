@@ -1,56 +1,61 @@
 import { Fragment, type ReactNode } from "react";
-import { parseBlocks } from "@/lib/markdown";
+import Link from "next/link";
+import { parseBlocks, parseInline } from "@/lib/markdown";
 
 /*
   Markdown — a deliberately small renderer for Rafiq's chat replies.
 
-  Gemini returns light Markdown (bold, the odd heading, bullet or numbered lists).
-  We render it to real React elements — never dangerouslySetInnerHTML — so there is
-  no HTML-injection surface even though the text originates from a language model.
+  Gemini returns light Markdown (bold, the odd heading, bullet or numbered lists, and
+  links to card detail pages). We render it to real React elements — never
+  dangerouslySetInnerHTML — so there is no HTML-injection surface even though the text
+  originates from a language model. The href allowlist (relative or http(s) only)
+  lives in the pure parser, so an unsafe link becomes literal text, never an anchor.
 
-  Block parsing lives in lib/markdown.ts (pure, unit-tested); this file owns only the
-  React rendering and the inline emphasis pass. Scope is intentional: bold, italic,
-  inline code, headings, and unordered/ordered lists — everything the assistant emits
-  now that the prompt keeps replies to a few sentences. Anything it doesn't recognise
-  falls through as plain text, so an unusual reply is always readable, never broken.
+  Block AND inline parsing live in lib/markdown.ts (pure, unit-tested); this file owns
+  only the React rendering. Anything not recognised falls through as plain text, so an
+  unusual reply is always readable, never broken.
 */
 
-// ── Inline: **bold**, *italic* / _italic_, `code`. ──────────────────────────────────
-const INLINE = /(\*\*[^*]+\*\*|`[^`]+`|(?<![*\w])\*[^*\n]+\*(?!\w)|(?<![_\w])_[^_\n]+_(?!\w))/g;
-
 function renderInline(text: string, keyPrefix: string): ReactNode[] {
-  const out: ReactNode[] = [];
-  let last = 0;
-  let m: RegExpExecArray | null;
-  INLINE.lastIndex = 0;
-  let i = 0;
-  while ((m = INLINE.exec(text)) !== null) {
-    if (m.index > last) out.push(text.slice(last, m.index));
-    const tok = m[0];
-    const key = `${keyPrefix}-${i++}`;
-    if (tok.startsWith("**")) {
-      out.push(
-        <strong key={key} className="font-semibold text-fg">
-          {tok.slice(2, -2)}
-        </strong>,
-      );
-    } else if (tok.startsWith("`")) {
-      out.push(
-        <code key={key} className="rounded bg-surface-2 px-1 py-0.5 font-mono text-[0.85em] text-fg">
-          {tok.slice(1, -1)}
-        </code>,
-      );
-    } else {
-      out.push(
-        <em key={key} className="italic">
-          {tok.slice(1, -1)}
-        </em>,
-      );
+  return parseInline(text).map((tok, i) => {
+    const key = `${keyPrefix}-${i}`;
+    switch (tok.kind) {
+      case "bold":
+        return (
+          <strong key={key} className="font-semibold text-fg">
+            {tok.value}
+          </strong>
+        );
+      case "code":
+        return (
+          <code key={key} className="rounded bg-surface-2 px-1 py-0.5 font-mono text-[0.85em] text-fg">
+            {tok.value}
+          </code>
+        );
+      case "italic":
+        return (
+          <em key={key} className="italic">
+            {tok.value}
+          </em>
+        );
+      case "link": {
+        // Internal links use next/link; external ones open in a new, isolated tab.
+        const external = /^https?:\/\//i.test(tok.href);
+        const className = "font-medium text-clay underline decoration-clay/40 underline-offset-2 transition-colors hover:text-flame hover:decoration-flame";
+        return external ? (
+          <a key={key} href={tok.href} target="_blank" rel="noopener noreferrer" className={className}>
+            {tok.text}
+          </a>
+        ) : (
+          <Link key={key} href={tok.href} className={className}>
+            {tok.text}
+          </Link>
+        );
+      }
+      default:
+        return <Fragment key={key}>{tok.value}</Fragment>;
     }
-    last = m.index + tok.length;
-  }
-  if (last < text.length) out.push(text.slice(last));
-  return out;
+  });
 }
 
 export function Markdown({ text, className }: { text: string; className?: string }) {

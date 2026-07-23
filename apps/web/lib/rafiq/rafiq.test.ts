@@ -309,3 +309,117 @@ describe("proactive suggestions", () => {
     expect(res.suggestion).toBeUndefined();
   });
 });
+
+describe("card_details: factual card lookup, grounded and linkable", () => {
+  const card365 = CARDS.find((c) => c.id === "adcb_365_cashback")!;
+
+  it("resolves messy names ('adcb 365', 'the 365 card', full name) to the same card", () => {
+    for (const q of ["adcb 365", "the 365 card", "ADCB 365 Cashback Credit Card", "adcb_365_cashback"]) {
+      const r = dispatchTool("card_details", { cardNameOrId: q }, ctxOf({}));
+      expect(r.ok, `query "${q}" should resolve`).toBe(true);
+      expect((r.forModel as { cardId: string }).cardId).toBe("adcb_365_cashback");
+    }
+  });
+
+  it("a benefits question returns the ACTUAL benefits from the dataset, verbatim", () => {
+    const r = dispatchTool("card_details", { cardNameOrId: "adcb 365" }, ctxOf({}));
+    expect(r.ok).toBe(true);
+    // The model is handed the real benefits...
+    expect((r.forModel as { benefits: string[] }).benefits).toEqual(card365.benefits);
+    // ...and the authoritative data is the verbatim card record.
+    expect((r.data as typeof card365).benefits).toEqual(card365.benefits);
+  });
+
+  it("a breakdown question returns real base rate and every category rate with its caps", () => {
+    const r = dispatchTool("card_details", { cardNameOrId: "adcb 365" }, ctxOf({}));
+    const fm = r.forModel as {
+      baseRate: string;
+      categoryRates: { category: string; rate: string; monthlyCap: number | null; annualCap: number | null }[];
+      fees: { annualFeeAed: number };
+    };
+    expect(fm.baseRate).toBe(card365.rewards.base_rate);
+    expect(fm.categoryRates).toEqual(
+      card365.rewards.categories.map((c) => ({
+        category: c.category,
+        rate: c.rate,
+        monthlyCap: c.monthly_cap,
+        annualCap: c.annual_cap,
+      })),
+    );
+    expect(fm.fees.annualFeeAed).toBe(card365.fees.annual_fee_aed);
+  });
+
+  it("surfaces the dataset's data_caveat so the model can mention it", () => {
+    const r = dispatchTool("card_details", { cardNameOrId: "adcb 365" }, ctxOf({}));
+    expect((r.forModel as { dataCaveat: string | null }).dataCaveat).toBe(card365.data_caveat ?? null);
+  });
+
+  it("exposes a detail-page link for the resolved card", () => {
+    const r = dispatchTool("card_details", { cardNameOrId: "adcb 365" }, ctxOf({}));
+    expect((r.forModel as { detailUrl: string }).detailUrl).toBe("/cards/adcb_365_cashback");
+  });
+
+  it("an ambiguous name asks which one, returning linkable candidates", () => {
+    const r = dispatchTool("card_details", { cardNameOrId: "adcb" }, ctxOf({}));
+    expect(r.ok).toBe(false);
+    const fm = r.forModel as { ambiguous?: boolean; candidates?: { id: string; name: string }[] };
+    expect(fm.ambiguous).toBe(true);
+    expect(fm.candidates!.length).toBeGreaterThan(1);
+    expect(fm.candidates!.every((c) => typeof c.id === "string" && typeof c.name === "string")).toBe(true);
+  });
+
+  it("an unknown card is refused, not fabricated", () => {
+    const r = dispatchTool("card_details", { cardNameOrId: "Galactic Express Titanium" }, ctxOf({}));
+    expect(r.ok).toBe(false);
+    expect((r.forModel as { unknownCard?: boolean }).unknownCard).toBe(true);
+  });
+
+  it("end to end: a benefits question routes to card_details and returns the real card", async () => {
+    const out = await runRafiq(
+      "what are the benefits of the ADCB 365 card?",
+      ctxOf({}),
+      [],
+      toolThenReply("card_details", { cardNameOrId: "ADCB 365" }),
+    );
+    expect(out.tool).toBe("card_details");
+    expect((out.data as typeof card365).id).toBe("adcb_365_cashback");
+    expect((out.data as typeof card365).benefits).toEqual(card365.benefits);
+    expect(out.degraded).toBe(false);
+  });
+
+  it("the reply includes a working link to the card detail page", async () => {
+    // Tool succeeds, phrasing fails: the deterministic fallback still links the card.
+    let calls = 0;
+    const client: GeminiClient = {
+      async generateContent(): Promise<GeminiContent> {
+        calls++;
+        if (calls === 1) return modelCall("card_details", { cardNameOrId: "adcb 365" });
+        throw new GeminiError("boom", 500, "http");
+      },
+    };
+    const out = await runRafiq("explain the adcb 365 rewards", ctxOf({}), [], client);
+    expect(out.tool).toBe("card_details");
+    expect(out.reply).toContain("(/cards/adcb_365_cashback)");
+  });
+});
+
+describe("card links in recommendations and comparisons", () => {
+  it("a recommendation reply links each recommended card", async () => {
+    let calls = 0;
+    const client: GeminiClient = {
+      async generateContent(): Promise<GeminiContent> {
+        calls++;
+        if (calls === 1) return modelCall("optimize_portfolio", {});
+        throw new GeminiError("boom", 500, "http");
+      },
+    };
+    const out = await runRafiq(
+      "which cards should I get?",
+      ctxOf({ spending: SPENDING, profile: PROFILE }),
+      [],
+      client,
+    );
+    expect(out.tool).toBe("optimize_portfolio");
+    expect(out.reply).toMatch(/\(\/cards\/[a-z0-9_]+\)/);
+  });
+});

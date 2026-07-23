@@ -175,6 +175,8 @@ function toolWhichCard(args: Record<string, unknown>, ctx: RafiqEngineContext): 
     assumedSpend,
     bestOwnedCard: best
       ? {
+          cardId: best.cardId,
+          detailUrl: `/cards/${best.cardId}`,
           cardName: best.cardName,
           bank: best.bank,
           monthlyEarningsAed: round(best.monthlyEarningsAed),
@@ -238,6 +240,12 @@ function toolOptimizePortfolio(args: Record<string, unknown>, ctx: RafiqEngineCo
           uncertain: best.uncertain,
           // A human-facing name list so the model never has to invent one from an id.
           cardNames: best.cardIds.map((id) => ctx.cards.find((c) => c.id === id)?.name ?? id),
+          // Name + detail-page url per card, so every recommended card can be linked.
+          cardLinks: best.cardIds.map((id) => ({
+            id,
+            name: ctx.cards.find((c) => c.id === id)?.name ?? id,
+            detailUrl: `/cards/${id}`,
+          })),
         }
       : null,
   };
@@ -329,8 +337,32 @@ function toolBurnPriority(_args: Record<string, unknown>, ctx: RafiqEngineContex
 // Tool: compare_cards  →  scoreCard per card, personalized to the user's spending
 // ─────────────────────────────────────────────────────────────────────────────────
 
-/** Resolve a free-text card reference ("the FAB one", "Emirates NBD Skywards") to a card. */
-function resolveCard(query: string, cards: Card[]): { card: Card } | { error: "unknown" | "ambiguous"; options: string[] } {
+/** Filler words that carry no identifying signal in a card reference. */
+const CARD_STOPWORDS = new Set([
+  "the", "a", "an", "card", "cards", "credit", "for", "my", "me", "one", "please",
+  "with", "and", "of", "to", "that", "this", "is", "what", "are",
+]);
+
+/** A card candidate the model can name AND link to its detail page. */
+export interface CardRef {
+  id: string;
+  name: string;
+  bank: string;
+}
+
+const cardRef = (c: Card): CardRef => ({ id: c.id, name: c.name, bank: c.bank });
+
+/**
+ * Resolve a free-text card reference to a card, the way merchant matching resolves
+ * messy names: exact id/name first, then an ALL-significant-tokens match against the
+ * card's name, bank and id. So "adcb 365", "ADCB 365 Cashback" and "the 365 card"
+ * all land on the same card, while a bare "adcb" stays ambiguous and returns the
+ * candidates for the model to disambiguate.
+ */
+function resolveCard(
+  query: string,
+  cards: Card[],
+): { card: Card } | { error: "unknown" | "ambiguous"; options: CardRef[] } {
   const q = query.trim().toLowerCase();
   if (!q) return { error: "unknown", options: [] };
 
@@ -339,9 +371,17 @@ function resolveCard(query: string, cards: Card[]): { card: Card } | { error: "u
   const byName = cards.find((c) => c.name.toLowerCase() === q);
   if (byName) return { card: byName };
 
-  const contains = cards.filter((c) => `${c.name} ${c.bank}`.toLowerCase().includes(q));
-  if (contains.length === 1) return { card: contains[0]! };
-  if (contains.length > 1) return { error: "ambiguous", options: contains.slice(0, 6).map((c) => c.name) };
+  // Token match: every significant token in the query must appear in the card's
+  // searchable text (name + bank + id-as-words).
+  const tokens = q.split(/[^a-z0-9]+/).filter((t) => t.length > 0 && !CARD_STOPWORDS.has(t));
+  if (tokens.length === 0) return { error: "unknown", options: [] };
+  const haystack = (c: Card) => `${c.name} ${c.bank} ${c.id.replace(/_/g, " ")}`.toLowerCase();
+  const matches = cards.filter((c) => {
+    const h = haystack(c);
+    return tokens.every((t) => h.includes(t));
+  });
+  if (matches.length === 1) return { card: matches[0]! };
+  if (matches.length > 1) return { error: "ambiguous", options: matches.slice(0, 6).map(cardRef) };
   return { error: "unknown", options: [] };
 }
 
@@ -390,7 +430,7 @@ function toolCompareCards(args: Record<string, unknown>, ctx: RafiqEngineContext
   for (const q of queries) {
     const r = resolveCard(q, ctx.cards);
     if ("card" in r) resolved.push(r.card);
-    else if (r.error === "ambiguous") ambiguous.push({ query: q, options: r.options });
+    else if (r.error === "ambiguous") ambiguous.push({ query: q, options: r.options.map((o) => o.name) });
     else unknown.push(q);
   }
 
@@ -470,6 +510,8 @@ function toolCompareCards(args: Record<string, unknown>, ctx: RafiqEngineContext
     year1DeltaAed: data.year1DeltaAed,
     winnerDiffersYear1VsOngoing: data.winnerDiffersYear1VsOngoing,
     cards: scored.map((s) => ({
+      cardId: s.cardId,
+      detailUrl: `/cards/${s.cardId}`,
       cardName: s.cardName,
       netAnnualValueAed: round(s.netAnnualValueAed),
       netAnnualValueYear1Aed: round(s.netAnnualValueYear1Aed),
@@ -482,6 +524,103 @@ function toolCompareCards(args: Record<string, unknown>, ctx: RafiqEngineContext
   return { ok: true, tool: "compare_cards", data, forModel };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────────
+// Tool: card_details  →  the raw card record from the dataset (no scoring)
+//
+// This is the LOOKUP tool. It answers "what are the benefits of card X" and "break
+// down how card X earns" by returning that card's real, verbatim data. It does no
+// math: every field is exactly what the dataset holds, so the model has facts to
+// phrase and cannot fall back on its own (wrong) knowledge of a card.
+// ─────────────────────────────────────────────────────────────────────────────────
+
+function toolCardDetails(args: Record<string, unknown>, ctx: RafiqEngineContext): DispatchResult {
+  const query = typeof args.cardNameOrId === "string" ? args.cardNameOrId.trim() : "";
+  if (!query) {
+    return {
+      ok: false,
+      tool: "card_details",
+      data: null,
+      forModel: { error: "No card name given. Ask the user which card they mean." },
+    };
+  }
+
+  const r = resolveCard(query, ctx.cards);
+  if ("error" in r) {
+    if (r.error === "ambiguous") {
+      return {
+        ok: false,
+        tool: "card_details",
+        data: null,
+        forModel: {
+          ambiguous: true,
+          query,
+          // Names + links so the model can ask "did you mean ...?" and still link each.
+          candidates: r.options,
+          message: `"${query}" matched several cards. Ask the user which one they mean, listing these candidates. Do not pick one yourself.`,
+        },
+      };
+    }
+    return {
+      ok: false,
+      tool: "card_details",
+      data: null,
+      forModel: {
+        unknownCard: true,
+        query,
+        message: `We have no data on "${query}". Tell the user plainly it is not in our dataset. Do NOT describe it from your own knowledge or invent any detail.`,
+      },
+    };
+  }
+
+  const card = r.card;
+  const rw = card.rewards;
+  const forModel = {
+    cardId: card.id,
+    detailUrl: `/cards/${card.id}`,
+    cardName: card.name,
+    bank: card.bank,
+    network: card.network,
+    tier: card.tier,
+    rewardType: rw.type,
+    rewardCurrency: rw.currency,
+    baseRate: rw.base_rate,
+    // Every category rate with BOTH caps, verbatim from the data (null = uncapped).
+    categoryRates: rw.categories.map((c) => ({
+      category: c.category,
+      rate: c.rate,
+      monthlyCap: c.monthly_cap,
+      annualCap: c.annual_cap,
+    })),
+    overallCap: rw.overall_cap,
+    minMonthlySpendRequiredAed: rw.min_monthly_spend_required_aed,
+    gateMode: rw.gate_mode ?? "degrade",
+    fees: {
+      annualFeeAed: card.fees.annual_fee_aed,
+      joiningFeeAed: card.fees.joining_fee_aed,
+      waiverConditions: card.fees.waiver_conditions,
+    },
+    eligibility: {
+      minMonthlySalaryAed: card.eligibility.min_monthly_salary_aed,
+      uaeResidentRequired: card.eligibility.uae_resident_required,
+      salaryTransferRequired: card.eligibility.salary_transfer_required,
+      minAge: card.eligibility.min_age,
+      employerRestrictions: card.eligibility.employer_restrictions,
+    },
+    redemption: {
+      currency: card.redemption.currency,
+      primaryUses: card.redemption.primary_uses,
+      redemptionUrl: card.redemption.redemption_url,
+    },
+    benefits: card.benefits,
+    // If the dataset flags a caveat on this card, the model MUST surface it.
+    dataCaveat: card.data_caveat ?? null,
+    excludedFromScoring: card.excluded_from_scoring ?? false,
+  };
+
+  // `data` is the verbatim card record — the authoritative source the UI can render.
+  return { ok: true, tool: "card_details", data: card, forModel };
+}
+
 // ── Public dispatch + declarations ───────────────────────────────────────────────
 
 type ToolHandler = (args: Record<string, unknown>, ctx: RafiqEngineContext) => DispatchResult;
@@ -492,6 +631,7 @@ const HANDLERS: Record<string, ToolHandler> = {
   recommend_redemptions: toolRecommendRedemptions,
   burn_priority: toolBurnPriority,
   compare_cards: toolCompareCards,
+  card_details: toolCardDetails,
 };
 
 /** Execute the engine call Gemini selected. Unknown tool names fail closed. */
@@ -584,6 +724,21 @@ export const TOOL_DECLARATIONS = [
         },
       },
       required: ["cards"],
+    },
+  },
+  {
+    name: "card_details",
+    description:
+      "Look up ONE specific card's real data from the dataset: reward type and currency, base rate, every category rate with its monthly and annual caps, annual and joining fees plus any waiver, minimum monthly spend, eligibility (salary, residency, salary transfer), redemption options, the benefits list, and any data caveat. Use this for factual questions about a card that are NOT a calculation: 'what are the benefits of card X', 'break down how card X earns', 'explain card X's rewards', 'what's the fee on X', 'does X require salary transfer'. Tolerate messy names ('adcb 365', 'the 365 card'). This is the only way to state a card's benefits or structure.",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        cardNameOrId: {
+          type: "STRING",
+          description: "The card the user is asking about, as they wrote it (a name, partial name, or id).",
+        },
+      },
+      required: ["cardNameOrId"],
     },
   },
 ] as const;
