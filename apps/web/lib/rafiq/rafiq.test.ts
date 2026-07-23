@@ -13,7 +13,7 @@ import {
 } from "@fils/engine";
 import { runRafiq } from "./rafiq";
 import { dispatchTool, type RafiqEngineContext } from "./tools";
-import type { GeminiClient, GeminiContent } from "./gemini";
+import { GeminiError, type GeminiClient, type GeminiContent } from "./gemini";
 
 /**
  * These tests exercise Rafiq's brain WITHOUT the network: a fake GeminiClient plays
@@ -177,14 +177,76 @@ describe("graceful degradation", () => {
       async generateContent(): Promise<GeminiContent> {
         calls++;
         if (calls === 1) return modelCall("burn_priority", {});
-        throw new Error("network down");
+        throw new GeminiError("Gemini API error 429: quota", 429, "http");
       },
     };
     const out = await runRafiq("what's expiring?", ctxOf({ points: POINTS }), [], client);
     expect(out.tool).toBe("burn_priority");
     expect(out.data).toEqual(burnPriority(POINTS, ASOF));
     expect(out.degraded).toBe(true);
+    // Even though phrasing failed on a rate limit, the engine result is preserved.
+    expect(out.degradedReason).toBe("rate_limited");
     expect(out.reply.length).toBeGreaterThan(0);
+  });
+});
+
+describe("degradedReason classification", () => {
+  // A client whose FIRST (tool-selection) call throws the given error, so there is
+  // no engine result to fall back on — the path that was previously invisible.
+  const throwing = (err: unknown): GeminiClient => ({
+    async generateContent(): Promise<GeminiContent> {
+      throw err;
+    },
+  });
+
+  const run = (err: unknown) => runRafiq("which card for fuel?", ctxOf({}), [], throwing(err));
+
+  it("missing key -> missing_key", async () => {
+    const out = await runRafiq("which card for fuel?", ctxOf({}), [], null);
+    expect(out.degradedReason).toBe("missing_key");
+  });
+
+  it("HTTP 429 -> rate_limited", async () => {
+    const out = await run(new GeminiError("Gemini API error 429: quota, limit 0", 429, "http"));
+    expect(out.degraded).toBe(true);
+    expect(out.degradedReason).toBe("rate_limited");
+  });
+
+  it("HTTP 400/404 -> model_error", async () => {
+    expect((await run(new GeminiError("bad request", 400, "http"))).degradedReason).toBe("model_error");
+    expect((await run(new GeminiError("not found", 404, "http"))).degradedReason).toBe("model_error");
+  });
+
+  it("timeout -> timeout", async () => {
+    const out = await run(new GeminiError("timed out after 12000ms", undefined, "timeout"));
+    expect(out.degradedReason).toBe("timeout");
+  });
+
+  it("network failure -> network_error", async () => {
+    const out = await run(new GeminiError("fetch failed", undefined, "network"));
+    expect(out.degradedReason).toBe("network_error");
+  });
+
+  it("empty/blocked content -> model_error", async () => {
+    const out = await run(new GeminiError("no content (blocked: SAFETY)", undefined, "empty"));
+    expect(out.degradedReason).toBe("model_error");
+  });
+
+  it("an unexpected non-Gemini error still classifies as model_error, never throws", async () => {
+    const out = await run(new Error("something odd"));
+    expect(out.degraded).toBe(true);
+    expect(out.degradedReason).toBe("model_error");
+  });
+
+  it("a successful turn carries no degradedReason", async () => {
+    const out = await runRafiq(
+      "which card for groceries?",
+      ctxOf({ owned: [] }),
+      [],
+      toolThenReply("which_card", { category: "groceries" }),
+    );
+    expect(out.degraded).toBe(false);
+    expect(out.degradedReason).toBeUndefined();
   });
 });
 

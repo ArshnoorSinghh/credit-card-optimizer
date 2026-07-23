@@ -26,7 +26,7 @@
 
 import type { GeminiClient, GeminiContent, GeminiPart } from "./gemini";
 import { GeminiError } from "./gemini";
-import type { RafiqTurn } from "./contract";
+import type { RafiqDegradedReason, RafiqTurn } from "./contract";
 import {
   dispatchTool,
   TOOL_DECLARATIONS,
@@ -70,6 +70,33 @@ export interface RafiqOutcome {
   tool: string | null;
   data: unknown | null;
   degraded: boolean;
+  degradedReason?: RafiqDegradedReason;
+}
+
+/** Map a caught error to a non-sensitive degrade reason for logs + the response. */
+function classifyDegrade(err: unknown): RafiqDegradedReason {
+  if (err instanceof GeminiError) {
+    if (err.kind === "timeout") return "timeout";
+    if (err.kind === "network") return "network_error";
+    if (err.status === 429) return "rate_limited";
+    // http 4xx/5xx and empty-content both mean "the model didn't give us a usable
+    // answer" — a model/provider error rather than a transport or quota problem.
+    return "model_error";
+  }
+  return "model_error";
+}
+
+/**
+ * One log line per degrade, with the REAL underlying failure (status + message) so
+ * an operator can tell quota from a bad model id from a timeout at a glance. This is
+ * the visibility that was missing: before, a degrade returned a friendly reply and
+ * swallowed the cause entirely. Never logs the API key (GeminiError carries none).
+ */
+function logDegrade(reason: RafiqDegradedReason, err: unknown, phrasingOnly: boolean): void {
+  const status = err instanceof GeminiError && err.status !== undefined ? err.status : "n/a";
+  const message = err instanceof Error ? err.message : String(err);
+  const stage = phrasingOnly ? " (engine result preserved; only phrasing lost)" : "";
+  console.error(`[rafiq] degraded reason=${reason} status=${status}${stage}: ${message}`);
 }
 
 /** A friendly, deterministic reply for when the model is unavailable and we have no engine result. */
@@ -149,7 +176,8 @@ export async function runRafiq(
 ): Promise<RafiqOutcome> {
   // No key / no client -> degrade immediately. The rest of the app is unaffected.
   if (!client) {
-    return { reply: UNAVAILABLE_REPLY, tool: null, data: null, degraded: true };
+    console.error("[rafiq] degraded reason=missing_key: GEMINI_API_KEY is not configured");
+    return { reply: UNAVAILABLE_REPLY, tool: null, data: null, degraded: true, degradedReason: "missing_key" };
   }
 
   const contents: GeminiContent[] = [
@@ -197,9 +225,14 @@ export async function runRafiq(
       lastSuggestion = dispatch.ok ? dispatch.suggestion : undefined;
 
       // Feed the model its own call plus the REAL result, then let it phrase.
+      // why role "user" for the function response (not "function"): the current
+      // Generative Language models reject role "function" with a 400 ("Role
+      // 'function' is not supported. Please use ... USER, MODEL"). A functionResponse
+      // part is delivered on a "user"-role turn. gemini-2.0-flash used to accept
+      // "function", so this silently broke when the served model rotated.
       contents.push(modelContent);
       contents.push({
-        role: "function",
+        role: "user",
         parts: [{ functionResponse: { name: call.name, response: { result: dispatch.forModel } } }],
       });
 
@@ -211,7 +244,8 @@ export async function runRafiq(
     }
 
     // Ran out of rounds while the model kept calling tools: phrase the last result
-    // ourselves so the user still gets a grounded answer.
+    // ourselves so the user still gets a grounded answer. This is NOT degraded — the
+    // engine answered; we just chose the deterministic phrasing.
     if (lastDispatch) {
       return {
         reply: fallbackReplyFor(lastDispatch, lastSuggestion),
@@ -220,23 +254,28 @@ export async function runRafiq(
         degraded: false,
       };
     }
-    return { reply: UNAVAILABLE_REPLY, tool: null, data: null, degraded: true };
+    // The model kept asking for tools but never actually named one we could run.
+    console.error(`[rafiq] degraded reason=model_error: no usable tool call within ${MAX_TOOL_ROUNDS} rounds`);
+    return { reply: UNAVAILABLE_REPLY, tool: null, data: null, degraded: true, degradedReason: "model_error" };
   } catch (err) {
+    const reason = classifyDegrade(err);
     // Gemini failed somewhere. If we already have a real engine result, phrase it
     // deterministically — the answer's numbers are still the engine's, so the user
     // gets a correct (if less chatty) reply instead of an error.
     if (lastDispatch) {
+      logDegrade(reason, err, true);
       return {
         reply: fallbackReplyFor(lastDispatch, lastSuggestion),
         tool: lastDispatch.tool,
         data: lastDispatch.ok ? lastDispatch.data : null,
         degraded: true,
+        degradedReason: reason,
       };
     }
-    if (!(err instanceof GeminiError)) {
-      // Unexpected (non-transport) error — still never crash the caller.
-      return { reply: UNAVAILABLE_REPLY, tool: null, data: null, degraded: true };
-    }
-    return { reply: UNAVAILABLE_REPLY, tool: null, data: null, degraded: true };
+    // No engine result to fall back on: the model failed before or during the very
+    // first (tool-selection) call. This is the common case for a bad key, quota, or
+    // a wrong model id — exactly what was previously invisible.
+    logDegrade(reason, err, false);
+    return { reply: UNAVAILABLE_REPLY, tool: null, data: null, degraded: true, degradedReason: reason };
   }
 }

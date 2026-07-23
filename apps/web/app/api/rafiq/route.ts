@@ -203,6 +203,7 @@ export async function POST(request: Request): Promise<Response> {
     tool: outcome.tool,
     data: outcome.data,
     degraded: outcome.degraded,
+    ...(outcome.degradedReason ? { degradedReason: outcome.degradedReason } : {}),
   };
   return Response.json(response);
 }
