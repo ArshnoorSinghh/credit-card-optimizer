@@ -59,8 +59,9 @@ export interface GeminiClient {
  *  - "timeout" our own AbortController fired (REQUEST_TIMEOUT_MS)
  *  - "network" fetch threw before any response (DNS, TLS, connection reset)
  *  - "empty"   a 200 with no usable content (e.g. a safety block)
+ *  - "parse"   a 2xx whose body wasn't valid/expected JSON
  */
-export type GeminiErrorKind = "http" | "timeout" | "network" | "empty";
+export type GeminiErrorKind = "http" | "timeout" | "network" | "empty" | "parse";
 
 export class GeminiError extends Error {
   constructor(
@@ -78,11 +79,17 @@ export class GeminiError extends Error {
 // models the generateContent endpoint actually serves, independently of what
 // ListModels advertises. Pinned ids rot silently — verified July 2026 against this
 // key: gemini-2.0-flash returns 429 (free-tier request quota 0), gemini-2.5-flash
-// returns 404 NOT_FOUND despite appearing in ListModels, while gemini-flash-latest
-// returns 200. The "-latest" alias tracks a currently-served model, so it survives
-// Google's rotation; GEMINI_MODEL overrides it without a deploy if we ever need to
-// pin a specific version.
-const DEFAULT_MODEL = "gemini-flash-latest";
+// returns 404 NOT_FOUND despite appearing in ListModels. The "-latest" aliases track
+// a currently-served model, so they survive Google's rotation.
+//
+// why the LITE alias as default: gemini-flash-lite-latest returns 200 and selected
+// the correct engine tool on every representative question we tested (which-card,
+// portfolio, points, comparison) with correct arguments, and the lite tier carries
+// more free-tier request headroom. gemini-flash-latest is the documented fallback —
+// set GEMINI_MODEL to it (or to any specific version) to override without a deploy.
+const DEFAULT_MODEL = "gemini-flash-lite-latest";
+/** Documented fallback if the lite alias ever misbehaves — set GEMINI_MODEL to this. */
+export const FALLBACK_MODEL = "gemini-flash-latest";
 const REQUEST_TIMEOUT_MS = 12_000;
 
 interface RawCandidate {
@@ -147,7 +154,14 @@ export function createGeminiClient(apiKey: string, model?: string): GeminiClient
         throw new GeminiError(`Gemini API error ${res.status}: ${detail.slice(0, 300)}`, res.status, "http");
       }
 
-      const json = (await res.json()) as RawResponse;
+      let json: RawResponse;
+      try {
+        json = (await res.json()) as RawResponse;
+      } catch (err) {
+        // A 2xx that isn't the JSON we expect (proxy HTML, truncated body, …). Classify
+        // it distinctly so a transport/quota problem is never mistaken for a bad body.
+        throw new GeminiError(`Gemini response was not valid JSON: ${String(err)}`, res.status, "parse");
+      }
       const parts = json.candidates?.[0]?.content?.parts;
       if (!parts || parts.length === 0) {
         const reason = json.promptFeedback?.blockReason;

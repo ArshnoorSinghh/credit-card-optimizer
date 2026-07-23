@@ -9,6 +9,7 @@ import { cn } from "@/lib/cn";
 import { sendRafiqMessage } from "@/lib/rafiq/client";
 import type { RafiqTurn } from "@/lib/rafiq/contract";
 import { RafiqReceipt } from "@/components/rafiq-receipt";
+import { Markdown } from "@/components/markdown";
 
 /*
   RafiqChat — the on-page AI assistant. A calm, data-first chat that talks to
@@ -204,8 +205,8 @@ function Bubble({ message }: { message: ChatMessage }) {
       transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
       className="mr-auto max-w-[92%]"
     >
-      <div className="rounded-[var(--radius-md)] rounded-bl-sm border border-line bg-surface px-4 py-2.5 text-sm text-fg">
-        {message.text}
+      <div className="rounded-[var(--radius-md)] rounded-bl-sm border border-line bg-surface px-4 py-2.5 text-sm leading-relaxed text-fg">
+        <Markdown text={message.text} />
       </div>
       <RafiqReceipt tool={message.tool ?? null} data={message.data ?? null} />
     </motion.div>
