@@ -10,18 +10,23 @@ import { DEFAULT_PROFILE, DEFAULT_SPEND } from "@/lib/optimizer";
   Deliberately minimal — real persistence lands with user accounts later.
 */
 
-const KEY = "fils.profile.v1";
+// v2: added heldCardIds. Bumped so a stale v1 blob doesn't hydrate the new field
+// as undefined — a missing key just falls back to defaults instead.
+const KEY = "fils.profile.v2";
 
 export interface StoredProfile {
   spending: Record<SpendCategory, number>;
   profile: UserProfile;
   bank: string | null;
+  /** Cards the user currently holds — anchors the "what you already earn" baseline. */
+  heldCardIds: string[];
 }
 
 const DEFAULTS: StoredProfile = {
   spending: { ...DEFAULT_SPEND },
   profile: { ...DEFAULT_PROFILE },
   bank: null,
+  heldCardIds: [],
 };
 
 export function saveProfile(p: StoredProfile): void {
@@ -39,6 +44,7 @@ export function loadProfile(): StoredProfile {
       spending: { ...DEFAULTS.spending, ...(parsed.spending ?? {}) },
       profile: { ...DEFAULTS.profile, ...(parsed.profile ?? {}) },
       bank: parsed.bank ?? null,
+      heldCardIds: parsed.heldCardIds ?? [],
     };
   } catch {
     return DEFAULTS;
