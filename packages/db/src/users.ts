@@ -75,6 +75,85 @@ export async function deleteUserByClerkId(clerkUserId: string): Promise<void> {
   await getPrisma().user.deleteMany({ where: { clerkUserId } });
 }
 
+// ── Saved profile: the user's wallet + spending, persisted across sessions ─────────
+
+/** The user's persisted preferences. `spending`/`salaryAed` are null until set. */
+export type SavedState = {
+  cardIds: string[];
+  spending: Record<string, number> | null;
+  salaryAed: number | null;
+  bank: string | null;
+};
+
+/**
+ * Read a user's saved wallet + spending profile by our INTERNAL user id (the caller
+ * resolves the Clerk id to a row via getCurrentUser first). Card ids come back in a
+ * stable order (oldest-added first) so the wallet renders deterministically.
+ */
+export async function getSavedState(userId: string): Promise<SavedState | null> {
+  const row = await getPrisma().user.findUnique({
+    where: { id: userId },
+    select: {
+      savedSpending: true,
+      savedSalaryAed: true,
+      savedBank: true,
+      savedCards: { select: { cardId: true }, orderBy: { createdAt: "asc" } },
+    },
+  });
+  if (!row) return null;
+  return {
+    cardIds: row.savedCards.map((c) => c.cardId),
+    // The column is JSON; the app is the only writer and always writes an object.
+    spending: (row.savedSpending as Record<string, number> | null) ?? null,
+    salaryAed: row.savedSalaryAed,
+    bank: row.savedBank,
+  };
+}
+
+/**
+ * Persist any subset of a user's saved state. Only the fields present in `patch` are
+ * written, so the dashboard can save spending without touching the wallet and vice
+ * versa. Card ids, when given, REPLACE the whole set inside a transaction (the same
+ * delete-then-recreate pattern the card seed uses) so the stored wallet always
+ * converges exactly on what the client sent.
+ */
+export async function saveSavedState(
+  userId: string,
+  patch: Partial<SavedState>,
+): Promise<void> {
+  const prisma = getPrisma();
+  const userData: {
+    savedSpending?: Record<string, number>;
+    savedSalaryAed?: number;
+    savedBank?: string | null;
+  } = {};
+  if (patch.spending !== undefined && patch.spending !== null) userData.savedSpending = patch.spending;
+  if (patch.salaryAed !== undefined && patch.salaryAed !== null) userData.savedSalaryAed = patch.salaryAed;
+  if (patch.bank !== undefined) userData.savedBank = patch.bank;
+
+  const writeCards = patch.cardIds !== undefined;
+  // Dedupe defensively; the unique (userId, cardId) constraint would reject dupes.
+  const ids = writeCards ? [...new Set(patch.cardIds)] : [];
+
+  // Interactive form with generous timeouts: Neon's serverless endpoint can go cold
+  // between requests, and the array form's fixed 2s maxWait surfaces as an
+  // intermittent P2028 there (same reason the seed uses this form).
+  await prisma.$transaction(
+    async (tx) => {
+      if (Object.keys(userData).length > 0) {
+        await tx.user.update({ where: { id: userId }, data: userData });
+      }
+      if (writeCards) {
+        await tx.savedCard.deleteMany({ where: { userId } });
+        if (ids.length > 0) {
+          await tx.savedCard.createMany({ data: ids.map((cardId) => ({ userId, cardId })) });
+        }
+      }
+    },
+    { maxWait: 15_000, timeout: 30_000 },
+  );
+}
+
 /**
  * How many users have registered — the metric.
  *

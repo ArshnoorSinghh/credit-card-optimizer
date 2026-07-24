@@ -179,6 +179,9 @@ export {
   getUserByClerkId,
   deleteUserByClerkId,
   getRegisteredUserCount,
+  getSavedState,
+  saveSavedState,
   type UserSyncInput,
   type AppUser,
+  type SavedState,
 } from "./users";

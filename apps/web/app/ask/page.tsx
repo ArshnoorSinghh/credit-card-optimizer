@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Reveal } from "@/components/ui/reveal";
 import { Aurora } from "@/components/aurora";
 import { RafiqChat } from "@/components/rafiq-chat";
-import { useStoredProfile } from "@/lib/profile-store";
+import { useProfileStore } from "@/lib/profile-store";
 
 /*
   Ask Rafiq. One grounded assistant for everything: which card to use for a
@@ -23,7 +23,7 @@ const SUGGESTIONS = [
 ];
 
 export default function AskPage() {
-  const [stored] = useStoredProfile();
+  const { state: stored } = useProfileStore();
 
   return (
     <main className="relative min-h-[calc(100vh-4rem)] overflow-hidden">
@@ -39,6 +39,7 @@ export default function AskPage() {
           <RafiqChat
             spending={stored.spending}
             profile={stored.profile}
+            ownedCardIds={stored.cardIds}
             suggestions={SUGGESTIONS}
             intro={INTRO}
           />

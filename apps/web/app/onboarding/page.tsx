@@ -1,35 +1,51 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, ArrowLeft, Check, Building2 } from "lucide-react";
+import { ArrowRight, ArrowLeft, Check } from "lucide-react";
 import type { SpendCategory } from "@fils/engine";
 import { Aurora } from "@/components/aurora";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { BANKS, cardsByBank } from "@/lib/cards";
+import { CardPicker } from "@/components/card-picker";
 import { CATEGORIES, DEFAULT_SPEND, totalSpend } from "@/lib/optimizer";
-import { saveProfile } from "@/lib/profile-store";
+import { useProfileStore } from "@/lib/profile-store";
 import { SpendSlider } from "@/components/spend-slider";
+import { cardById } from "@/lib/cards";
 import { aed } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
 const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
+const STEPS = ["Your cards", "Your spending"];
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { state, ready, save } = useProfileStore();
   const [step, setStep] = useState(0);
-  const [bank, setBank] = useState<string | null>(null);
+  const [cardIds, setCardIds] = useState<string[]>([]);
   const [spend, setSpend] = useState<Record<SpendCategory, number>>({ ...DEFAULT_SPEND });
   const [salary, setSalary] = useState(20000);
+  const [seeded, setSeeded] = useState(false);
+
+  // Seed the form from any saved state once, after the store hydrates.
+  useEffect(() => {
+    if (!ready || seeded) return;
+    setCardIds(state.cardIds);
+    setSpend(state.spending);
+    setSalary(state.profile.monthlySalaryAed);
+    setSeeded(true);
+  }, [ready, seeded, state]);
 
   function finish() {
-    saveProfile({
+    // Primary bank = the bank of the first card the user picked (display only).
+    const bank = cardIds.length ? cardById(cardIds[0]!)?.bank ?? null : null;
+    save({
+      cardIds,
       spending: spend,
       profile: { monthlySalaryAed: salary, uaeResident: true },
       bank,
+      onboarded: true,
     });
     router.push("/results");
   }
@@ -42,7 +58,7 @@ export default function OnboardingPage() {
       <div className="relative mx-auto max-w-2xl px-5 py-14">
         {/* Progress */}
         <div className="mb-8 flex items-center gap-3">
-          {["Your bank", "Your spending"].map((s, i) => (
+          {STEPS.map((s, i) => (
             <div key={s} className="flex flex-1 items-center gap-3">
               <span
                 className={cn(
@@ -61,51 +77,25 @@ export default function OnboardingPage() {
         <AnimatePresence mode="wait">
           {step === 0 ? (
             <motion.div
-              key="bank"
+              key="cards"
               initial={{ opacity: 0, x: 24 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -24 }}
               transition={{ duration: 0.4, ease: EASE }}
             >
-              <h1 className="text-3xl font-semibold md:text-4xl">Who do you bank with?</h1>
+              <h1 className="text-3xl font-semibold md:text-4xl">Which cards do you hold?</h1>
               <p className="mt-3 text-muted">
-                Pick your main bank to see its cards, or skip and we&apos;ll search all{" "}
-                {BANKS.length}.
+                Pick a bank, tick the cards you have, then add more from another bank. This lets us
+                show what your wallet earns today. Skip it if you have none or would rather not say.
               </p>
 
-              <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {BANKS.map((b) => {
-                  const count = cardsByBank(b).length;
-                  const selected = bank === b;
-                  return (
-                    <button
-                      key={b}
-                      onClick={() => setBank(selected ? null : b)}
-                      className={cn(
-                        "group flex flex-col items-start gap-2 rounded-[var(--radius-md)] border p-4 text-left transition-all",
-                        selected
-                          ? "border-flame/60 bg-flame/10"
-                          : "border-line bg-surface hover:border-line-strong",
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "grid h-9 w-9 place-items-center rounded-lg",
-                          selected ? "bg-flame text-white" : "bg-surface-2 text-muted",
-                        )}
-                      >
-                        <Building2 className="h-4 w-4" />
-                      </span>
-                      <span className="text-sm font-medium text-fg">{b}</span>
-                      <span className="text-xs text-faint">{count} cards</span>
-                    </button>
-                  );
-                })}
-              </div>
+              <Card className="mt-8">
+                <CardPicker selected={cardIds} onChange={setCardIds} />
+              </Card>
 
               <div className="mt-10 flex items-center justify-between">
-                <Button variant="ghost" onClick={finish}>
-                  Skip to results
+                <Button variant="ghost" onClick={() => setCardIds([])}>
+                  I have no cards yet
                 </Button>
                 <Button onClick={() => setStep(1)}>
                   Continue
@@ -153,7 +143,7 @@ export default function OnboardingPage() {
                   className="w-full rounded-[var(--radius-md)] border border-line bg-surface-2 px-4 py-3 text-fg outline-none transition-colors focus:border-line-strong focus:ring-2 focus:ring-flame/40"
                 />
                 <p className="mt-2 text-xs text-faint">
-                  Used only to filter cards you&apos;re eligible for. Never stored on a server in the demo.
+                  Used only to filter cards you&apos;re eligible for.
                 </p>
               </div>
 

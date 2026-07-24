@@ -19,7 +19,9 @@ import { getPrisma } from "./index";
 import {
   deleteUserByClerkId,
   getRegisteredUserCount,
+  getSavedState,
   getUserByClerkId,
+  saveSavedState,
   upsertUser,
 } from "./users";
 
@@ -82,7 +84,11 @@ describe("upsertUser — the Clerk signup -> Postgres row requirement", () => {
     const row = await getPrisma().user.findUnique({ where: { clerkUserId: clerkId("shape") } });
 
     const keys = Object.keys(row!);
-    expect(keys.sort()).toEqual(["clerkUserId", "createdAt", "email", "id", "updatedAt"].sort());
+    // Identity columns plus the saved-preference columns (spending/salary/bank). None
+    // is credential material; the forbidden-list check below is the real guard.
+    expect(keys.sort()).toEqual(
+      ["clerkUserId", "createdAt", "email", "id", "savedBank", "savedSalaryAed", "savedSpending", "updatedAt"].sort(),
+    );
     for (const forbidden of ["password", "passwordHash", "hash", "salt", "resetToken"]) {
       expect(keys).not.toContain(forbidden);
     }
@@ -111,6 +117,61 @@ describe("deleteUserByClerkId — the user.deleted webhook", () => {
   it("is a no-op for a user who was never synced, rather than throwing", async () => {
     // A deletion webhook for a user we never saw must not 500, or Clerk retries forever.
     await expect(deleteUserByClerkId(clerkId("never"))).resolves.toBeUndefined();
+  });
+});
+
+describe("saved wallet + spending — the dashboard persistence requirement", () => {
+  it("round-trips a saved profile and wallet", async () => {
+    const user = await upsertUser({ clerkUserId: clerkId("save"), email: "save@example.com" });
+    await saveSavedState(user.id, {
+      cardIds: ["card_a", "card_b"],
+      spending: { groceries: 2500, dining: 1800 },
+      salaryAed: 25000,
+      bank: "ADCB",
+    });
+
+    const state = await getSavedState(user.id);
+    expect(state).toEqual({
+      cardIds: ["card_a", "card_b"], // insertion order preserved
+      spending: { groceries: 2500, dining: 1800 },
+      salaryAed: 25000,
+      bank: "ADCB",
+    });
+  });
+
+  it("replaces the whole card set on save, leaving spending untouched", async () => {
+    const user = await upsertUser({ clerkUserId: clerkId("cards"), email: "c@example.com" });
+    await saveSavedState(user.id, {
+      cardIds: ["card_a", "card_b"],
+      spending: { groceries: 1000 },
+      salaryAed: 15000,
+    });
+    // A wallet-only save must not wipe the spending profile.
+    await saveSavedState(user.id, { cardIds: ["card_b", "card_c"] });
+
+    const state = await getSavedState(user.id);
+    expect(state?.cardIds).toEqual(["card_b", "card_c"]);
+    expect(state?.spending).toEqual({ groceries: 1000 });
+    expect(state?.salaryAed).toBe(15000);
+  });
+
+  it("clears the wallet when saved with an empty card list", async () => {
+    const user = await upsertUser({ clerkUserId: clerkId("empty"), email: "e@example.com" });
+    await saveSavedState(user.id, { cardIds: ["card_a"] });
+    await saveSavedState(user.id, { cardIds: [] });
+    expect((await getSavedState(user.id))?.cardIds).toEqual([]);
+  });
+
+  it("returns null for a user id that does not exist", async () => {
+    await expect(getSavedState("usr_does_not_exist")).resolves.toBeNull();
+  });
+
+  it("cascades: deleting the user removes their saved cards", async () => {
+    const user = await upsertUser({ clerkUserId: clerkId("cascade"), email: "cascade@example.com" });
+    await saveSavedState(user.id, { cardIds: ["card_a", "card_b"] });
+    await deleteUserByClerkId(clerkId("cascade"));
+    const orphans = await getPrisma().savedCard.count({ where: { userId: user.id } });
+    expect(orphans).toBe(0);
   });
 });
 

@@ -41,13 +41,14 @@ export function AiEntry() {
     setMessages(nextMessages);
     setBusy(true);
 
-    // Pull known context so Rafiq can answer portfolio/comparison questions.
+    // Pull known context so Rafiq can answer portfolio/comparison questions, and the
+    // user's own cards so "which of my cards should I use for X" works.
     const stored = loadProfile();
     const history: RafiqTurn[] = messages.map((m) => ({ role: m.role, text: m.text }));
 
     const res = await sendRafiqMessage({
       message: text,
-      context: { spending: stored.spending, profile: stored.profile },
+      context: { spending: stored.spending, profile: stored.profile, ownedCardIds: stored.cardIds },
       history,
     });
     setMessages([...nextMessages, { role: "model", text: res.reply }]);
