@@ -9,7 +9,7 @@ import { SpendSlider } from "@/components/spend-slider";
 import { PortfolioResults } from "@/components/portfolio-results";
 import { Reveal } from "@/components/ui/reveal";
 import { CATEGORIES, DEFAULT_SPEND, DEFAULT_PROFILE, runOptimize, totalSpend } from "@/lib/optimizer";
-import { loadProfile, saveProfile } from "@/lib/profile-store";
+import { useProfileStore } from "@/lib/profile-store";
 import { aed } from "@/lib/format";
 
 /*
@@ -20,17 +20,18 @@ import { aed } from "@/lib/format";
 
 export default function OptimizerPage() {
   // Start from deterministic defaults (same on server + client, no hydration
-  // mismatch), then hydrate from the stored onboarding profile after mount.
+  // mismatch), then hydrate from the saved profile after the store loads.
+  const { state, ready, save } = useProfileStore();
   const [spend, setSpend] = useState<Record<SpendCategory, number>>({ ...DEFAULT_SPEND });
   const [salary, setSalary] = useState(DEFAULT_PROFILE.monthlySalaryAed);
-  const [bank, setBank] = useState<string | null>(null);
+  const [seeded, setSeeded] = useState(false);
 
   useEffect(() => {
-    const seed = loadProfile();
-    setSpend(seed.spending);
-    setSalary(seed.profile.monthlySalaryAed);
-    setBank(seed.bank);
-  }, []);
+    if (!ready || seeded) return;
+    setSpend(state.spending);
+    setSalary(state.profile.monthlySalaryAed);
+    setSeeded(true);
+  }, [ready, seeded, state]);
 
   const result = useMemo(
     () => runOptimize(spend, { monthlySalaryAed: salary, uaeResident: true }),
@@ -40,7 +41,7 @@ export default function OptimizerPage() {
   function update(cat: SpendCategory, v: number) {
     const next = { ...spend, [cat]: v };
     setSpend(next);
-    saveProfile({ spending: next, profile: { monthlySalaryAed: salary, uaeResident: true }, bank });
+    save({ spending: next, onboarded: true });
   }
 
   return (
@@ -77,7 +78,11 @@ export default function OptimizerPage() {
                 type="number"
                 min={0}
                 value={salary}
-                onChange={(e) => setSalary(Number(e.target.value) || 0)}
+                onChange={(e) => {
+                  const v = Number(e.target.value) || 0;
+                  setSalary(v);
+                  save({ profile: { monthlySalaryAed: v, uaeResident: true }, onboarded: true });
+                }}
                 className="w-full rounded-[var(--radius-md)] border border-line bg-surface-2 px-4 py-3 text-fg outline-none transition-colors focus:border-line-strong focus:ring-2 focus:ring-flame/40"
               />
             </Card>

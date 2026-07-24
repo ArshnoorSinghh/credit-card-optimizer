@@ -57,10 +57,45 @@ model User {
   /// constraint here would convert an eventual-consistency blip into a 500.
   email String
 
+  /// The user's saved spending profile: { category: aedPerMonth }. NULL means they
+  /// have not completed the spending step yet, which is DIFFERENT from an all-zero
+  /// profile — the dashboard uses null to prompt "set your spending" rather than
+  /// showing a misleading AED 0. JSON because the engine never reads this column; the
+  /// app passes it into the pure engine at request time.
+  savedSpending  Json? @map("saved_spending")
+  /// Saved monthly salary (AED), used to filter eligible cards. NULL = not set.
+  savedSalaryAed Int?  @map("saved_salary_aed")
+  /// The primary bank the user browsed/selected during onboarding. Display only.
+  savedBank      String? @map("saved_bank")
+
+  /// The cards the user says they hold. Relational (not a JSON array) to match the
+  /// schema author's stated intent that child tables FK to User.id, and so
+  /// "which users hold card X" stays a query.
+  savedCards SavedCard[]
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("users")
+}
+
+/// One card a user says they hold. cardId is the natural card id from cards.json
+/// (e.g. "adcb_365_cashback"). Deliberately NOT a DB foreign key to `cards`: saved
+/// cards are a user concern validated by the app against the known card set, and
+/// decoupling them means a card-data reseed can never cascade-delete a user's wallet.
+model SavedCard {
+  id     String @id @default(cuid())
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  cardId    String   @map("card_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  /// A user holds a given card at most once.
+  @@unique([userId, cardId])
+  @@index([userId])
+  @@index([cardId])
+  @@map("saved_cards")
 }
 
 /// How a card denominates rewards. Mirrors the engine's `RewardType` union exactly;

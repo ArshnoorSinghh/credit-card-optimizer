@@ -423,3 +423,34 @@ describe("card links in recommendations and comparisons", () => {
     expect(out.reply).toMatch(/\(\/cards\/[a-z0-9_]+\)/);
   });
 });
+
+describe("which_card uses the user's own saved cards", () => {
+  const owned = ["rakbank_world", "adcb_365_cashback"]
+    .map((id) => CARDS.find((c) => c.id === id)!)
+    .filter(Boolean);
+
+  it("recommends one of the user's OWN cards for a category, and links it", async () => {
+    const out = await runRafiq(
+      "which of my cards should I use for groceries?",
+      ctxOf({ owned, profile: PROFILE, spending: SPENDING }),
+      [],
+      toolThenReply("which_card", { merchantOrCategory: "groceries" }),
+    );
+    expect(out.tool).toBe("which_card");
+    const data = out.data as { bestOwnedCard: { cardId: string } | null };
+    expect(data.bestOwnedCard).not.toBeNull();
+    // The recommended card is one the user actually holds.
+    expect(owned.map((c) => c.id)).toContain(data.bestOwnedCard!.cardId);
+  });
+
+  it("with no owned cards, reports it has nothing to recommend from the wallet", async () => {
+    const out = await runRafiq(
+      "which of my cards should I use for groceries?",
+      ctxOf({ owned: [], profile: PROFILE, spending: SPENDING }),
+      [],
+      toolThenReply("which_card", { merchantOrCategory: "groceries" }),
+    );
+    const data = out.data as { bestOwnedCard: unknown | null };
+    expect(data.bestOwnedCard).toBeNull();
+  });
+});

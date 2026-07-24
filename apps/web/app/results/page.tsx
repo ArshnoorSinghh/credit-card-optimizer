@@ -11,11 +11,11 @@ import { Card } from "@/components/ui/card";
 import { Reveal } from "@/components/ui/reveal";
 import { PortfolioResults } from "@/components/portfolio-results";
 import { RafiqChat } from "@/components/rafiq-chat";
-import { useStoredProfile } from "@/lib/profile-store";
+import { useProfileStore } from "@/lib/profile-store";
 import { runOptimize } from "@/lib/optimizer";
 
 export default function ResultsPage() {
-  const [stored, ready] = useStoredProfile();
+  const { state: stored, ready } = useProfileStore();
 
   const result = useMemo(
     () => (ready ? runOptimize(stored.spending, stored.profile) : null),
@@ -82,7 +82,11 @@ export default function ResultsPage() {
           </Card>
 
           {/* Rafiq — the AI assistant, grounded in the engine */}
-          <RafiqChat spending={stored.spending} profile={stored.profile} />
+          <RafiqChat
+            spending={stored.spending}
+            profile={stored.profile}
+            ownedCardIds={stored.cardIds}
+          />
         </div>
       </div>
     </main>

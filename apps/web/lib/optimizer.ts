@@ -1,6 +1,7 @@
 import {
   optimizePortfolio,
   SPEND_CATEGORIES,
+  type Card,
   type PortfolioResult,
   type SpendCategory,
   type SpendingProfile,
@@ -68,6 +69,25 @@ export function runOptimize(
     return optimizePortfolio(spending, profile, ALL_CARDS);
   } catch (err) {
     console.error("Optimizer failed:", err);
+    return null;
+  }
+}
+
+/**
+ * Run the engine over a SPECIFIC set of cards (e.g. the ones the user holds), to see
+ * the best they can net from what they already have. Same pure engine, just a
+ * different universe. Returns null on any failure or an empty card set.
+ */
+export function runOptimizeOver(
+  spending: SpendingProfile,
+  profile: UserProfile,
+  cards: Card[],
+): PortfolioResult | null {
+  if (cards.length === 0) return null;
+  try {
+    return optimizePortfolio(spending, profile, cards);
+  } catch (err) {
+    console.error("Optimizer (owned cards) failed:", err);
     return null;
   }
 }

@@ -40,12 +40,15 @@ const DEFAULT_INTRO =
 export function RafiqChat({
   spending,
   profile,
+  ownedCardIds = [],
   className,
   suggestions = DEFAULT_SUGGESTIONS,
   intro = DEFAULT_INTRO,
 }: {
   spending: SpendingProfile;
   profile: UserProfile;
+  /** The cards the user holds, so Rafiq can answer "which of MY cards for X". */
+  ownedCardIds?: string[];
   className?: string;
   /** Prompt chips shown in the empty state. Defaults to a general set. */
   suggestions?: string[];
@@ -72,7 +75,7 @@ export function RafiqChat({
 
     const res = await sendRafiqMessage({
       message: trimmed,
-      context: { spending, profile },
+      context: { spending, profile, ownedCardIds },
       history,
     });
 
