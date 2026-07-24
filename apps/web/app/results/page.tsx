@@ -14,12 +14,19 @@ import { PortfolioResults } from "@/components/portfolio-results";
 import { RafiqChat } from "@/components/rafiq-chat";
 import { useStoredProfile } from "@/lib/profile-store";
 import { runOptimize } from "@/lib/optimizer";
+import { runBaseline } from "@/lib/baseline";
 
 export default function ResultsPage() {
   const [stored, ready] = useStoredProfile();
 
   const result = useMemo(
     () => (ready ? runOptimize(stored.spending, stored.profile) : null),
+    [ready, stored],
+  );
+
+  // Anchor the recommendation against the user's current cards, if they gave any.
+  const baseline = useMemo(
+    () => (ready ? runBaseline(stored.heldCardIds, stored.spending, stored.profile) : null),
     [ready, stored],
   );
 
@@ -53,7 +60,7 @@ export default function ResultsPage() {
           className="mt-10"
         >
           {ready ? (
-            <PortfolioResults result={result} />
+            <PortfolioResults result={result} baselineNet={baseline?.netAnnualValue ?? null} />
           ) : (
             <div aria-busy="true" aria-label="Crunching portfolios">
               <div className="flex gap-2">

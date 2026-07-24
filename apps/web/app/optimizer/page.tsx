@@ -24,12 +24,15 @@ export default function OptimizerPage() {
   const [spend, setSpend] = useState<Record<SpendCategory, number>>({ ...DEFAULT_SPEND });
   const [salary, setSalary] = useState(DEFAULT_PROFILE.monthlySalaryAed);
   const [bank, setBank] = useState<string | null>(null);
+  // Carried through so editing spend here doesn't wipe held cards chosen at entry.
+  const [heldCardIds, setHeldCardIds] = useState<string[]>([]);
 
   useEffect(() => {
     const seed = loadProfile();
     setSpend(seed.spending);
     setSalary(seed.profile.monthlySalaryAed);
     setBank(seed.bank);
+    setHeldCardIds(seed.heldCardIds);
   }, []);
 
   const result = useMemo(
@@ -40,7 +43,7 @@ export default function OptimizerPage() {
   function update(cat: SpendCategory, v: number) {
     const next = { ...spend, [cat]: v };
     setSpend(next);
-    saveProfile({ spending: next, profile: { monthlySalaryAed: salary, uaeResident: true }, bank });
+    saveProfile({ spending: next, profile: { monthlySalaryAed: salary, uaeResident: true }, bank, heldCardIds });
   }
 
   return (

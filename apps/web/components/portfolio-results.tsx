@@ -3,9 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, TriangleAlert, Sparkles } from "lucide-react";
+import { ChevronDown, TriangleAlert, Sparkles, TrendingUp } from "lucide-react";
 import type { Portfolio, PortfolioResult } from "@fils/engine";
 import { ALL_CARDS } from "@/lib/cards";
+import { annualDelta } from "@/lib/baseline";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CountTo } from "@/components/count-to";
@@ -104,7 +105,14 @@ function AllocationRow({ group }: { group: AllocationGroup }) {
   );
 }
 
-export function PortfolioResults({ result }: { result: PortfolioResult | null }) {
+export function PortfolioResults({
+  result,
+  baselineNet,
+}: {
+  result: PortfolioResult | null;
+  /** Net AED/yr the user's current cards earn — renders the "+X vs your cards" delta when set. */
+  baselineNet?: number | null;
+}) {
   const [size, setSize] = useState<SizeKey>(result?.overallBest?.size ?? 1);
   const [showMath, setShowMath] = useState(false);
 
@@ -193,6 +201,15 @@ export function PortfolioResults({ result }: { result: PortfolioResult | null })
                     format={aed}
                     className="mt-1 block text-5xl font-semibold text-clay"
                   />
+                  {baselineNet != null && annualDelta(active.netAnnualValue, baselineNet) > 0 && (
+                    <p className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-clay">
+                      <TrendingUp className="h-4 w-4" />
+                      <span className="tabular-nums">
+                        +{aed(annualDelta(active.netAnnualValue, baselineNet))}
+                      </span>
+                      /yr vs your current cards
+                    </p>
+                  )}
                 </div>
                 <div className="text-right text-sm text-muted">
                   <p>
