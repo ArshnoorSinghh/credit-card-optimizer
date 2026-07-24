@@ -111,9 +111,9 @@ export default function LandingPage() {
               transition={{ duration: 0.75, ease: EASE, delay: 0.08 }}
               className="mt-6 text-5xl font-semibold leading-[1.02] md:text-7xl"
             >
-              Stop leaving
+              The right cards for
               <br />
-              money on the <span className="text-gradient">table.</span>
+              the way you <span className="text-gradient">actually spend</span>
             </motion.h1>
 
             <motion.p

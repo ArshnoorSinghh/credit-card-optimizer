@@ -17,7 +17,8 @@ import { CreditCardArt } from "@/components/credit-card-art";
   actual 3D (perspective + per-card translateZ, so the cards float at different
   depths rather than sitting on one flat sheet).
 
-  The four beats tie straight to the headline, "money on the table":
+  The four beats tie straight to the headline, "the right cards for the way you
+  actually spend":
     1. THE DEAL       — cards are dealt in from a deck off the top-right: far away
                         and turned (negative Z + rotateY), they fly toward the
                         viewer, tumbling flat and settling with a spring overshoot.
