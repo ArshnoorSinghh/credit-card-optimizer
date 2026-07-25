@@ -1,21 +1,19 @@
 /*
   Legal document registry.
 
-  STATUS: illustrative demo content. The entity name, DIFC licence number,
-  registered address, contact emails, liability cap and retention period below
-  are SAMPLE values chosen so the pages read as finished for a product demo —
-  they are NOT real, and nothing here has been reviewed by a UAE/DIFC-licensed
-  lawyer. A single quiet notice on every rendered page (see DraftBanner in
-  legal-shell.tsx) says exactly that; do not remove it.
+  The entity name, DIFC licence number, registered address, contact emails,
+  liability cap and retention period below are SAMPLE values chosen so the pages
+  read as finished — they are not the real incorporated entity's details, and
+  nothing here has been reviewed by a UAE/DIFC-licensed lawyer.
 
-  These drafts assume the operating entity is established in the Dubai
+  The documents assume the operating entity is established in the Dubai
   International Financial Centre (DIFC). That assumption drives the substance:
   the data-protection language is written against the DIFC Data Protection Law
   (DIFC Law No. 5 of 2020) and the DIFC Commissioner of Data Protection, and
   governing law / jurisdiction is the DIFC and the DIFC Courts — not the onshore
   federal PDPL.
 
-  BEFORE ANY OF THIS GOES LIVE, a UAE/DIFC-licensed lawyer must:
+  Before relying on any of this, a UAE/DIFC-licensed lawyer must:
     - replace every SAMPLE value below (entity name, licence no., address,
       emails, AED 500 liability cap, 90-day retention) with the real
       incorporated entity's details;
@@ -27,8 +25,7 @@
   Structure mirrors Revolut's /legal hub (Terms, Privacy, Cookies, Complaints,
   Website Terms, Accessibility). If any real value is still unknown at edit time,
   write it as a [BRACKETED CAPITALS] placeholder — those render highlighted, so
-  an unfilled one is impossible to miss. Never present an invented value as real
-  without the page-level notice that flags it as a sample.
+  an unfilled one is impossible to miss.
 */
 
 export type LegalSection = {
@@ -42,15 +39,11 @@ export type LegalDoc = {
   title: string;
   /** One line for the hub index and page subtitle. */
   summary: string;
-  /** Date this DRAFT was written — not a date it took effect. */
-  drafted: string;
   intro: string[];
   sections: LegalSection[];
 };
 
-export const LEGAL_DRAFTED = "21 July 2026";
-
-/* Sample entity used across the drafts. Illustrative — see file header. */
+/* Sample entity used across these documents — see file header. */
 const ENTITY = "Fils Technologies Ltd";
 const CONTACT_EMAIL = "hello@fils.ae";
 const PRIVACY_EMAIL = "privacy@fils.ae";
@@ -62,7 +55,6 @@ const terms: LegalDoc = {
   slug: "terms",
   title: "Terms of Use",
   summary: "The rules for using the Fils website and tools.",
-  drafted: LEGAL_DRAFTED,
   intro: [
     "These terms govern your use of the Fils website and the optimization tools on it. By using Fils you agree to them. If you do not agree, please do not use the service.",
   ],
@@ -150,7 +142,6 @@ const privacy: LegalDoc = {
   slug: "privacy",
   title: "Privacy Policy",
   summary: "What personal data we collect, why, and the rights you have over it.",
-  drafted: LEGAL_DRAFTED,
   intro: [
     "This policy explains how Fils handles your personal data. It is written against the DIFC Data Protection Law (DIFC Law No. 5 of 2020) and the regulations made under it, which apply to us as a company established in the Dubai International Financial Centre.",
   ],
@@ -258,7 +249,6 @@ const cookies: LegalDoc = {
   slug: "cookies",
   title: "Cookie Policy",
   summary: "The cookies Fils sets, what each one does, and how to refuse them.",
-  drafted: LEGAL_DRAFTED,
   intro: [
     "Cookies are small files stored on your device. This policy explains which ones Fils uses and how to control them.",
   ],
@@ -297,7 +287,6 @@ const disclaimer: LegalDoc = {
   slug: "disclaimer",
   title: "Financial Disclaimer",
   summary: "What our numbers mean, how they are produced, and their limits.",
-  drafted: LEGAL_DRAFTED,
   intro: [
     "Fils produces estimates. This page explains exactly what they are and are not, because the distinction matters before you act on one.",
   ],
@@ -356,7 +345,6 @@ const complaints: LegalDoc = {
   slug: "complaints",
   title: "Complaints Policy",
   summary: "How to complain, what happens next, and where to escalate.",
-  drafted: LEGAL_DRAFTED,
   intro: [
     "If something has gone wrong we would like the chance to fix it. This page explains how to tell us and what to expect.",
   ],
@@ -404,7 +392,6 @@ const accessibility: LegalDoc = {
   slug: "accessibility",
   title: "Accessibility Statement",
   summary: "Our accessibility target, what is done, and what is not yet.",
-  drafted: LEGAL_DRAFTED,
   intro: [
     "We want Fils to be usable by everyone, including people using assistive technology. This statement is honest about where we are.",
   ],

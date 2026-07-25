@@ -149,7 +149,10 @@ export default function LandingPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="mt-6 text-sm text-faint"
+              // why: text-faint sits at ~4.6:1 on the canvas — technically AA, but
+              // this line rides over the BurjSunrise wash where it dips below.
+              // text-muted is the same warm family at ~5.8:1 and stays legible.
+              className="mt-6 text-sm font-medium text-muted"
             >
               {CARD_COUNT} cards · {BANK_COUNT} banks · no card details required
             </motion.p>
