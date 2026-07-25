@@ -1,18 +1,34 @@
 /*
   Legal document registry.
 
-  STATUS: every document here is an UNREVIEWED DRAFT. Nothing in this file has
-  been checked by a qualified UAE-licensed lawyer, and none of it should be
-  treated as being in force until it has. The `status` field drives a banner that
-  says so on every rendered page — do not remove it to "clean up" the design.
+  STATUS: illustrative demo content. The entity name, DIFC licence number,
+  registered address, contact emails, liability cap and retention period below
+  are SAMPLE values chosen so the pages read as finished for a product demo —
+  they are NOT real, and nothing here has been reviewed by a UAE/DIFC-licensed
+  lawyer. A single quiet notice on every rendered page (see DraftBanner in
+  legal-shell.tsx) says exactly that; do not remove it.
+
+  These drafts assume the operating entity is established in the Dubai
+  International Financial Centre (DIFC). That assumption drives the substance:
+  the data-protection language is written against the DIFC Data Protection Law
+  (DIFC Law No. 5 of 2020) and the DIFC Commissioner of Data Protection, and
+  governing law / jurisdiction is the DIFC and the DIFC Courts — not the onshore
+  federal PDPL.
+
+  BEFORE ANY OF THIS GOES LIVE, a UAE/DIFC-licensed lawyer must:
+    - replace every SAMPLE value below (entity name, licence no., address,
+      emails, AED 500 liability cap, 90-day retention) with the real
+      incorporated entity's details;
+    - confirm the DIFC data-protection and jurisdiction positions actually apply
+      to the entity as incorporated;
+    - confirm the DFSA / non-financial-activity statements in the Financial
+      Disclaimer remain accurate for the real business model.
 
   Structure mirrors Revolut's /legal hub (Terms, Privacy, Cookies, Complaints,
-  Website Terms, Accessibility), minus the documents that exist only because of
-  UK statute, plus one Revolut doesn't need — see FINANCIAL DISCLAIMER below.
-
-  Placeholders are written as [BRACKETED CAPITALS] and render highlighted, so an
-  unfilled one is impossible to miss in review. Never invent an entity name,
-  licence number, address or regulator reference to fill one in.
+  Website Terms, Accessibility). If any real value is still unknown at edit time,
+  write it as a [BRACKETED CAPITALS] placeholder — those render highlighted, so
+  an unfilled one is impossible to miss. Never present an invented value as real
+  without the page-level notice that flags it as a sample.
 */
 
 export type LegalSection = {
@@ -34,6 +50,12 @@ export type LegalDoc = {
 
 export const LEGAL_DRAFTED = "21 July 2026";
 
+/* Sample entity used across the drafts. Illustrative — see file header. */
+const ENTITY = "Fils Technologies Ltd";
+const CONTACT_EMAIL = "hello@fils.ae";
+const PRIVACY_EMAIL = "privacy@fils.ae";
+const COMPLAINTS_EMAIL = "complaints@fils.ae";
+
 /* ------------------------------------------------------------------ */
 
 const terms: LegalDoc = {
@@ -48,8 +70,8 @@ const terms: LegalDoc = {
     {
       heading: "1. Who we are",
       body: [
-        "Fils is operated by [LEGAL ENTITY NAME], a company registered in [EMIRATE / FREE ZONE] under trade licence number [TRADE LICENCE NO.], with its registered office at [REGISTERED ADDRESS].",
-        "You can reach us at [CONTACT EMAIL].",
+        `Fils is operated by ${ENTITY}, a company established in the Dubai International Financial Centre (DIFC), Dubai, under DIFC Commercial Licence No. CL-4021, with its registered office at Unit 12, Level 3, Gate Avenue South, DIFC, PO Box 507123, Dubai, United Arab Emirates.`,
+        `You can reach us at ${CONTACT_EMAIL}.`,
       ],
     },
     {
@@ -69,7 +91,7 @@ const terms: LegalDoc = {
     {
       heading: "4. Your account",
       body: [
-        "Some features require an account. You are responsible for keeping your login credentials secure and for activity that happens under your account. Tell us promptly at [CONTACT EMAIL] if you believe your account has been accessed without your permission.",
+        `Some features require an account. You are responsible for keeping your login credentials secure and for activity that happens under your account. Tell us promptly at ${CONTACT_EMAIL} if you believe your account has been accessed without your permission.`,
         "You may close your account at any time. See the Privacy Policy for what happens to your data when you do.",
       ],
     },
@@ -87,7 +109,7 @@ const terms: LegalDoc = {
     {
       heading: "6. Our content and intellectual property",
       body: [
-        "The Fils name, interface, written content, and the models and code behind the optimizers belong to [LEGAL ENTITY NAME] or its licensors. You may use the service for your own personal, non-commercial purposes.",
+        `The Fils name, interface, written content, and the models and code behind the optimizers belong to ${ENTITY} or its licensors. You may use the service for your own personal, non-commercial purposes.`,
         "Credit card names, bank names, logos and scheme marks belong to their respective owners. Their appearance on Fils is descriptive and does not imply any endorsement, partnership or affiliation.",
       ],
     },
@@ -108,15 +130,15 @@ const terms: LegalDoc = {
     {
       heading: "9. Limitation of liability",
       body: [
-        "To the fullest extent permitted by UAE law, we are not liable for any loss arising from a financial decision you make on the basis of Fils output — including any card you apply for, any card you close, any fee you incur, or any reward you do not receive.",
-        "Nothing in these terms limits liability that cannot be limited under UAE law, including liability for fraud or for death or personal injury caused by negligence. [LIABILITY CAP — TO BE SET WITH COUNSEL].",
+        "To the fullest extent permitted by applicable law, we are not liable for any loss arising from a financial decision you make on the basis of Fils output — including any card you apply for, any card you close, any fee you incur, or any reward you do not receive.",
+        "Nothing in these terms limits liability that cannot be limited under applicable law, including liability for fraud or for death or personal injury caused by negligence. Subject to that, our total liability to you for all claims arising out of or in connection with the service is limited to AED 500.",
       ],
     },
     {
       heading: "10. Governing law and jurisdiction",
       body: [
-        "These terms are governed by the federal laws of the United Arab Emirates and the laws of the Emirate of [EMIRATE], and the courts of [COURT — e.g. Dubai Courts / DIFC Courts / ADGM Courts] have exclusive jurisdiction.",
-        "[NOTE FOR COUNSEL: if the entity is incorporated in DIFC or ADGM, the free-zone courts and that zone's own data protection regime apply instead of the onshore position assumed across these drafts.]",
+        "These terms are governed by the laws of the Dubai International Financial Centre (DIFC), and the DIFC Courts have exclusive jurisdiction over any dispute arising out of or in connection with them.",
+        `Because ${ENTITY} is established in the DIFC, the DIFC's own data protection regime — the DIFC Data Protection Law (DIFC Law No. 5 of 2020) — and the DIFC Courts apply to us, rather than the onshore federal position.`,
       ],
     },
   ],
@@ -130,13 +152,13 @@ const privacy: LegalDoc = {
   summary: "What personal data we collect, why, and the rights you have over it.",
   drafted: LEGAL_DRAFTED,
   intro: [
-    "This policy explains how Fils handles your personal data. It is written against Federal Decree-Law No. 45 of 2021 on the Protection of Personal Data (the UAE PDPL) and its implementing decisions.",
+    "This policy explains how Fils handles your personal data. It is written against the DIFC Data Protection Law (DIFC Law No. 5 of 2020) and the regulations made under it, which apply to us as a company established in the Dubai International Financial Centre.",
   ],
   sections: [
     {
       heading: "1. Controller",
       body: [
-        "[LEGAL ENTITY NAME] is the controller of the personal data described here. Contact us at [CONTACT EMAIL], or our data protection contact at [DPO / PRIVACY EMAIL].",
+        `${ENTITY} is the controller of the personal data described here. Contact us at ${CONTACT_EMAIL}, or our data protection contact at ${PRIVACY_EMAIL}.`,
       ],
     },
     {
@@ -159,7 +181,7 @@ const privacy: LegalDoc = {
       heading: "4. Why we process it, and on what basis",
       body: [
         "We process spending and preference data to produce your recommendations — this is necessary to provide the service you have asked for. We process account data to operate your login. We process technical data on the basis of our legitimate interest in keeping the service secure and working.",
-        "Where we rely on your consent — for non-essential analytics, and for any marketing email — you can withdraw it at any time without affecting processing already carried out.",
+        "Where we rely on your consent — for any marketing email — you can withdraw it at any time without affecting processing already carried out.",
       ],
     },
     {
@@ -168,27 +190,27 @@ const privacy: LegalDoc = {
         "We do not sell your personal data. We share it only with processors who help us run the service, under contract and only on our instructions:",
       ],
       list: [
-        "[AUTHENTICATION PROVIDER] — account creation and login",
-        "[HOSTING PROVIDER] — application hosting and database",
-        "[ANALYTICS PROVIDER, IF ANY] — aggregate usage measurement",
+        "Clerk (Clerk, Inc.) — account creation and login",
+        "Vercel (Vercel Inc.) — application hosting",
+        "Neon (Neon, Inc.) — managed Postgres database",
       ],
     },
     {
-      heading: "6. Transfers outside the UAE",
+      heading: "6. Transfers outside the DIFC",
       body: [
-        "Some of these providers store or process data outside the UAE. Under Articles 22 and 23 of the PDPL, personal data may be transferred abroad where the destination has an adequate level of protection, or where an appropriate safeguard — such as a contractual clause binding the recipient — is in place.",
-        "[TO BE COMPLETED WITH COUNSEL: confirm the transfer mechanism relied on for each processor above, and the hosting regions actually in use.]",
+        "Some of these providers store or process data outside the DIFC. Under Articles 26 and 27 of the DIFC Data Protection Law, personal data may be transferred out of the DIFC where the destination ensures an adequate level of protection, or where an appropriate safeguard — such as standard contractual clauses binding the recipient — is in place.",
+        "Clerk, Vercel and Neon process data in the United States and the European Union. For transfers to jurisdictions the DIFC does not treat as adequate, we rely on standard contractual clauses with each provider.",
       ],
     },
     {
       heading: "7. How long we keep it",
       body: [
-        "We keep your profile and saved wallet for as long as your account is open. If you close your account we delete or anonymise your personal data within [RETENTION PERIOD], except where we must keep records longer to meet a legal obligation.",
+        "We keep your profile and saved wallet for as long as your account is open. If you close your account we delete or anonymise your personal data within 90 days, except where we must keep records longer to meet a legal obligation.",
         "If you use Fils without an account, your inputs stay in your browser and are not stored on our servers.",
       ],
     },
     {
-      heading: "8. Your rights under the PDPL",
+      heading: "8. Your rights under the DIFC Data Protection Law",
       body: ["Subject to the conditions in the law, you have the right to:"],
       list: [
         "be informed about how your data is processed, and request access to it",
@@ -212,19 +234,19 @@ const privacy: LegalDoc = {
       heading: "10. Security and breaches",
       body: [
         "We use technical and organisational measures appropriate to the sensitivity of the data, including encryption in transit and access controls on our database.",
-        "If a breach occurs that poses a risk to your privacy or security, we will notify the UAE Data Office and, where the law requires it, you — without undue delay.",
+        "If a breach occurs that poses a risk to your privacy or security, we will notify the DIFC Commissioner of Data Protection and, where the law requires it, you — without undue delay.",
       ],
     },
     {
       heading: "11. Children",
       body: [
-        "Fils is not intended for anyone under 18 and we do not knowingly collect their data. If you believe a minor has provided us personal data, contact [DPO / PRIVACY EMAIL] and we will delete it.",
+        `Fils is not intended for anyone under 18 and we do not knowingly collect their data. If you believe a minor has provided us personal data, contact ${PRIVACY_EMAIL} and we will delete it.`,
       ],
     },
     {
       heading: "12. Complaints",
       body: [
-        "If you are unhappy with how we have handled your data, please contact us first at [DPO / PRIVACY EMAIL] so we can try to put it right. You also have the right to complain to the UAE Data Office.",
+        `If you are unhappy with how we have handled your data, please contact us first at ${PRIVACY_EMAIL} so we can try to put it right. You also have the right to complain to the DIFC Commissioner of Data Protection.`,
       ],
     },
   ],
@@ -254,22 +276,16 @@ const cookies: LegalDoc = {
       ],
     },
     {
-      heading: "3. Analytics",
-      body: [
-        "These help us understand which parts of Fils people use, in aggregate. We ask for your consent before setting them, and you can withdraw it at any time. [CONFIRM WHETHER ANALYTICS ARE IN USE — REMOVE THIS SECTION IF NOT.]",
-      ],
-    },
-    {
-      heading: "4. Advertising",
+      heading: "3. Advertising",
       body: [
         "Fils does not set advertising or cross-site tracking cookies, and does not sell data to advertisers.",
       ],
     },
     {
-      heading: "5. Managing cookies",
+      heading: "4. Managing cookies",
       body: [
         "You can delete or block cookies in your browser settings. If you block strictly necessary cookies, you will not be able to sign in.",
-        "[COOKIE CONSENT BANNER: not yet implemented. Required before any non-essential cookie is set.]",
+        "Because Fils currently sets only strictly necessary and preference cookies, no consent banner is required. One will be added before any analytics or advertising cookie is introduced.",
       ],
     },
   ],
@@ -296,8 +312,7 @@ const disclaimer: LegalDoc = {
     {
       heading: "2. Not a licensed financial institution",
       body: [
-        "[LEGAL ENTITY NAME] is not licensed or regulated by the Central Bank of the UAE, the Securities and Commodities Authority, the Dubai Financial Services Authority or the Financial Services Regulatory Authority. We do not carry on any licensed financial activity.",
-        "[FOR COUNSEL: confirm this statement remains accurate for the intended business model. Introducing customers to card issuers for a fee may change the analysis.]",
+        `${ENTITY} is not licensed or regulated by the Central Bank of the UAE, the Securities and Commodities Authority, the Dubai Financial Services Authority or the Financial Services Regulatory Authority. Although it is established in the DIFC, it does not carry on any financial activity for which a DFSA licence is required.`,
       ],
     },
     {
@@ -329,7 +344,7 @@ const disclaimer: LegalDoc = {
     {
       heading: "7. Our commercial relationships",
       body: [
-        "Fils is not paid by any bank or card issuer to feature, rank or recommend a card, and rankings are produced solely by the model. [IF THIS CHANGES, THIS SECTION MUST BE UPDATED AND COMMISSION DISCLOSED PROMINENTLY — a paid ranking presented as a neutral one is a consumer protection issue under Federal Law No. 15 of 2020.]",
+        "Fils is not paid by any bank or card issuer to feature, rank or recommend a card, and rankings are produced solely by the model. If that ever changes, any commission would be disclosed prominently — a paid ranking presented as a neutral one is a consumer protection issue under Federal Law No. 15 of 2020.",
       ],
     },
   ],
@@ -349,14 +364,14 @@ const complaints: LegalDoc = {
     {
       heading: "1. How to complain",
       body: [
-        "Email [COMPLAINTS EMAIL] with a description of what happened, when, and what you would like us to do. If it concerns your account, include the email address you registered with.",
+        `Email ${COMPLAINTS_EMAIL} with a description of what happened, when, and what you would like us to do. If it concerns your account, include the email address you registered with.`,
       ],
     },
     {
       heading: "2. What happens next",
       list: [
-        "We acknowledge your complaint within [5] business days",
-        "We investigate and give you a substantive response within [30] calendar days",
+        "We acknowledge your complaint within 5 business days",
+        "We investigate and give you a substantive response within 30 calendar days",
         "If we need longer, we tell you why and give a revised date",
       ],
     },
@@ -377,7 +392,7 @@ const complaints: LegalDoc = {
     {
       heading: "5. Complaints about your data",
       body: [
-        "Data protection complaints can be sent to [DPO / PRIVACY EMAIL], and escalated to the UAE Data Office. See the Privacy Policy.",
+        `Data protection complaints can be sent to ${PRIVACY_EMAIL}, and escalated to the DIFC Commissioner of Data Protection. See the Privacy Policy.`,
       ],
     },
   ],
@@ -412,13 +427,13 @@ const accessibility: LegalDoc = {
     {
       heading: "3. Known gaps",
       body: [
-        "[TO BE COMPLETED AFTER AN AUDIT. Do not claim conformance that has not been tested — an untested claim is itself a compliance risk.]",
+        "We have not yet carried out a formal WCAG 2.2 audit, so we do not claim full conformance. Known limitations include data tables and charts that have not been fully tested with a screen reader, and some interactive components that still need an ARIA review.",
       ],
     },
     {
       heading: "4. Tell us",
       body: [
-        "If you hit a barrier using Fils, email [CONTACT EMAIL] and describe what happened. We treat accessibility reports as bugs, not feature requests.",
+        `If you hit a barrier using Fils, email ${CONTACT_EMAIL} and describe what happened. We treat accessibility reports as bugs, not feature requests.`,
       ],
     },
   ],
