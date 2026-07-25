@@ -43,11 +43,19 @@ export type LegalDoc = {
   sections: LegalSection[];
 };
 
-/* Sample entity used across these documents — see file header. */
-const ENTITY = "Fils Technologies Ltd";
-const CONTACT_EMAIL = "hello@fils.ae";
-const PRIVACY_EMAIL = "privacy@fils.ae";
-const COMPLAINTS_EMAIL = "complaints@fils.ae";
+/* Sample entity used across these documents — see file header.
+   Exported because /contact and /about surface the same details; one definition
+   means the contact page can never drift from the Terms. */
+export const ENTITY = "Fils Technologies Ltd";
+export const LICENCE_NO = "CL-4021";
+export const REGISTERED_OFFICE = [
+  "Unit 12, Level 3, Gate Avenue South",
+  "Dubai International Financial Centre",
+  "PO Box 507123, Dubai, United Arab Emirates",
+];
+export const CONTACT_EMAIL = "hello@fils.ae";
+export const PRIVACY_EMAIL = "privacy@fils.ae";
+export const COMPLAINTS_EMAIL = "complaints@fils.ae";
 
 /* ------------------------------------------------------------------ */
 
@@ -62,7 +70,7 @@ const terms: LegalDoc = {
     {
       heading: "1. Who we are",
       body: [
-        `Fils is operated by ${ENTITY}, a company established in the Dubai International Financial Centre (DIFC), Dubai, under DIFC Commercial Licence No. CL-4021, with its registered office at Unit 12, Level 3, Gate Avenue South, DIFC, PO Box 507123, Dubai, United Arab Emirates.`,
+        `Fils is operated by ${ENTITY}, a company established in the Dubai International Financial Centre (DIFC), Dubai, under DIFC Commercial Licence No. ${LICENCE_NO}, with its registered office at ${REGISTERED_OFFICE.join(", ")}.`,
         `You can reach us at ${CONTACT_EMAIL}.`,
       ],
     },

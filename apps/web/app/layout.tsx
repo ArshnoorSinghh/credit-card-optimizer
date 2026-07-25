@@ -2,19 +2,30 @@ import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { Fraunces, Hanken_Grotesk } from "next/font/google";
+import { Newsreader, Hanken_Grotesk } from "next/font/google";
 import { CursorGlow } from "@/components/cursor-glow";
 import { Navbar } from "@/components/navbar";
 import { ToastProvider } from "@/components/ui/toast";
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
 
-// Display: Fraunces — a warm, high-contrast serif that reads "heritage private
+// Display: Newsreader — a warm, editorial serif that reads "heritage private
 // bank" rather than generic-SaaS. Body: Hanken Grotesk — a clean humanist sans
 // for copy and money figures. Exposed as CSS variables that globals.css maps
 // onto --font-display / --font-sans.
-const display = Fraunces({
+//
+// why Newsreader and not Fraunces: Fraunces' lowercase "f" carries almost no
+// crossbar to the right of the stem, so at heading sizes it reads as a long-s —
+// "Transfers" looked like "Tranſers" on the legal pages. That shape is baked
+// into the glyph, not a ligature or an axis (checked: it survives WONK 0/1 and
+// every opsz), so the only fix was a different display face.
+//
+// why: opsz is requested explicitly so the browser's default optical sizing can
+// use it — Newsreader pins opsz at 18 otherwise, which is a text cut, and the
+// hero runs at 72px.
+const display = Newsreader({
   subsets: ["latin"],
-  variable: "--font-fraunces",
+  axes: ["opsz"],
+  variable: "--font-newsreader",
   display: "swap",
 });
 const sans = Hanken_Grotesk({

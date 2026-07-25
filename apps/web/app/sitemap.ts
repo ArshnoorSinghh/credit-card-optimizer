@@ -11,7 +11,17 @@ import { LEGAL_DOCS } from "@/lib/legal";
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
-  const staticRoutes = ["", "/cards", "/optimizer", "/points", "/onboarding", "/results", "/legal"];
+  const staticRoutes = [
+    "",
+    "/cards",
+    "/optimizer",
+    "/points",
+    "/onboarding",
+    "/results",
+    "/about",
+    "/contact",
+    "/legal",
+  ];
 
   const staticEntries: MetadataRoute.Sitemap = staticRoutes.map((path) => ({
     url: `${SITE_URL}${path}`,
