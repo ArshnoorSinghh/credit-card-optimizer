@@ -8,17 +8,25 @@ import { Aurora } from "@/components/aurora";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Reveal } from "@/components/ui/reveal";
 import { PortfolioResults } from "@/components/portfolio-results";
 import { RafiqChat } from "@/components/rafiq-chat";
 import { useProfileStore } from "@/lib/profile-store";
 import { runOptimize } from "@/lib/optimizer";
+import { runBaseline } from "@/lib/baseline";
 
 export default function ResultsPage() {
   const { state: stored, ready } = useProfileStore();
 
   const result = useMemo(
     () => (ready ? runOptimize(stored.spending, stored.profile) : null),
+    [ready, stored],
+  );
+
+  // Anchor the recommendation against the user's current cards, if they gave any.
+  const baseline = useMemo(
+    () => (ready ? runBaseline(stored.cardIds, stored.spending, stored.profile) : null),
     [ready, stored],
   );
 
@@ -52,9 +60,17 @@ export default function ResultsPage() {
           className="mt-10"
         >
           {ready ? (
-            <PortfolioResults result={result} />
+            <PortfolioResults result={result} baselineNet={baseline?.netAnnualValue ?? null} />
           ) : (
-            <Card className="animate-pulse text-muted">Searching every 1, 2, and 3-card combination…</Card>
+            <div aria-busy="true" aria-label="Searching every 1, 2, and 3 card combination">
+              <div className="flex gap-2">
+                {[0, 1, 2].map((i) => (
+                  <Skeleton key={i} className="h-9 w-24 rounded-full" />
+                ))}
+              </div>
+              <Skeleton className="mt-6 h-40 rounded-[var(--radius-lg)]" />
+              <Skeleton className="mt-4 h-64 rounded-[var(--radius-lg)]" />
+            </div>
           )}
         </motion.div>
 

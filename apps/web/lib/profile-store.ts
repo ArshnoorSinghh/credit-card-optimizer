@@ -19,13 +19,18 @@ import { DEFAULT_PROFILE, DEFAULT_SPEND } from "@/lib/optimizer";
   "finish setup" instead of a misleading AED 0.
 */
 
+// v2: added the held-card list. Bumped so a stale v1 blob doesn't hydrate the new
+// field as undefined — a missing key just falls back to defaults instead.
 const KEY = "fils.profile.v2";
 
 export interface StoredProfile {
   spending: Record<SpendCategory, number>;
   profile: UserProfile;
   bank: string | null;
-  /** Card ids the user says they hold. */
+  /**
+   * Card ids the user says they hold. Also anchors the "what you already earn"
+   * baseline on the entry flow.
+   */
   cardIds: string[];
   /** True once the user has set a real spending profile (not just the defaults). */
   onboarded: boolean;

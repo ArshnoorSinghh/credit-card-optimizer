@@ -1,8 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowRight } from "lucide-react";
-import { LEGAL_DOCS, LEGAL_DRAFTED } from "@/lib/legal";
-import { DraftBanner } from "@/components/legal-shell";
+import { LEGAL_DOCS } from "@/lib/legal";
 
 export const metadata: Metadata = {
   title: "Legal | Fils",
@@ -18,12 +17,8 @@ export default function LegalHubPage() {
         Terms &amp; policies
       </h1>
       <p className="mt-4 text-lg text-muted">
-        Everything governing your use of Fils, in one place. Drafted {LEGAL_DRAFTED}.
+        Everything governing your use of Fils, in one place.
       </p>
-
-      <div className="mt-10">
-        <DraftBanner />
-      </div>
 
       <ul className="mt-10 space-y-3">
         {LEGAL_DOCS.map((doc) => (

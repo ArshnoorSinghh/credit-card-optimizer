@@ -149,7 +149,10 @@ export default function LandingPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="mt-6 text-sm text-faint"
+              // why: text-faint sits at ~4.6:1 on the canvas — technically AA, but
+              // this line rides over the BurjSunrise wash where it dips below.
+              // text-muted is the same warm family at ~5.8:1 and stays legible.
+              className="mt-6 text-sm font-medium text-muted"
             >
               {CARD_COUNT} cards · {BANK_COUNT} banks · no card details required
             </motion.p>
@@ -181,10 +184,12 @@ export default function LandingPage() {
       </div>
 
       {/* ---------------- HOW IT WORKS (pinned scroll sequence) ---------------- */}
-      <StickySteps steps={STEPS} />
+      <div id="how" className="scroll-mt-20">
+        <StickySteps steps={STEPS} />
+      </div>
 
       {/* ---------------- FEATURES (bold dusk band) ---------------- */}
-      <section className="relative overflow-hidden bg-dusk text-on-dusk">
+      <section id="features" className="relative scroll-mt-20 overflow-hidden bg-dusk text-on-dusk">
         {/* a low sun still glowing at the horizon of the dark band */}
         <div className="pointer-events-none absolute -top-24 right-[8%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,rgba(244,166,58,0.4),transparent_65%)]" />
         <div className="relative mx-auto max-w-6xl px-5 py-24 md:py-32">
@@ -225,10 +230,10 @@ export default function LandingPage() {
       <section className="mx-auto max-w-6xl px-5 py-24 md:py-32">
         <Reveal className="text-center">
           <p className="text-sm font-medium uppercase tracking-widest text-clay">
-            Trusted by smart spenders
+            Built for smart spenders
           </p>
           <h2 className="mx-auto mt-4 max-w-2xl text-3xl font-semibold md:text-4xl">
-            <span className="text-fg">8,400+</span> UAE residents have found their best cards
+            Every recommendation is <span className="text-fg">modelled, not marketed</span>
           </h2>
         </Reveal>
 
@@ -269,6 +274,7 @@ export default function LandingPage() {
             </StaggerItem>
           ))}
         </Stagger>
+        <p className="mt-8 text-center text-xs text-faint">Illustrative examples.</p>
       </section>
 
       {/* ---------------- CTA BAND ---------------- */}

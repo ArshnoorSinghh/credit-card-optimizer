@@ -30,7 +30,7 @@ export default async function LegalDocPage({
   if (!doc) notFound();
 
   return (
-    <LegalShell title={doc.title} summary={doc.summary} drafted={doc.drafted}>
+    <LegalShell title={doc.title} summary={doc.summary}>
       <div className="mt-12 space-y-4">
         {doc.intro.map((p, i) => (
           <p key={i} className="text-muted">

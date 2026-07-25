@@ -41,6 +41,8 @@ export default function OptimizerPage() {
   function update(cat: SpendCategory, v: number) {
     const next = { ...spend, [cat]: v };
     setSpend(next);
+    // why: save() merges a patch rather than replacing the profile, so held cards and
+    // bank chosen at entry survive a spend edit without being carried through here.
     save({ spending: next, onboarded: true });
   }
 

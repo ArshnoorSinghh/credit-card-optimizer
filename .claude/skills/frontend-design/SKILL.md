@@ -58,9 +58,11 @@ Use the Tailwind utilities generated from the `@theme` vars. Do not invent hexes
 
 ## 2. Typography
 
-- **Display font** (`font-display`, **Fraunces** — a warm, high-contrast serif)
+- **Display font** (`font-display`, **Newsreader** — a warm, editorial serif)
   for `h1–h4` and big numbers. It carries the heritage/private-bank personality;
-  use it with restraint.
+  use it with restraint. (It replaced Fraunces, whose lowercase "f" has almost no
+  crossbar right of the stem and read as a long-s at heading sizes — "Transfers"
+  looked like "Tranſers". Don't switch back.)
 - **Body** (`font-sans`, **Hanken Grotesk**, a clean humanist sans) for
   everything else, including money figures. Already the default.
 - Headings get gentle tracking (`-0.015em`, baked into base) and tight leading.
@@ -169,7 +171,7 @@ Do NOT ship (these are the anti-patterns we explicitly moved away from):
 - Even, identical cards with no hierarchy — vary size/emphasis.
 - Center-everything layouts for data — use real grids, tables, alignment.
 - Default Tailwind blue (`blue-500`) or unmodified `slate-*` grays; and don't
-  reach for the generic Inter/Space-Grotesk pairing — we use Fraunces + Hanken.
+  reach for the generic Inter/Space-Grotesk pairing — we use Newsreader + Hanken.
 - Tourist-kitsch "Dubai" clichés (literal camels, dunes, lamps, gold-everything).
   The UAE reference is *light, material, architectural* — sun, sand, limestone,
   the skyline — handled with restraint.
