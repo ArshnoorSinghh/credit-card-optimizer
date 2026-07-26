@@ -159,8 +159,12 @@ export default function ContactPage() {
               the financial sector, if their answer doesn&apos;t satisfy you.
             </p>
             <p>
-              What we <em>can</em> fix is our own modelling. If a rate, cap or fee we show
-              disagrees with what the issuer publishes, that&apos;s a bug in our dataset.
+              {/* why the explicit {" "}: JSX trims the leading whitespace of a text
+                  node that wraps across lines, so a plain space after </em> is
+                  dropped at build time and this renders "canfix". */}
+              What we <em>can</em>{" "}
+              fix is our own modelling. If a rate, cap or fee we show disagrees with what
+              the issuer publishes, that&apos;s a bug in our dataset.
             </p>
             <Link
               href="/legal/disclaimer"

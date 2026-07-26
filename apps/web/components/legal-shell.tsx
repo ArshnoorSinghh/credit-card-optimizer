@@ -62,10 +62,12 @@ function PrototypeNotice() {
         lawyer.
       </p>
       <p className="mt-2 text-muted">
-        Sections marked <em>not yet drafted</em> are deliberately blank. Each would
-        state a commitment nobody can currently stand behind, so it keeps its heading
-        and says nothing. Treat the prototype accordingly and don&apos;t enter anything
-        you would mind losing.
+        {/* {" "} rather than a plain space: JSX trims the leading whitespace of a
+            text node that wraps across lines, which rendered this as "draftedare". */}
+        Sections marked <em>not yet drafted</em>{" "}
+        are deliberately blank. Each would state a commitment nobody can currently
+        stand behind, so it keeps its heading and says nothing. Treat the prototype
+        accordingly and don&apos;t enter anything you would mind losing.
       </p>
     </div>
   );

@@ -145,14 +145,20 @@ export default function LandingPage() {
               // accent on them costs no legibility.
               className="mt-6 text-sm font-medium text-fg"
             >
-              {CARD_COUNT} cards
-              <span className="mx-1.5 text-clay" aria-hidden>
+              {/* why {" "} and not the mx-1.5 this used to rely on: a margin puts
+                  visual space between the words but leaves the TEXT joined, so the
+                  line copy-pasted as "53 cards·12 banks·no card details required"
+                  and a screen reader ran the words together — the separators are
+                  aria-hidden, so nothing stood between them. Real spaces fix both,
+                  and the margin is no longer needed to fake them. */}
+              {CARD_COUNT} cards{" "}
+              <span className="text-clay" aria-hidden>
                 ·
-              </span>
-              {BANK_COUNT} banks
-              <span className="mx-1.5 text-clay" aria-hidden>
+              </span>{" "}
+              {BANK_COUNT} banks{" "}
+              <span className="text-clay" aria-hidden>
                 ·
-              </span>
+              </span>{" "}
               no card details required
             </motion.p>
 
