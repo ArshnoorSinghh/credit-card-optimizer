@@ -17,6 +17,7 @@ const COLS = [
     title: "Company",
     links: [
       { href: "/about", label: "About us" },
+      { href: "/suggestions", label: "Send feedback" },
       { href: "/contact", label: "Contact" },
       { href: "/#how", label: "How it works" },
       { href: "/onboarding", label: "Try the demo" },
@@ -24,14 +25,17 @@ const COLS = [
     ],
   },
   {
-    title: "Legal",
+    // Terms and Complaints still link out even though both are entirely empty —
+    // a missing link hides the gap, an empty page shows it. See lib/legal.ts.
+    title: "Disclosures",
     links: [
-      { href: "/legal/privacy", label: "Privacy" },
-      { href: "/legal/terms", label: "Terms" },
-      { href: "/legal/cookies", label: "Cookies" },
       { href: "/legal/disclaimer", label: "Financial disclaimer" },
+      { href: "/legal/privacy", label: "Your data" },
+      { href: "/legal/cookies", label: "Cookies" },
+      { href: "/legal/accessibility", label: "Accessibility" },
+      { href: "/legal/terms", label: "Terms" },
       { href: "/legal/complaints", label: "Complaints" },
-      { href: "/legal", label: "All policies" },
+      { href: "/legal", label: "All disclosures" },
     ],
   },
 ];

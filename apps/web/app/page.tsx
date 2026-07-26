@@ -20,7 +20,6 @@ import { CountUp } from "@/components/count-up";
 import { StickySteps } from "@/components/sticky-steps";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { Reveal, Stagger, StaggerItem } from "@/components/ui/reveal";
 import { Footer } from "@/components/footer";
 import {
@@ -149,12 +148,27 @@ export default function LandingPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              // why: text-faint sits at ~4.6:1 on the canvas — technically AA, but
-              // this line rides over the BurjSunrise wash where it dips below.
-              // text-muted is the same warm family at ~5.8:1 and stays legible.
-              className="mt-6 text-sm font-medium text-muted"
+              // why text-fg: this line was text-faint (4.64:1), then text-muted
+              // (5.84:1) — legible, but it reads as body copy and disappears under
+              // the CTAs. Warm ink is 14.19:1 and unmistakably deliberate.
+              //
+              // why not text-clay, the system's accent *text* colour: measured
+              // against the canvas it is 4.23:1, under the 4.5:1 AA floor for
+              // 14px. It clears the bar only at heading sizes, which is where the
+              // design brief's eyebrows use it. Carrying the golden hour here is
+              // the separators' job instead — they are decorative, so a warm
+              // accent on them costs no legibility.
+              className="mt-6 text-sm font-medium text-fg"
             >
-              {CARD_COUNT} cards · {BANK_COUNT} banks · no card details required
+              {CARD_COUNT} cards
+              <span className="mx-1.5 text-clay" aria-hidden>
+                ·
+              </span>
+              {BANK_COUNT} banks
+              <span className="mx-1.5 text-clay" aria-hidden>
+                ·
+              </span>
+              no card details required
             </motion.p>
           </div>
 
@@ -226,7 +240,16 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ---------------- SOCIAL PROOF ---------------- */}
+      {/* ---------------- WHAT WE STAND ON ---------------- */}
+      {/*
+        why there are no testimonials here: this section used to carry three
+        quotes attributed to named people in named emirates, one of them citing a
+        specific AED figure. Nobody said them. An "illustrative examples" caption
+        does not cure an invented testimonial — it still renders as a person with
+        an avatar and a location — and under Federal Law No. 15 of 2020 that is
+        consumer-protection exposure no disclaimer reaches. Fils has no users to
+        quote yet. What it does have is a method, so that is what this says.
+      */}
       <section className="mx-auto max-w-6xl px-5 py-24 md:py-32">
         <Reveal className="text-center">
           <p className="text-sm font-medium uppercase tracking-widest text-clay">
@@ -235,46 +258,13 @@ export default function LandingPage() {
           <h2 className="mx-auto mt-4 max-w-2xl text-3xl font-semibold md:text-4xl">
             Every recommendation is <span className="text-fg">modelled, not marketed</span>
           </h2>
+          <p className="mx-auto mt-5 max-w-2xl text-lg text-muted">
+            No bank pays to be ranked here. Every number expands into a receipt: the rate
+            applied, the cap that bound, the fee subtracted. Where an issuer&apos;s published
+            terms are ambiguous, we show a range and say so rather than inventing a figure
+            that looks authoritative.
+          </p>
         </Reveal>
-
-        <Stagger className="mt-14 grid gap-5 md:grid-cols-3">
-          {[
-            {
-              quote:
-                "I was carrying two cards that overlapped completely. Fils found a combo that adds ~AED 3,100 a year for me.",
-              name: "Layla H.",
-              role: "Dubai Marina",
-            },
-            {
-              quote:
-                "The points optimizer told me my Skywards miles were about to devalue. Burned them just in time.",
-              name: "Omar R.",
-              role: "Abu Dhabi",
-            },
-            {
-              quote:
-                "Finally a tool that shows the math instead of pushing whatever card pays the biggest referral.",
-              name: "Priya S.",
-              role: "Sharjah",
-            },
-          ].map((t) => (
-            <StaggerItem key={t.name}>
-              <Card className="h-full">
-                <p className="text-lg leading-relaxed text-fg">“{t.quote}”</p>
-                <div className="mt-6 flex items-center gap-3">
-                  <span className="grid h-10 w-10 place-items-center rounded-full border border-line bg-surface-2 font-display text-sm font-semibold text-clay">
-                    {t.name.charAt(0)}
-                  </span>
-                  <div>
-                    <p className="text-sm font-medium text-fg">{t.name}</p>
-                    <p className="text-xs text-faint">{t.role}</p>
-                  </div>
-                </div>
-              </Card>
-            </StaggerItem>
-          ))}
-        </Stagger>
-        <p className="mt-8 text-center text-xs text-faint">Illustrative examples.</p>
       </section>
 
       {/* ---------------- CTA BAND ---------------- */}

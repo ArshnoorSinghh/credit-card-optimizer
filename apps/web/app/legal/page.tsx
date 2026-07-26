@@ -4,20 +4,28 @@ import { ArrowRight } from "lucide-react";
 import { LEGAL_DOCS } from "@/lib/legal";
 
 export const metadata: Metadata = {
-  title: "Legal | Fils",
-  description: "Terms, privacy, cookies and disclosures for Fils.",
+  title: "Disclosures | Fils",
+  description:
+    "What Fils does with your data, what its numbers mean, and where the limits are.",
 };
 
-/* The /legal hub — mirrors Revolut's "Terms & Policies" index. */
+/*
+  The /legal hub.
+
+  why "disclosures" and not "terms & policies": there is no entity to be a party
+  to terms or to stand behind a policy. What is left is a set of statements about
+  how the software behaves — which is worth publishing, but under an honest name.
+*/
 export default function LegalHubPage() {
   return (
     <main className="mx-auto max-w-2xl px-5 py-16 md:py-24">
-      <p className="text-sm font-medium uppercase tracking-widest text-clay">Legal</p>
+      <p className="text-sm font-medium uppercase tracking-widest text-clay">Disclosures</p>
       <h1 className="mt-4 font-display text-4xl font-semibold text-balance md:text-5xl">
-        Terms &amp; policies
+        What you should know
       </h1>
       <p className="mt-4 text-lg text-muted">
-        Everything governing your use of Fils, in one place.
+        What our numbers mean, what the app stores, and where the limits are. Fils is a
+        prototype: none of this is a contract.
       </p>
 
       <ul className="mt-10 space-y-3">
