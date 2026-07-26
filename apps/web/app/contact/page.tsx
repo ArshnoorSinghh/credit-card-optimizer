@@ -14,60 +14,53 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Reveal, Stagger, StaggerItem } from "@/components/ui/reveal";
 import { Footer } from "@/components/footer";
-import {
-  ENTITY,
-  REGISTERED_OFFICE,
-  CONTACT_EMAIL,
-  PRIVACY_EMAIL,
-  COMPLAINTS_EMAIL,
-} from "@/lib/legal";
 
 /*
-  /contact — how to reach a human.
+  /contact — the channels are described, the addresses are blank.
 
-  why no contact form: a form needs somewhere to post. There is no transactional
-  mail provider wired up, and a form that silently drops what you typed is worse
-  than no form at all — so this page routes to real mailto: addresses instead.
-  When an inbox/provider exists, a form belongs here, posting to an API route.
+  This page used to list four working addresses (general, privacy, complaints,
+  accessibility), a postal address at a registered office, and response-time
+  commitments. None of it was real: the addresses were on a domain Fils does not
+  use, no mail provider is wired up, there is no registered office because there
+  is no incorporated entity, and nobody had committed to answering anything in
+  two business days.
 
-  Addresses and entity details are imported from lib/legal so this page states
-  exactly what the Terms, Privacy Policy and Complaints Policy state.
+  why the cards stay: describing what each channel is *for* costs nothing and
+  commits to nothing — it is the same reason the empty headings stay in
+  lib/legal.ts. What was removed is the part that made a promise: the address
+  itself and the turnaround time. When a monitored inbox exists, the address slot
+  is the only thing that needs filling.
+
+  Do not add a contact form until something is wired up to receive it: a form
+  that silently drops what you typed is worse than no form.
 */
 
 export const metadata: Metadata = {
   title: "Contact — Fils",
   description:
-    "How to reach Fils — general questions, data protection requests, complaints and accessibility reports.",
+    "What you'd reach us about, where Fils can't help, and why there's no inbox yet.",
 };
 
 const CHANNELS = [
   {
     icon: MessageSquare,
     title: "General questions",
-    email: CONTACT_EMAIL,
     body: "Feedback on a recommendation, a card whose terms we've modelled wrong, press, partnerships, or anything that doesn't fit the boxes below.",
-    meta: "Usually answered within 2 business days",
   },
   {
     icon: ShieldCheck,
     title: "Your data",
-    email: PRIVACY_EMAIL,
-    body: "Access, correction, erasure, portability, or withdrawing consent. Reaches our data protection contact directly.",
-    meta: "Rights requests handled under the DIFC Data Protection Law",
+    body: "Access, correction, erasure, or withdrawing consent. There is no data protection contact yet because there is no entity to be the controller.",
   },
   {
     icon: Scale,
     title: "Complaints",
-    email: COMPLAINTS_EMAIL,
-    body: "If something has gone wrong, tell us what happened, when, and what you'd like us to do. Include the email you registered with if it concerns your account.",
-    meta: "Acknowledged within 5 business days · resolved within 30 days",
+    body: "If something has gone wrong. Note that complaints about a card or a bank go to the issuer rather than to us — see below.",
   },
   {
     icon: Accessibility,
     title: "Accessibility barriers",
-    email: CONTACT_EMAIL,
-    body: "Hit something you couldn't use with a screen reader or a keyboard? Describe what happened — we treat accessibility reports as bugs, not feature requests.",
-    meta: "Targeting WCAG 2.2 level AA",
+    body: "Hit something you couldn't use with a screen reader or a keyboard? We treat accessibility reports as bugs, not feature requests.",
   },
 ];
 
@@ -82,12 +75,13 @@ export default function ContactPage() {
             Contact
           </Badge>
           <h1 className="mt-6 text-5xl font-semibold text-balance md:text-7xl">
-            Talk to <span className="text-gradient">a human.</span>
+            No inbox <span className="text-gradient">just yet.</span>
           </h1>
           <p className="mt-6 max-w-2xl text-lg text-muted">
-            Every message goes to a real inbox and gets a real reply. Pick the address that
-            fits — it routes your message to whoever can actually resolve it, which is faster
-            than a single catch-all.
+            Fils is a prototype, and publishing a support address nobody monitors would
+            just be a slower way of ignoring you. Here is what each channel will be for,
+            with the addresses left blank until they&apos;re real. If you&apos;re seeing
+            this in a demo, talk to whoever showed it to you.
           </p>
         </Reveal>
       </section>
@@ -97,20 +91,13 @@ export default function ContactPage() {
         <Stagger className="grid gap-5 md:grid-cols-2">
           {CHANNELS.map((c) => (
             <StaggerItem key={c.title}>
-              <Card hover className="flex h-full flex-col p-8">
+              <Card className="flex h-full flex-col p-8">
                 <span className="mb-5 inline-grid h-11 w-11 place-items-center rounded-[0.8rem] border border-flame/30 bg-flame/10 text-clay">
                   <c.icon className="h-5 w-5" />
                 </span>
                 <h2 className="text-xl font-semibold text-fg">{c.title}</h2>
                 <p className="mt-3 flex-1 text-muted">{c.body}</p>
-                <a
-                  href={`mailto:${c.email}`}
-                  className="mt-6 inline-flex items-center gap-2 self-start rounded-full border border-line-strong px-4 py-2 text-sm font-medium text-fg transition-colors hover:bg-black/[0.04]"
-                >
-                  {c.email}
-                  <ArrowRight className="h-3.5 w-3.5 text-clay" aria-hidden />
-                </a>
-                <p className="mt-4 text-xs text-faint">{c.meta}</p>
+                <p className="mt-6 text-sm italic text-faint">No address yet.</p>
               </Card>
             </StaggerItem>
           ))}
@@ -142,14 +129,13 @@ export default function ContactPage() {
             </p>
             <p>
               What we <em>can</em> fix is our own modelling. If a rate, cap or fee we show
-              disagrees with what the issuer publishes, send it over — that&apos;s a bug in our
-              dataset and we want it.
+              disagrees with what the issuer publishes, that&apos;s a bug in our dataset.
             </p>
             <Link
-              href="/legal/complaints"
+              href="/legal/disclaimer"
               className="inline-flex items-center gap-2 pt-2 text-sm font-medium text-clay transition-colors hover:text-flame"
             >
-              Read the full Complaints Policy
+              Read the Financial Disclaimer
               <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
           </Reveal>
@@ -164,18 +150,12 @@ export default function ContactPage() {
               <Building2 className="h-5 w-5" />
             </span>
             <h2 className="text-xl font-semibold text-fg">By post</h2>
+            {/* why blank rather than deleted: the same rule as the legal pages —
+                an absent address shows the gap, a removed section hides it. */}
             <p className="mt-3 text-muted">
-              Email reaches us far faster, but formal notices can be sent to the registered
-              office:
+              There is no registered office, because there is no incorporated entity to
+              register one. Nothing can be served on Fils by post.
             </p>
-            <address className="mt-5 not-italic text-fg">
-              <span className="block font-medium">{ENTITY}</span>
-              {REGISTERED_OFFICE.map((line) => (
-                <span key={line} className="block text-muted">
-                  {line}
-                </span>
-              ))}
-            </address>
           </Card>
         </Reveal>
       </section>

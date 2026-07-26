@@ -16,7 +16,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Reveal, Stagger, StaggerItem } from "@/components/ui/reveal";
 import { Footer } from "@/components/footer";
-import { ENTITY, LICENCE_NO, REGISTERED_OFFICE } from "@/lib/legal";
 import { CARD_COUNT, BANK_COUNT, PORTFOLIO_COUNT_ROUNDED } from "@/lib/marketing-stats";
 
 /*
@@ -194,45 +193,58 @@ export default function AboutPage() {
         </Stagger>
       </section>
 
-      {/* ---------------- ENTITY ---------------- */}
+      {/* ---------------- WHAT FILS IS ---------------- */}
+      {/* why no entity details here: Fils is not incorporated. There is no
+          operating entity, licence number or registered office to state, and a
+          plausible-looking one would be a fabrication. What replaces it is the
+          true version of the same disclosure. */}
       <section className="border-t border-line bg-bg-soft/60">
         <div className="mx-auto grid max-w-6xl gap-10 px-5 py-20 md:grid-cols-[1fr_1.2fr] md:py-24">
           <Reveal>
             <span className="text-sm font-medium uppercase tracking-widest text-clay">
-              The company
+              Where we are
             </span>
-            <h2 className="mt-5 text-3xl font-semibold">Who you&apos;re dealing with</h2>
+            <h2 className="mt-5 text-3xl font-semibold">Early, and honest about it</h2>
           </Reveal>
           <Reveal delay={0.1}>
             <Card className="p-8">
+              {/* why the values are em-dashes: Fils is not incorporated, so there is
+                  no entity name, licence number or registered office to state. The
+                  rows stay because an absent field shows the gap, where a removed
+                  one hides it — and an empty value asserts nothing. The sr-only
+                  text is because a screen reader announces a bare dash as nothing. */}
               <dl className="space-y-5 text-sm">
-                <div>
-                  <dt className="text-faint">Operating entity</dt>
-                  <dd className="mt-1 font-medium text-fg">{ENTITY}</dd>
-                </div>
-                <div>
-                  <dt className="text-faint">DIFC Commercial Licence</dt>
-                  <dd className="mt-1 font-medium tabular-nums text-fg">{LICENCE_NO}</dd>
-                </div>
-                <div>
-                  <dt className="text-faint">Registered office</dt>
-                  <dd className="mt-1 text-fg">
-                    {REGISTERED_OFFICE.map((line) => (
-                      <span key={line} className="block">
-                        {line}
-                      </span>
-                    ))}
-                  </dd>
-                </div>
+                {[
+                  { term: "Operating entity", note: "none; Fils is not incorporated" },
+                  { term: "Trade licence", note: "none held" },
+                  { term: "Registered office", note: "none" },
+                ].map(({ term, note }) => (
+                  <div key={term}>
+                    <dt className="text-faint">{term}</dt>
+                    <dd className="mt-1 text-faint" aria-hidden>
+                      —
+                    </dd>
+                    <dd className="sr-only">{note}</dd>
+                  </div>
+                ))}
               </dl>
+              <p className="mt-6 border-t border-line pt-5 text-muted">
+                Fils is a working prototype, not a company. It isn&apos;t incorporated, holds
+                no trade licence, and is not licensed or regulated by the Central Bank of the
+                UAE or any other financial regulator.
+              </p>
+              <p className="mt-4 text-muted">
+                It is an information and modelling tool, not a bank or a credit broker. It
+                doesn&apos;t issue cards, arrange credit, or submit applications for you. What
+                it does do is model published card terms against spending figures you type in
+                yourself, and show its working.
+              </p>
               <p className="mt-6 border-t border-line pt-5 text-sm text-muted">
-                Fils is an information and modelling tool, not a bank, a credit broker or a
-                licensed financial institution. We don&apos;t issue cards, arrange credit, or
-                submit applications for you. The{" "}
+                The{" "}
                 <Link href="/legal/disclaimer" className="text-clay hover:text-flame">
                   Financial Disclaimer
                 </Link>{" "}
-                sets out the full position.
+                sets out the full position, including what the numbers are and are not.
               </p>
             </Card>
           </Reveal>

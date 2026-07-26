@@ -1,31 +1,44 @@
 /*
-  Legal document registry.
+  Disclosure registry.
 
-  The entity name, DIFC licence number, registered address, contact emails,
-  liability cap and retention period below are SAMPLE values chosen so the pages
-  read as finished — they are not the real incorporated entity's details, and
-  nothing here has been reviewed by a UAE/DIFC-licensed lawyer.
+  READ THIS BEFORE ADDING ANYTHING HERE.
 
-  The documents assume the operating entity is established in the Dubai
-  International Financial Centre (DIFC). That assumption drives the substance:
-  the data-protection language is written against the DIFC Data Protection Law
-  (DIFC Law No. 5 of 2020) and the DIFC Commissioner of Data Protection, and
-  governing law / jurisdiction is the DIFC and the DIFC Courts — not the onshore
-  federal PDPL.
+  Fils is a prototype. There is no incorporated company behind it, no trade
+  licence, no registered office, and no monitored support inbox. Everything in
+  this file is therefore written to be DESCRIPTIVE, not CONTRACTUAL: it states
+  what the software does and does not do, and stops there.
 
-  Before relying on any of this, a UAE/DIFC-licensed lawyer must:
-    - replace every SAMPLE value below (entity name, licence no., address,
-      emails, AED 500 liability cap, 90-day retention) with the real
-      incorporated entity's details;
-    - confirm the DIFC data-protection and jurisdiction positions actually apply
-      to the entity as incorporated;
-    - confirm the DFSA / non-financial-activity statements in the Financial
-      Disclaimer remain accurate for the real business model.
+  What that rules out until a real entity exists:
+    - an operating entity name, licence number, or registered address
+    - contact addresses that do not resolve to an inbox somebody reads
+    - anything phrased as a binding undertaking — a liability cap, a retention
+      period, a response-time SLA, a governing law or choice of court
+    - a rights framework under a named statute (DIFC Data Protection Law,
+      federal PDPL), which presupposes an established controller subject to it
 
-  Structure mirrors Revolut's /legal hub (Terms, Privacy, Cookies, Complaints,
-  Website Terms, Accessibility). If any real value is still unknown at edit time,
-  write it as a [BRACKETED CAPITALS] placeholder — those render highlighted, so
-  an unfilled one is impossible to miss.
+  why these documents are full of empty sections: an earlier revision carried
+  SAMPLE values for all of the above — an invented DIFC commercial licence
+  number, a real Gate Avenue address, @fils.ae inboxes, an AED 500 liability
+  cap, a 90-day retention promise, DIFC Courts jurisdiction. Sample or not, they
+  render to a reader as statements of fact about a regulated company.
+
+  Rather than delete those sections, each keeps its `heading` and drops its
+  `body`/`list`. A heading on its own states nothing, so it binds nobody — while
+  still showing the shape a finished document has to take and making the gaps
+  countable. `LegalSection` types `body` and `list` as optional precisely so a
+  heading-only section is valid; the renderer marks them "Not yet drafted."
+
+  A heading can itself carry a claim, so headings were neutralised where they
+  did: "Your rights under the DIFC Data Protection Law" became "Your rights",
+  and "Transfers outside the DIFC" became "International transfers". Naming a
+  statute asserts that it applies.
+
+  Do not fill any of these in "for completeness". An obviously empty section is
+  safer than a convincing fabrication.
+
+  If a real value is ever known but not yet filled in, write it as a
+  [BRACKETED CAPITALS] placeholder — Prose in components/legal-shell.tsx renders
+  those highlighted, so an unfilled one is impossible to miss.
 */
 
 export type LegalSection = {
@@ -43,104 +56,35 @@ export type LegalDoc = {
   sections: LegalSection[];
 };
 
-/* Sample entity used across these documents — see file header.
-   Exported because /contact and /about surface the same details; one definition
-   means the contact page can never drift from the Terms. */
-export const ENTITY = "Fils Technologies Ltd";
-export const LICENCE_NO = "CL-4021";
-export const REGISTERED_OFFICE = [
-  "Unit 12, Level 3, Gate Avenue South",
-  "Dubai International Financial Centre",
-  "PO Box 507123, Dubai, United Arab Emirates",
-];
-export const CONTACT_EMAIL = "hello@fils.ae";
-export const PRIVACY_EMAIL = "privacy@fils.ae";
-export const COMPLAINTS_EMAIL = "complaints@fils.ae";
+/* No entity constants live here any more — see the file header. There is no
+   entity name, licence number, registered office or contact address to export,
+   and inventing one is the specific failure this file now guards against. */
 
 /* ------------------------------------------------------------------ */
 
 const terms: LegalDoc = {
   slug: "terms",
   title: "Terms of Use",
-  summary: "The rules for using the Fils website and tools.",
+  summary: "Not written yet — the structure a finished document will need.",
   intro: [
-    "These terms govern your use of the Fils website and the optimization tools on it. By using Fils you agree to them. If you do not agree, please do not use the service.",
+    "There are no terms of use yet. Terms are an agreement between you and a company, and there is no company here to be a party to one.",
+    "The headings below are the structure a finished document will need. Nothing is written under them, so nothing here binds you or us. They stay visible so the gaps are countable rather than invisible.",
   ],
+  // why every section is empty: this document was previously filled in against a
+  // sample entity, with an invented licence number, an AED 500 liability cap and
+  // DIFC Courts jurisdiction. Each needs a real incorporated counterparty and a
+  // lawyer. Until both exist, the honest content of a contract is nothing.
   sections: [
-    {
-      heading: "1. Who we are",
-      body: [
-        `Fils is operated by ${ENTITY}, a company established in the Dubai International Financial Centre (DIFC), Dubai, under DIFC Commercial Licence No. ${LICENCE_NO}, with its registered office at ${REGISTERED_OFFICE.join(", ")}.`,
-        `You can reach us at ${CONTACT_EMAIL}.`,
-      ],
-    },
-    {
-      heading: "2. What Fils is, and what it is not",
-      body: [
-        "Fils is an information and modelling tool. It estimates what combination of UAE credit cards would earn you the most, based on spending figures you enter yourself.",
-        "Fils is not a bank, a finance company, a payment service provider, a credit broker, or an insurance or securities intermediary. It is not licensed by the Central Bank of the UAE, the Securities and Commodities Authority, the DFSA or the FSRA. We do not issue cards, arrange credit, or submit applications on your behalf.",
-        "Nothing on Fils is financial, investment, tax or legal advice. See our Financial Disclaimer for the full position.",
-      ],
-    },
-    {
-      heading: "3. Eligibility",
-      body: [
-        "You must be at least 18 years old to use Fils. The service is designed for UAE residents and models UAE-issued credit cards only; results will not be meaningful for cards issued elsewhere.",
-      ],
-    },
-    {
-      heading: "4. Your account",
-      body: [
-        `Some features require an account. You are responsible for keeping your login credentials secure and for activity that happens under your account. Tell us promptly at ${CONTACT_EMAIL} if you believe your account has been accessed without your permission.`,
-        "You may close your account at any time. See the Privacy Policy for what happens to your data when you do.",
-      ],
-    },
-    {
-      heading: "5. Acceptable use",
-      body: ["You agree not to:"],
-      list: [
-        "use Fils for any unlawful purpose, or in breach of Federal Decree-Law No. 34 of 2021 on Countering Rumours and Cybercrimes",
-        "scrape, harvest or systematically extract the card dataset or modelling output",
-        "attempt to interfere with, probe or reverse-engineer the service or its infrastructure",
-        "resell, redistribute or present our output as your own product",
-        "submit information about another person without their knowledge",
-      ],
-    },
-    {
-      heading: "6. Our content and intellectual property",
-      body: [
-        `The Fils name, interface, written content, and the models and code behind the optimizers belong to ${ENTITY} or its licensors. You may use the service for your own personal, non-commercial purposes.`,
-        "Credit card names, bank names, logos and scheme marks belong to their respective owners. Their appearance on Fils is descriptive and does not imply any endorsement, partnership or affiliation.",
-      ],
-    },
-    {
-      heading: "7. Card data and accuracy",
-      body: [
-        "Card terms in the UAE change frequently and are published by issuers in inconsistent formats. We take reasonable care to keep our dataset current, but we do not warrant that any rate, fee, cap or eligibility rule shown on Fils is accurate, complete or up to date at the moment you read it.",
-        "Where a published rate is genuinely ambiguous, we flag it rather than presenting a single confident figure. Always verify the terms with the issuing bank before applying for or relying on a card.",
-      ],
-    },
-    {
-      heading: "8. Availability and changes",
-      body: [
-        "We may change, suspend or withdraw any part of Fils, including individual features, at any time. We may also update these terms; the version published on this page is the one that applies.",
-        "We aim to give reasonable notice of material changes, but we may make changes immediately where needed for security, legal or regulatory reasons.",
-      ],
-    },
-    {
-      heading: "9. Limitation of liability",
-      body: [
-        "To the fullest extent permitted by applicable law, we are not liable for any loss arising from a financial decision you make on the basis of Fils output, including any card you apply for, any card you close, any fee you incur, or any reward you do not receive.",
-        "Nothing in these terms limits liability that cannot be limited under applicable law, including liability for fraud or for death or personal injury caused by negligence. Subject to that, our total liability to you for all claims arising out of or in connection with the service is limited to AED 500.",
-      ],
-    },
-    {
-      heading: "10. Governing law and jurisdiction",
-      body: [
-        "These terms are governed by the laws of the Dubai International Financial Centre (DIFC), and the DIFC Courts have exclusive jurisdiction over any dispute arising out of or in connection with them.",
-        `Because ${ENTITY} is established in the DIFC, the DIFC's own data protection regime (the DIFC Data Protection Law, DIFC Law No. 5 of 2020) and the DIFC Courts apply to us, rather than the onshore federal position.`,
-      ],
-    },
+    { heading: "1. Who we are" },
+    { heading: "2. What Fils is, and what it is not" },
+    { heading: "3. Eligibility" },
+    { heading: "4. Your account" },
+    { heading: "5. Acceptable use" },
+    { heading: "6. Our content and intellectual property" },
+    { heading: "7. Card data and accuracy" },
+    { heading: "8. Availability and changes" },
+    { heading: "9. Limitation of liability" },
+    { heading: "10. Governing law and jurisdiction" },
   ],
 };
 
@@ -148,20 +92,15 @@ const terms: LegalDoc = {
 
 const privacy: LegalDoc = {
   slug: "privacy",
-  title: "Privacy Policy",
-  summary: "What personal data we collect, why, and the rights you have over it.",
+  title: "How Fils handles your data",
+  summary: "What the app stores, what it never touches, and who processes it.",
   intro: [
-    "This policy explains how Fils handles your personal data. It is written against the DIFC Data Protection Law (DIFC Law No. 5 of 2020) and the regulations made under it, which apply to us as a company established in the Dubai International Financial Centre.",
+    "This is a factual description of what the software does with the information you give it. It is deliberately not a privacy policy: a policy is an undertaking given by a company, and there is no company here yet.",
+    "Sections that would state a commitment are left empty rather than filled with something nobody can currently stand behind.",
   ],
   sections: [
     {
-      heading: "1. Controller",
-      body: [
-        `${ENTITY} is the controller of the personal data described here. Contact us at ${CONTACT_EMAIL}, or our data protection contact at ${PRIVACY_EMAIL}.`,
-      ],
-    },
-    {
-      heading: "2. What we collect",
+      heading: "1. What we collect",
       list: [
         "Spending inputs, the monthly figures you enter per category, and your stated monthly salary",
         "Preferences, the bank you select, and cards you save to your wallet",
@@ -170,23 +109,16 @@ const privacy: LegalDoc = {
       ],
     },
     {
-      heading: "3. What we never collect",
+      heading: "2. What we never collect",
       body: [
-        "Fils does not ask for and does not store credit card numbers, CVVs, expiry dates, PINs, online banking credentials, Emirates ID numbers, or your Al Etihad Credit Bureau report. We do not perform credit checks and we do not submit applications to banks.",
+        "Fils does not ask for and does not store credit card numbers, CVVs, expiry dates, PINs, online banking credentials, Emirates ID numbers, or your Al Etihad Credit Bureau report. It performs no credit checks and submits no applications to banks.",
         "Your salary figure is used only to filter cards whose stated income requirement you would meet. It is never shared with a bank.",
       ],
     },
     {
-      heading: "4. Why we process it, and on what basis",
+      heading: "3. Who else processes it",
       body: [
-        "We process spending and preference data to produce your recommendations, this is necessary to provide the service you have asked for. We process account data to operate your login. We process technical data on the basis of our legitimate interest in keeping the service secure and working.",
-        "Where we rely on your consent, for any marketing email, you can withdraw it at any time without affecting processing already carried out.",
-      ],
-    },
-    {
-      heading: "5. Who we share it with",
-      body: [
-        "We do not sell your personal data. We share it only with processors who help us run the service, under contract and only on our instructions:",
+        "Fils runs on third-party infrastructure, so data you enter passes through these providers. They process it in the United States and the European Union:",
       ],
       list: [
         "Clerk (Clerk, Inc.) for account creation and login",
@@ -195,59 +127,31 @@ const privacy: LegalDoc = {
       ],
     },
     {
-      heading: "6. Transfers outside the DIFC",
+      heading: "4. Used without an account",
       body: [
-        "Some of these providers store or process data outside the DIFC. Under Articles 26 and 27 of the DIFC Data Protection Law, personal data may be transferred out of the DIFC where the destination ensures an adequate level of protection, or where an appropriate safeguard, such as standard contractual clauses binding the recipient, is in place.",
-        "Clerk, Vercel and Neon process data in the United States and the European Union. For transfers to jurisdictions the DIFC does not treat as adequate, we rely on standard contractual clauses with each provider.",
+        "If you use Fils without signing in, the figures you enter stay in your browser and are not written to the database.",
       ],
     },
     {
-      heading: "7. How long we keep it",
-      body: [
-        "We keep your profile and saved wallet for as long as your account is open. If you close your account we delete or anonymise your personal data within 90 days, except where we must keep records longer to meet a legal obligation.",
-        "If you use Fils without an account, your inputs stay in your browser and are not stored on our servers.",
-      ],
+      // why these five are empty: each states a commitment (a lawful basis, a
+      // retention period, a transfer safeguard, an enforceable right, a breach
+      // notification route) that presupposes an identified controller subject to
+      // a named statute. There is neither. The previous revision answered all
+      // five against the DIFC regime on the strength of an assumption.
+      heading: "5. Why we process it, and on what basis",
     },
+    { heading: "6. How long we keep it" },
+    { heading: "7. International transfers" },
+    { heading: "8. Your rights" },
+    { heading: "9. Security and breaches" },
     {
-      heading: "8. Your rights under the DIFC Data Protection Law",
-      body: ["Subject to the conditions in the law, you have the right to:"],
-      list: [
-        "be informed about how your data is processed, and request access to it",
-        "have inaccurate data corrected",
-        "have your data erased",
-        "restrict or object to certain processing",
-        "receive your data in a structured, machine-readable format and have it ported",
-        "withdraw consent where processing is based on it",
-        "object to automated processing that produces a legal effect for you",
-      ],
-      // why: the last item matters more here than in a typical product — the
-      // optimizer IS automated decision-making, even though it only advises.
-    },
-    {
-      heading: "9. Automated processing",
+      heading: "10. Automated processing",
       body: [
-        "Fils recommendations are produced automatically by our optimization engine. They are advisory: no bank sees them, no application is made, and no decision about you is taken by anyone on the basis of the output. You are free to disregard any recommendation.",
+        "Recommendations are produced automatically by the optimization engine. They are advisory: no bank sees them, no application is made, and no decision about you is taken by anyone on the basis of the output. You are free to disregard any recommendation.",
       ],
     },
-    {
-      heading: "10. Security and breaches",
-      body: [
-        "We use technical and organisational measures appropriate to the sensitivity of the data, including encryption in transit and access controls on our database.",
-        "If a breach occurs that poses a risk to your privacy or security, we will notify the DIFC Commissioner of Data Protection and, where the law requires it, you, without undue delay.",
-      ],
-    },
-    {
-      heading: "11. Children",
-      body: [
-        `Fils is not intended for anyone under 18 and we do not knowingly collect their data. If you believe a minor has provided us personal data, contact ${PRIVACY_EMAIL} and we will delete it.`,
-      ],
-    },
-    {
-      heading: "12. Complaints",
-      body: [
-        `If you are unhappy with how we have handled your data, please contact us first at ${PRIVACY_EMAIL} so we can try to put it right. You also have the right to complain to the DIFC Commissioner of Data Protection.`,
-      ],
-    },
+    { heading: "11. Children" },
+    { heading: "12. Complaints about your data" },
   ],
 };
 
@@ -283,7 +187,10 @@ const cookies: LegalDoc = {
       heading: "4. Managing cookies",
       body: [
         "You can delete or block cookies in your browser settings. If you block strictly necessary cookies, you will not be able to sign in.",
-        "Because Fils currently sets only strictly necessary and preference cookies, no consent banner is required. One will be added before any analytics or advertising cookie is introduced.",
+        // why: states the fact (only two categories are set) without the legal
+        // conclusion that used to follow it — whether a banner is required is a
+        // question for counsel, not for this file.
+        "Fils currently sets only strictly necessary and preference cookies. A consent banner will be added before any analytics or advertising cookie is introduced.",
       ],
     },
   ],
@@ -307,9 +214,10 @@ const disclaimer: LegalDoc = {
       ],
     },
     {
-      heading: "2. Not a licensed financial institution",
+      heading: "2. Not a licensed institution, and not a company yet",
       body: [
-        `${ENTITY} is not licensed or regulated by the Central Bank of the UAE, the Securities and Commodities Authority, the Dubai Financial Services Authority or the Financial Services Regulatory Authority. Although it is established in the DIFC, it does not carry on any financial activity for which a DFSA licence is required.`,
+        "Fils is a prototype. It is not an incorporated company, holds no trade licence, and is not licensed or regulated by the Central Bank of the UAE, the Securities and Commodities Authority, the Dubai Financial Services Authority or the Financial Services Regulatory Authority.",
+        "It does not issue cards, arrange credit, broker applications, or carry on any other activity for which a licence would be required.",
       ],
     },
     {
@@ -352,45 +260,26 @@ const disclaimer: LegalDoc = {
 const complaints: LegalDoc = {
   slug: "complaints",
   title: "Complaints Policy",
-  summary: "How to complain, what happens next, and where to escalate.",
+  summary: "Not written yet, except for where a card complaint actually goes.",
   intro: [
-    "If something has gone wrong we would like the chance to fix it. This page explains how to tell us and what to expect.",
+    "There is no complaints process yet. A complaints policy commits someone to acknowledge, investigate and respond within a stated time, and there is nobody here to hold to that.",
+    "The headings below stay so the gaps are countable. Section 4 is filled in because it is the one part that is true today and binds no one: it tells you where a complaint about a bank or a card actually goes, which is somewhere other than us.",
   ],
   sections: [
-    {
-      heading: "1. How to complain",
-      body: [
-        `Email ${COMPLAINTS_EMAIL} with a description of what happened, when, and what you would like us to do. If it concerns your account, include the email address you registered with.`,
-      ],
-    },
-    {
-      heading: "2. What happens next",
-      list: [
-        "We acknowledge your complaint within 5 business days",
-        "We investigate and give you a substantive response within 30 calendar days",
-        "If we need longer, we tell you why and give a revised date",
-      ],
-    },
-    {
-      heading: "3. If you are not satisfied",
-      body: [
-        "Tell us, and a different person will review the outcome.",
-        "If you remain unsatisfied, you may take the matter to the consumer protection authorities, the Ministry of Economy, or the Department of Economy and Tourism in the relevant emirate.",
-      ],
-    },
+    // why 1-3 and 5 are empty: each was a response-time commitment or an
+    // escalation route belonging to an entity that does not exist. The previous
+    // revision promised acknowledgement in 5 business days and resolution in 30.
+    { heading: "1. How to complain" },
+    { heading: "2. What happens next" },
+    { heading: "3. If you are not satisfied" },
     {
       heading: "4. Complaints about a bank or a card",
       body: [
         "Fils is not a licensed financial institution, so complaints about Fils do not fall to Sanadak, the UAE's independent ombudsman unit for the financial sector. Sanadak handles complaints against licensed banks, finance companies and insurers.",
-        "If your complaint is about a card, a fee, or a decision made by an issuing bank, raise it with that bank first, and escalate to Sanadak if you are not satisfied with their response.",
+        "If your complaint is about a card, a fee, or a decision made by an issuing bank, raise it with that bank first, and escalate to Sanadak if their response does not satisfy you.",
       ],
     },
-    {
-      heading: "5. Complaints about your data",
-      body: [
-        `Data protection complaints can be sent to ${PRIVACY_EMAIL}, and escalated to the DIFC Commissioner of Data Protection. See the Privacy Policy.`,
-      ],
-    },
+    { heading: "5. Complaints about your data" },
   ],
 };
 
@@ -428,7 +317,7 @@ const accessibility: LegalDoc = {
     {
       heading: "4. Tell us",
       body: [
-        `If you hit a barrier using Fils, email ${CONTACT_EMAIL} and describe what happened. We treat accessibility reports as bugs, not feature requests.`,
+        "If you hit a barrier using Fils, tell us what happened and what you were trying to do. Accessibility reports are treated as bugs, not feature requests.",
       ],
     },
   ],
@@ -436,13 +325,17 @@ const accessibility: LegalDoc = {
 
 /* ------------------------------------------------------------------ */
 
+/* why disclaimer leads: it is the only document here that carries real weight
+   for a reader about to act on a number, and the only one that survives the
+   no-entity constraint fully intact. The rest follow in the order a reader
+   would want them, with the two entirely-empty documents last. */
 export const LEGAL_DOCS: LegalDoc[] = [
-  terms,
+  disclaimer,
   privacy,
   cookies,
-  disclaimer,
-  complaints,
   accessibility,
+  terms,
+  complaints,
 ];
 
 export function getLegalDoc(slug: string): LegalDoc | undefined {

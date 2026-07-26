@@ -67,6 +67,15 @@ export default async function LegalDocPage({
                 ))}
               </ul>
             )}
+
+            {/* why: a heading with nothing under it is deliberate here — an
+                empty section states nothing and so commits to nothing. Without
+                this marker it reads as a rendering bug, so the emptiness is
+                labelled rather than left to be inferred. Presentation only:
+                lib/legal.ts stores no text for these. */}
+            {!section.body?.length && !section.list?.length && (
+              <p className="mt-4 text-sm italic text-faint">Not yet drafted.</p>
+            )}
           </section>
         ))}
       </div>
@@ -77,7 +86,7 @@ export default async function LegalDocPage({
           className="inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-fg"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
-          All terms &amp; policies
+          All disclosures
         </Link>
       </div>
     </LegalShell>
