@@ -57,8 +57,19 @@ export type LegalDoc = {
 };
 
 /* No entity constants live here any more — see the file header. There is no
-   entity name, licence number, registered office or contact address to export,
-   and inventing one is the specific failure this file now guards against. */
+   entity name, licence number or registered office to export, and inventing one
+   is the specific failure this file now guards against.
+
+   The one address that does exist. It is a personal Gmail, not a corporate
+   domain, and the name says so on purpose: it is a temporary inbox for
+   prototype feedback, not a support desk, and nothing about it implies a
+   company. The rule in the header still holds — an address may only be
+   published if somebody actually reads it.
+
+   why it lives here rather than in the page: /suggestions, the footer and
+   /contact all surface it, and one definition means they cannot drift. Changing
+   it in this one place changes it everywhere. */
+export const SUGGESTIONS_EMAIL = "TempFilsSuggestions@gmail.com";
 
 /* ------------------------------------------------------------------ */
 

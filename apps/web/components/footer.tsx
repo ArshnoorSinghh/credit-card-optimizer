@@ -17,6 +17,7 @@ const COLS = [
     title: "Company",
     links: [
       { href: "/about", label: "About us" },
+      { href: "/suggestions", label: "Send feedback" },
       { href: "/contact", label: "Contact" },
       { href: "/#how", label: "How it works" },
       { href: "/onboarding", label: "Try the demo" },

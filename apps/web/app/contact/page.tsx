@@ -41,26 +41,32 @@ export const metadata: Metadata = {
     "What you'd reach us about, where Fils can't help, and why there's no inbox yet.",
 };
 
+/* An `href` means the channel is live; without one it renders as an open gap.
+   Only feedback has somewhere to go — see SUGGESTIONS_EMAIL in lib/legal.ts. */
 const CHANNELS = [
   {
     icon: MessageSquare,
-    title: "General questions",
-    body: "Feedback on a recommendation, a card whose terms we've modelled wrong, press, partnerships, or anything that doesn't fit the boxes below.",
+    title: "Feedback and suggestions",
+    body: "A recommendation that looked wrong, a card whose terms we've modelled badly, something broken, or an idea for what to build next.",
+    href: "/suggestions",
+    cta: "Go to suggestions",
+  },
+  {
+    icon: Accessibility,
+    title: "Accessibility barriers",
+    body: "Hit something you couldn't use with a screen reader or a keyboard? We treat accessibility reports as bugs, not feature requests, so they go to the same place.",
+    href: "/suggestions",
+    cta: "Report a barrier",
   },
   {
     icon: ShieldCheck,
     title: "Your data",
-    body: "Access, correction, erasure, or withdrawing consent. There is no data protection contact yet because there is no entity to be the controller.",
+    body: "Access, correction, erasure, or withdrawing consent. There is no data protection contact yet, because there is no entity to be the controller.",
   },
   {
     icon: Scale,
     title: "Complaints",
     body: "If something has gone wrong. Note that complaints about a card or a bank go to the issuer rather than to us — see below.",
-  },
-  {
-    icon: Accessibility,
-    title: "Accessibility barriers",
-    body: "Hit something you couldn't use with a screen reader or a keyboard? We treat accessibility reports as bugs, not feature requests.",
   },
 ];
 
@@ -75,13 +81,13 @@ export default function ContactPage() {
             Contact
           </Badge>
           <h1 className="mt-6 text-5xl font-semibold text-balance md:text-7xl">
-            No inbox <span className="text-gradient">just yet.</span>
+            One inbox, <span className="text-gradient">for feedback.</span>
           </h1>
           <p className="mt-6 max-w-2xl text-lg text-muted">
-            Fils is a prototype, and publishing a support address nobody monitors would
-            just be a slower way of ignoring you. Here is what each channel will be for,
-            with the addresses left blank until they&apos;re real. If you&apos;re seeing
-            this in a demo, talk to whoever showed it to you.
+            Fils is a prototype, so there&apos;s no support team — but there is somewhere to
+            send what we got wrong, and it&apos;s read. The channels a real company would
+            have are listed below with their addresses left blank, because publishing one
+            nobody monitors is just a slower way of ignoring you.
           </p>
         </Reveal>
       </section>
@@ -97,7 +103,17 @@ export default function ContactPage() {
                 </span>
                 <h2 className="text-xl font-semibold text-fg">{c.title}</h2>
                 <p className="mt-3 flex-1 text-muted">{c.body}</p>
-                <p className="mt-6 text-sm italic text-faint">No address yet.</p>
+                {c.href ? (
+                  <Link
+                    href={c.href}
+                    className="mt-6 inline-flex items-center gap-2 self-start rounded-full border border-line-strong px-4 py-2 text-sm font-medium text-fg transition-colors hover:bg-black/[0.04]"
+                  >
+                    {c.cta}
+                    <ArrowRight className="h-3.5 w-3.5 text-clay" aria-hidden />
+                  </Link>
+                ) : (
+                  <p className="mt-6 text-sm italic text-faint">No address yet.</p>
+                )}
               </Card>
             </StaggerItem>
           ))}
