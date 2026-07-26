@@ -48,10 +48,10 @@ const VALID = { category: "General feedback", message: "The dining rate looks wr
  * noUncheckedIndexedAccess, and asserting it away at each call site with `!`
  * would turn "sendMail was never called" into an unreadable destructuring crash.
  */
-function sentMail(): { text: string; replyTo?: string } {
+function sentMail(): { text: string; subject: string; replyTo?: string } {
   const call = sendMailMock.mock.calls[0];
   if (call === undefined) throw new Error("expected sendMail to have been called");
-  return call[0] as { text: string; replyTo?: string };
+  return call[0] as { text: string; subject: string; replyTo?: string };
 }
 
 beforeEach(() => {
@@ -131,6 +131,26 @@ describe("POST /api/suggestions — who sent it", () => {
     const { text } = sentMail();
     expect(text).toContain("anonymous, no reply address given");
     expect(text).not.toContain("admin@fils.ae");
+  });
+
+  it("tags the subject when nothing can be replied to", async () => {
+    await post(VALID);
+
+    expect(sentMail().subject).toBe("Fils feedback [no reply] — General feedback");
+  });
+
+  it("leaves the subject untagged when a typed address is present", async () => {
+    await post({ ...VALID, replyTo: "someone@example.com" });
+
+    expect(sentMail().subject).toBe("Fils feedback — General feedback");
+  });
+
+  it("leaves the subject untagged for a signed-in sender", async () => {
+    getCurrentUserMock.mockResolvedValue({ id: "usr_1", email: "real@user.com" });
+
+    await post(VALID);
+
+    expect(sentMail().subject).not.toContain("[no reply]");
   });
 
   it("replies to the session address, not one typed over it", async () => {

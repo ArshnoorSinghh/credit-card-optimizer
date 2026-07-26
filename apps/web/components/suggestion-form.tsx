@@ -168,7 +168,7 @@ export function SuggestionForm() {
 
       <div>
         <label htmlFor="replyTo" className="block text-sm text-muted">
-          Your email <span className="text-faint">(optional)</span>
+          Your email <span className="text-faint">(optional - if you want a reply)</span>
         </label>
         <input
           id="replyTo"
@@ -180,8 +180,9 @@ export function SuggestionForm() {
           className={`mt-2 ${FIELD}`}
         />
         <p className="mt-2 text-xs text-faint">
-          If you&apos;re signed in we already know your address and you can leave this
-          blank.
+          Blank is fine and the message still reaches us. It just arrives with no return
+          address, so there would be nothing for us to reply to. If you&apos;re signed in
+          we already have yours.
         </p>
       </div>
 

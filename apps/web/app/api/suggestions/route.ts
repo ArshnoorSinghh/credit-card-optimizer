@@ -149,6 +149,13 @@ export async function POST(request: Request): Promise<Response> {
       ? `${selfReported} (typed into the form — NOT verified)`
       : "anonymous, no reply address given";
 
+  /*
+    The address a reply would go to, if any. The verified one wins: if a
+    signed-in user types someone else's address into the form, hitting reply
+    should still reach the account that actually sent this.
+  */
+  const replyAddress = user?.email ?? selfReported ?? null;
+
   const lines = [
     `Category: ${category}`,
     `From: ${sender}`,
@@ -166,14 +173,18 @@ export async function POST(request: Request): Promise<Response> {
     await transport.sendMail({
       from: `"Fils feedback" <${smtpUser}>`,
       to: SUGGESTIONS_EMAIL,
-      subject: `Fils feedback — ${category}`,
+      // why the tag: every one of these arrives from our own address, so the
+      // inbox list gives no clue which can be answered. Marking the dead ends in
+      // the subject means they can be told apart, and filtered, without opening
+      // them. It goes on the anonymous ones because those are the exception.
+      subject: replyAddress
+        ? `Fils feedback — ${category}`
+        : `Fils feedback [no reply] — ${category}`,
       text: lines.join("\n"),
-      // Only set Reply-To when we have an address to reply to. The verified one
-      // wins: if a signed-in user types someone else's address, hitting reply
-      // should still reach the account that actually sent this.
-      ...(user?.email || selfReported
-        ? { replyTo: user?.email ?? selfReported ?? undefined }
-        : {}),
+      // Only set Reply-To when there is somewhere for a reply to land. Setting
+      // it to our own address would make the Reply button look functional while
+      // sending mail to ourselves.
+      ...(replyAddress ? { replyTo: replyAddress } : {}),
     });
   } catch (error) {
     console.error("[suggestions] SMTP send failed:", error);
