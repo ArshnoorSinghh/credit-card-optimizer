@@ -93,8 +93,9 @@ export default function SuggestionsPage() {
           <Reveal>
             <h2 className="text-3xl font-semibold md:text-4xl">Send it over</h2>
             <p className="mt-4 text-muted">
-              Fill this in and it opens a draft in your own email app, already addressed and
-              filled out. We don&apos;t store anything you type here.
+              Goes straight to our inbox. We don&apos;t store any of it in the app — if
+              you&apos;re signed in we attach your account email so we can reply, and if
+              you&apos;re not, leaving an address is entirely up to you.
             </p>
           </Reveal>
           <Reveal delay={0.1} className="mt-10">
