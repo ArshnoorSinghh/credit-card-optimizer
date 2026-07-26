@@ -168,7 +168,7 @@ export function SuggestionForm() {
 
       <div>
         <label htmlFor="replyTo" className="block text-sm text-muted">
-          Your email <span className="text-faint">(optional — only if you want a reply)</span>
+          Your email <span className="text-faint">(optional - only if you want a reply)</span>
         </label>
         <input
           id="replyTo"
@@ -208,12 +208,12 @@ export function SuggestionForm() {
         </p>
       )}
 
-      <div className="flex flex-wrap items-center gap-4 pt-1">
+      <div className="pt-1">
         <Button type="submit" size="lg" disabled={!canSubmit}>
           <Send className="h-4 w-4" />
           {status === "sending" ? "Sending…" : "Send"}
         </Button>
-        <p aria-live="polite" className="text-sm text-faint">
+        <p aria-live="polite" className="mt-3 text-sm text-faint">
           {status === "sending" ? "Sending your message…" : "Goes straight to our inbox."}
         </p>
       </div>

@@ -60,16 +60,15 @@ export type LegalDoc = {
    entity name, licence number or registered office to export, and inventing one
    is the specific failure this file now guards against.
 
-   The one address that does exist. It is a personal Gmail, not a corporate
-   domain, and the name says so on purpose: it is a temporary inbox for
-   prototype feedback, not a support desk, and nothing about it implies a
-   company. The rule in the header still holds — an address may only be
-   published if somebody actually reads it.
+   The one address that does exist. It is a Gmail account, not a corporate
+   domain — which is honest for a prototype and implies no company. The rule in
+   the header still holds: an address may only be published if somebody actually
+   reads it.
 
    why it lives here rather than in the page: /suggestions, the footer and
    /contact all surface it, and one definition means they cannot drift. Changing
    it in this one place changes it everywhere. */
-export const SUGGESTIONS_EMAIL = "TempFilsSuggestions@gmail.com";
+export const SUGGESTIONS_EMAIL = "filsoptimizer@gmail.com";
 
 /* ------------------------------------------------------------------ */
 

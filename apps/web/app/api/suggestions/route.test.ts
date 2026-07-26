@@ -41,6 +41,19 @@ function post(body: unknown): Promise<Response> {
 
 const VALID = { category: "General feedback", message: "The dining rate looks wrong." };
 
+/**
+ * The payload handed to sendMail, with the index access narrowed.
+ *
+ * why a helper: `mock.calls[0][0]` is `possibly undefined` under
+ * noUncheckedIndexedAccess, and asserting it away at each call site with `!`
+ * would turn "sendMail was never called" into an unreadable destructuring crash.
+ */
+function sentMail(): { text: string; replyTo?: string } {
+  const call = sendMailMock.mock.calls[0];
+  if (call === undefined) throw new Error("expected sendMail to have been called");
+  return call[0] as { text: string; replyTo?: string };
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   getCurrentUserMock.mockResolvedValue(null);
@@ -87,7 +100,7 @@ describe("POST /api/suggestions — who sent it", () => {
 
     await post(VALID);
 
-    const { text, replyTo } = sendMailMock.mock.calls[0][0];
+    const { text, replyTo } = sentMail();
     expect(text).toContain("real@user.com (signed in — verified)");
     expect(replyTo).toBe("real@user.com");
   });
@@ -95,7 +108,7 @@ describe("POST /api/suggestions — who sent it", () => {
   it("marks a typed address as NOT verified", async () => {
     await post({ ...VALID, replyTo: "someone@example.com" });
 
-    const { text, replyTo } = sendMailMock.mock.calls[0][0];
+    const { text, replyTo } = sentMail();
     expect(text).toContain("someone@example.com (typed into the form — NOT verified)");
     // the label that would imply the session vouched for it must not appear
     expect(text).not.toContain("signed in — verified");
@@ -105,7 +118,7 @@ describe("POST /api/suggestions — who sent it", () => {
   it("says so when an anonymous sender leaves no address", async () => {
     await post(VALID);
 
-    const { text, replyTo } = sendMailMock.mock.calls[0][0];
+    const { text, replyTo } = sentMail();
     expect(text).toContain("anonymous, no reply address given");
     expect(replyTo).toBeUndefined();
   });
@@ -115,7 +128,7 @@ describe("POST /api/suggestions — who sent it", () => {
     // from the session only, so this can at most populate the unverified line.
     await post({ ...VALID, user: { email: "admin@fils.ae" }, verified: true });
 
-    const { text } = sendMailMock.mock.calls[0][0];
+    const { text } = sentMail();
     expect(text).toContain("anonymous, no reply address given");
     expect(text).not.toContain("admin@fils.ae");
   });
@@ -125,7 +138,7 @@ describe("POST /api/suggestions — who sent it", () => {
 
     await post({ ...VALID, replyTo: "someone-else@example.com" });
 
-    expect(sendMailMock.mock.calls[0][0].replyTo).toBe("real@user.com");
+    expect(sentMail().replyTo).toBe("real@user.com");
   });
 });
 
