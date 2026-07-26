@@ -125,32 +125,17 @@ export default function LandingPage() {
               portfolio that earns you the most, then how to spend the points you already have.
             </motion.p>
 
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.75, ease: EASE, delay: 0.24 }}
-              className="mt-9 flex flex-wrap items-center gap-3"
-            >
-              <Link href="/hub">
-                <Button size="lg">
-                  Try the demo
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link href="/sign-up">
-                <Button variant="outline" size="lg">
-                  Sign up free
-                </Button>
-              </Link>
-            </motion.div>
-
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
+              // why this sits above the buttons: it is the last thing a reader
+              // needs before deciding, and the "no card details" half answers the
+              // objection that stops people clicking. Underneath the CTAs it was
+              // a footnote to a decision already made.
+              transition={{ duration: 0.8, delay: 0.24 }}
               // why text-fg: this line was text-faint (4.64:1), then text-muted
-              // (5.84:1) — legible, but it reads as body copy and disappears under
-              // the CTAs. Warm ink is 14.19:1 and unmistakably deliberate.
+              // (5.84:1) — legible, but it reads as body copy. Warm ink is
+              // 14.19:1 and unmistakably deliberate.
               //
               // why not text-clay, the system's accent *text* colour: measured
               // against the canvas it is 4.23:1, under the 4.5:1 AA floor for
@@ -170,6 +155,25 @@ export default function LandingPage() {
               </span>
               no card details required
             </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.75, ease: EASE, delay: 0.32 }}
+              className="mt-8 flex flex-wrap items-center gap-3"
+            >
+              <Link href="/hub">
+                <Button size="lg">
+                  Try the demo
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="/sign-up">
+                <Button variant="outline" size="lg">
+                  Sign up free
+                </Button>
+              </Link>
+            </motion.div>
           </div>
 
           {/* Floating card fan — 3D tilt + scroll parallax */}

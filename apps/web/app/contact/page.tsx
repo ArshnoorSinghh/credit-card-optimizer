@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Reveal, Stagger, StaggerItem } from "@/components/ui/reveal";
 import { Footer } from "@/components/footer";
+import { SUGGESTIONS_EMAIL } from "@/lib/legal";
 
 /*
   /contact — the channels are described, the addresses are blank.
@@ -103,14 +104,28 @@ export default function ContactPage() {
                 </span>
                 <h2 className="text-xl font-semibold text-fg">{c.title}</h2>
                 <p className="mt-3 flex-1 text-muted">{c.body}</p>
+                {/* The address only appears on channels that actually reach it.
+                    Repeating it under "Your data" or "Complaints" would imply a
+                    data-protection contact and a complaints process that don't
+                    exist — the empty state is the honest answer there. */}
                 {c.href ? (
-                  <Link
-                    href={c.href}
-                    className="mt-6 inline-flex items-center gap-2 self-start rounded-full border border-line-strong px-4 py-2 text-sm font-medium text-fg transition-colors hover:bg-black/[0.04]"
-                  >
-                    {c.cta}
-                    <ArrowRight className="h-3.5 w-3.5 text-clay" aria-hidden />
-                  </Link>
+                  <div className="mt-6 flex flex-col items-start gap-3">
+                    <Link
+                      href={c.href}
+                      className="inline-flex items-center gap-2 rounded-full border border-line-strong px-4 py-2 text-sm font-medium text-fg transition-colors hover:bg-black/[0.04]"
+                    >
+                      {c.cta}
+                      <ArrowRight className="h-3.5 w-3.5 text-clay" aria-hidden />
+                    </Link>
+                    {/* why text-muted and not text-clay: at 14px clay measures
+                        4.23:1 on this canvas, under the AA floor. */}
+                    <a
+                      href={`mailto:${SUGGESTIONS_EMAIL}`}
+                      className="text-sm text-muted underline decoration-line-strong underline-offset-4 transition-colors hover:text-fg hover:decoration-flame"
+                    >
+                      {SUGGESTIONS_EMAIL}
+                    </a>
+                  </div>
                 ) : (
                   <p className="mt-6 text-sm italic text-faint">No address yet.</p>
                 )}
