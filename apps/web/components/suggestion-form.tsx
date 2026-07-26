@@ -168,7 +168,7 @@ export function SuggestionForm() {
 
       <div>
         <label htmlFor="replyTo" className="block text-sm text-muted">
-          Your email <span className="text-faint">(optional - only if you want a reply)</span>
+          Your email <span className="text-faint">(optional)</span>
         </label>
         <input
           id="replyTo"
