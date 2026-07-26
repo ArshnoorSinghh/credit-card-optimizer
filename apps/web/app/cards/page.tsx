@@ -110,7 +110,8 @@ export default function CardBrowserPage() {
                       )}
                     </span>
                   </div>
-                  <p className="mt-3 text-sm text-muted line-clamp-2">
+                  <p className="mt-3 font-medium text-fg line-clamp-1">{c.name}</p>
+                  <p className="mt-1 text-sm text-muted line-clamp-2">
                     Earns {c.rewards.currency}. Min salary {aed(c.eligibility.min_monthly_salary_aed)}.
                   </p>
                 </Card>

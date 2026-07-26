@@ -238,8 +238,21 @@ const BANKS: Record<string, Omit<CardSkin, "program">> = {
   },
 };
 
-const FALLBACK: Omit<CardSkin, "program"> = {
-  brand: "Fils",
+// Some data sources spell an issuer differently than our BANKS keys (the card
+// dataset uses "Mashreq"/"HSBC"/"Standard Chartered"/"Citibank"; some callers
+// pass the fuller legal name). Map every known spelling to one canonical key so
+// the card face resolves to the real issuer's house style, never the fallback.
+const BANK_ALIASES: Record<string, string> = {
+  Mashreq: "Mashreq Bank",
+  HSBC: "HSBC UAE",
+  "Standard Chartered": "Standard Chartered UAE",
+  Citibank: "Citibank UAE",
+};
+
+// Visual fallback for an issuer we don't have a house style for. The brand
+// wordmark is filled in from the card's real bank field at resolve time — we
+// never print a placeholder issuer name on the card face.
+const FALLBACK: Omit<CardSkin, "program" | "brand"> = {
   bg: "linear-gradient(135deg,#8b5cf6 0%,#6366f1 45%,#38bdf8 100%)",
   accent: "#ffffff",
   chip: "gold",
@@ -248,14 +261,18 @@ const FALLBACK: Omit<CardSkin, "program"> = {
 
 /**
  * Resolve the visual skin for a card from its bank, name and reward currency.
- * Co-brand program wins; otherwise the issuing bank's house style.
+ * Co-brand program wins; otherwise the issuing bank's house style. The brand
+ * wordmark always comes from the card's real bank — an unknown issuer keeps its
+ * own name on the card face, never a placeholder.
  */
 export function cardSkin(input: {
   bank: string;
   name: string;
   currency?: string;
 }): CardSkin {
-  const bankSkin = BANKS[input.bank] ?? FALLBACK;
+  const key = BANK_ALIASES[input.bank] ?? input.bank;
+  const bankSkin: Omit<CardSkin, "program"> =
+    BANKS[key] ?? { ...FALLBACK, brand: input.bank };
   const program = PROGRAMS.find((p) => p.test(input.name, input.currency ?? ""));
   if (program) {
     return {

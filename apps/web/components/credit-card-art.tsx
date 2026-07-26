@@ -47,28 +47,18 @@ export function CreditCardArt({
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(130%_90%_at_0%_0%,rgba(255,255,255,0.28),transparent_46%)]" />
 
       <div className="relative flex h-full flex-col justify-between">
-        {/* Bank + program wordmark, tier badge */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold uppercase tracking-[0.14em] text-white drop-shadow-sm">
-              {skin.brand}
-            </p>
-            {skin.program ? (
-              <p
-                className="mt-0.5 truncate text-xs font-medium tracking-wide"
-                style={{ color: skin.accent }}
-              >
-                {skin.program}
-              </p>
-            ) : null}
-          </div>
-          {tier ? (
-            <span
-              className="shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide backdrop-blur"
-              style={{ borderColor: hexA(skin.accent, 0.5), color: skin.accent }}
+        {/* Bank + program wordmark (top-left only — no tier badge) */}
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold uppercase tracking-[0.14em] text-white drop-shadow-sm">
+            {skin.brand}
+          </p>
+          {skin.program ? (
+            <p
+              className="mt-0.5 truncate text-xs font-medium tracking-wide"
+              style={{ color: skin.accent }}
             >
-              {tier}
-            </span>
+              {skin.program}
+            </p>
           ) : null}
         </div>
 
@@ -196,13 +186,4 @@ function DinersMark() {
       </span>
     </div>
   );
-}
-
-/* Convert a #rrggbb (or a keyword we control) to an rgba() string. */
-function hexA(hex: string, alpha: number): string {
-  if (!hex.startsWith("#") || hex.length !== 7) return hex;
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r},${g},${b},${alpha})`;
 }
