@@ -21,7 +21,7 @@ import { SuggestionForm } from "@/components/suggestion-form";
 */
 
 export const metadata: Metadata = {
-  title: "Suggestions — Fils",
+  title: "Suggestions",
   description:
     "Tell us what Fils got wrong. Modelling errors, bugs, and ideas for what to build next.",
 };
@@ -30,7 +30,7 @@ const WANTED = [
   {
     icon: Table2,
     title: "A rate or fee that's wrong",
-    body: "The most valuable thing you can send. If a rate, cap or annual fee we show disagrees with what the bank publishes, that's a bug in our dataset — and one we can fix the same day.",
+    body: "The most valuable thing you can send. If a rate, cap or annual fee we show disagrees with what the bank publishes, that's a bug in our dataset, and one we can fix the same day.",
   },
   {
     icon: Bug,
@@ -64,8 +64,8 @@ export default function SuggestionsPage() {
           </h1>
           <p className="mt-6 max-w-2xl text-lg text-muted">
             Fils is early, and the fastest way it gets better is someone finding the number
-            that doesn&apos;t match reality. There&apos;s no support team behind this — it&apos;s
-            a prototype and a small inbox — but everything sent here is read.
+            that doesn&apos;t match reality. There&apos;s no support team behind this. It&apos;s
+            a prototype and a small inbox, but everything sent here is read.
           </p>
         </Reveal>
       </section>
@@ -117,8 +117,8 @@ export default function SuggestionsPage() {
           </Reveal>
           <Reveal delay={0.1} className="space-y-4 text-muted">
             <p>
-              Fils isn&apos;t a bank or a credit broker, so anything about a real card — an
-              application, a limit, a disputed transaction, a reward that never arrived — has
+              Fils isn&apos;t a bank or a credit broker, so anything about a real card (an
+              application, a limit, a disputed transaction, a reward that never arrived) has
               to go to the bank that issued it. We have no visibility into your account and
               no way to act on it.
             </p>

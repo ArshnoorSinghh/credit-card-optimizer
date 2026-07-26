@@ -104,7 +104,7 @@ export async function POST(request: Request): Promise<Response> {
     return bad("Unknown category.");
   }
   if (typeof message !== "string" || message.trim() === "") {
-    return bad("Tell us what happened — the message can't be empty.");
+    return bad("Tell us what happened. The message can't be empty.");
   }
   if (message.length > MAX_MESSAGE_CHARS) {
     return bad(`Message is too long (max ${MAX_MESSAGE_CHARS} characters).`);

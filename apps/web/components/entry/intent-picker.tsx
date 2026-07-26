@@ -24,7 +24,7 @@ const OPTIONS: {
     intent: "gap",
     icon: TrendingUp,
     title: "See what I'm leaving on the table",
-    body: "Tell us your cards, and we'll show what they earn today — then the setup that earns more.",
+    body: "Tell us your cards, and we'll show what they earn today, then the setup that earns more.",
   },
   {
     intent: "cards",
@@ -36,7 +36,7 @@ const OPTIONS: {
     intent: "points",
     icon: Coins,
     title: "Optimize the points I already have",
-    body: "Model your miles and points — what they're really worth and when to burn them.",
+    body: "Model your miles and points: what they're really worth and when to burn them.",
   },
 ];
 

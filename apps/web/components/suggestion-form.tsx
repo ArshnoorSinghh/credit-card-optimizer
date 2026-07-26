@@ -100,7 +100,7 @@ export function SuggestionForm() {
         <span className="mx-auto mb-5 grid h-12 w-12 place-items-center rounded-full border border-oasis/30 bg-oasis/10 text-oasis">
           <Check className="h-5 w-5" />
         </span>
-        <h3 className="text-xl font-semibold text-fg">Sent — thank you.</h3>
+        <h3 className="text-xl font-semibold text-fg">Sent. Thank you.</h3>
         <p className="mx-auto mt-3 max-w-sm text-muted">
           It landed in a real inbox and it will be read. If you left an address we&apos;ll
           reply when there&apos;s something worth saying.

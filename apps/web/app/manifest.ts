@@ -8,7 +8,7 @@ import { SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
 */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: `${SITE_NAME} — Smarter UAE credit cards`,
+    name: `${SITE_NAME} - Smarter UAE credit cards`,
     short_name: SITE_NAME,
     description: SITE_DESCRIPTION,
     start_url: "/",

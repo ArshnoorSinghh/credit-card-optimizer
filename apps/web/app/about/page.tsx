@@ -36,7 +36,7 @@ import { CARD_COUNT, BANK_COUNT, PORTFOLIO_COUNT_ROUNDED } from "@/lib/marketing
 */
 
 export const metadata: Metadata = {
-  title: "About — Fils",
+  title: "About",
   description:
     "Why Fils exists, how the two optimization engines work, and the commitments behind every recommendation.",
 };
@@ -50,7 +50,7 @@ const PRINCIPLES = [
   {
     icon: ShieldCheck,
     title: "We say when we don't know",
-    body: "UAE issuers publish reward terms inconsistently. When a rate can't be parsed with confidence we flag it and carry a range through the model — rather than inventing a precise figure that looks authoritative and isn't.",
+    body: "UAE issuers publish reward terms inconsistently. When a rate can't be parsed with confidence we flag it and carry a range through the model, rather than inventing a precise figure that looks authoritative and isn't.",
   },
   {
     icon: Compass,
@@ -68,7 +68,7 @@ const ENGINES = [
   {
     icon: Layers,
     title: "Card Optimizer",
-    body: `A constrained combinatorial search over every subset of one, two and three cards — roughly ${PORTFOLIO_COUNT_ROUNDED} portfolios — scored on net expected value: rewards earned minus annual fees, with each card's reward caps and eligibility rules enforced rather than assumed away.`,
+    body: `A constrained combinatorial search over every subset of one, two and three cards (roughly ${PORTFOLIO_COUNT_ROUNDED} portfolios) scored on net expected value: rewards earned minus annual fees, with each card's reward caps and eligibility rules enforced rather than assumed away.`,
   },
   {
     icon: Coins,
@@ -91,8 +91,8 @@ export default function AboutPage() {
             Built to answer one <span className="text-gradient">stubborn question.</span>
           </h1>
           <p className="mt-6 max-w-2xl text-lg text-muted">
-            Which UAE credit cards should you actually carry? It sounds simple. It isn&apos;t
-            — the answer depends on how you spend, which caps you hit, what the annual fees
+            Which UAE credit cards should you actually carry? It sounds simple. It isn&apos;t.
+            The answer depends on how you spend, which caps you hit, what the annual fees
             claw back, and how {CARD_COUNT} cards across {BANK_COUNT} banks interact when you
             hold two or three of them at once.
           </p>
@@ -123,7 +123,7 @@ export default function AboutPage() {
               The genuinely hard part is that the best <em>single</em> card is rarely part of
               the best <em>pair</em>. Cards overlap: two strong grocery cards mostly duplicate
               each other, while a mediocre one with a category nobody else covers can be worth
-              more in combination. You cannot see that by reading a list — it only falls out
+              more in combination. You cannot see that by reading a list; it only falls out
               of searching the combinations.
             </p>
             <p>
@@ -146,7 +146,7 @@ export default function AboutPage() {
             <h2 className="mt-5 text-3xl font-semibold md:text-5xl">Two engines</h2>
             <p className="mt-4 text-lg text-on-dusk-muted">
               Both are pure, deterministic TypeScript with no network calls and no hidden
-              state — the same inputs always produce the same answer, which is the only way a
+              state: the same inputs always produce the same answer, which is the only way a
               recommendation about money is worth auditing.
             </p>
           </Reveal>
@@ -208,7 +208,7 @@ export default function AboutPage() {
           </Reveal>
           <Reveal delay={0.1}>
             <Card className="p-8">
-              {/* why the values are em-dashes: Fils is not incorporated, so there is
+              {/* why the values are dashes: Fils is not incorporated, so there is
                   no entity name, licence number or registered office to state. The
                   rows stay because an absent field shows the gap, where a removed
                   one hides it — and an empty value asserts nothing. The sr-only
@@ -222,7 +222,7 @@ export default function AboutPage() {
                   <div key={term}>
                     <dt className="text-faint">{term}</dt>
                     <dd className="mt-1 text-faint" aria-hidden>
-                      —
+                      -
                     </dd>
                     <dd className="sr-only">{note}</dd>
                   </div>
@@ -262,7 +262,7 @@ export default function AboutPage() {
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-lg text-muted">
                 A minute of sliders, no account, no card details. Or tell us what you think
-                we&apos;ve got wrong — we read everything.
+                we&apos;ve got wrong. We read everything.
               </p>
               <div className="mt-9 flex flex-wrap justify-center gap-3">
                 <Link href="/onboarding">

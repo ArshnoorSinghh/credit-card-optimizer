@@ -75,7 +75,7 @@ export const SUGGESTIONS_EMAIL = "filsoptimizer@gmail.com";
 const terms: LegalDoc = {
   slug: "terms",
   title: "Terms of Use",
-  summary: "Not written yet — the structure a finished document will need.",
+  summary: "Not written yet: the structure a finished document will need.",
   intro: [
     "There are no terms of use yet. Terms are an agreement between you and a company, and there is no company here to be a party to one.",
     "The headings below are the structure a finished document will need. Nothing is written under them, so nothing here binds you or us. They stay visible so the gaps are countable rather than invisible.",

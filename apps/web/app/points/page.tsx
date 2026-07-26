@@ -121,7 +121,7 @@ export default function PointsPage() {
           <h1 className="mt-4 font-display text-4xl font-semibold md:text-5xl">Make your points count</h1>
           <p className="mt-3 max-w-xl text-muted">
             Add what you&apos;re holding and pick a goal. We show the best redemption route, the real
-            AED value, and what&apos;s at risk of expiring — straight from the engine.
+            AED value, and what&apos;s at risk of expiring, straight from the engine.
           </p>
         </Reveal>
 
@@ -239,7 +239,7 @@ export default function PointsPage() {
                 <span>
                   <span className="font-medium text-fg">Value premium-cabin seats</span>
                   <span className="mt-0.5 block text-xs text-faint">
-                    Assumes premium redemptions are worth ~2× economy — an assumption, not a quote.
+                    Assumes premium redemptions are worth ~2× economy, an assumption, not a quote.
                   </span>
                 </span>
               </label>
@@ -255,7 +255,7 @@ export default function PointsPage() {
                 </span>
                 <h3 className="text-lg font-semibold">Add a holding to begin</h3>
                 <p className="max-w-xs text-sm text-muted">
-                  Tell us which reward currencies you hold and how many points — we&apos;ll show the
+                  Tell us which reward currencies you hold and how many points, and we&apos;ll show the
                   best way to redeem them and what&apos;s at risk of expiring.
                 </p>
               </Card>
@@ -315,7 +315,7 @@ export default function PointsPage() {
 
         <p className="mt-8 text-xs text-faint">
           Figures come from the engine&apos;s researched redemption model. Low-confidence or flagged
-          currencies are labelled as such — we never fabricate a value or invent an expiry date.
+          currencies are labelled as such, and we never fabricate a value or invent an expiry date.
         </p>
       </div>
     </main>

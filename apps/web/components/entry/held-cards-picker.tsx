@@ -138,7 +138,7 @@ export function HeldCardsPicker({
         <Badge tone="neutral">
           {selected.length}/{MAX_HELD_CARDS}
         </Badge>
-        Don&apos;t hold any yet? Skip — we&apos;ll just show you the best setup.
+        Don&apos;t hold any yet? Skip, and we&apos;ll just show you the best setup.
       </p>
     </div>
   );

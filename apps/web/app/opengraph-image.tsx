@@ -6,7 +6,7 @@ import { ImageResponse } from "next/og";
   Satori subset) and the system default font, so it needs no font fetch.
 */
 
-export const alt = "Fils — Smarter UAE credit cards";
+export const alt = "Fils - Smarter UAE credit cards";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -52,7 +52,7 @@ export default function OpengraphImage() {
             Stop leaving money on the table.
           </div>
           <div style={{ display: "flex", fontSize: "34px", color: "#6a5b47", maxWidth: "860px" }}>
-            The best 1–3 UAE credit-card portfolio for how you spend — then how to
+            The best 1-3 UAE credit-card portfolio for how you spend, then how to
             spend the points you already hold.
           </div>
         </div>

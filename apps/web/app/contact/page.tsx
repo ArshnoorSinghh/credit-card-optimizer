@@ -37,7 +37,7 @@ import { SUGGESTIONS_EMAIL } from "@/lib/legal";
 */
 
 export const metadata: Metadata = {
-  title: "Contact — Fils",
+  title: "Contact",
   description:
     "What you'd reach us about, where Fils can't help, and why there's no inbox yet.",
 };
@@ -67,7 +67,7 @@ const CHANNELS = [
   {
     icon: Scale,
     title: "Complaints",
-    body: "If something has gone wrong. Note that complaints about a card or a bank go to the issuer rather than to us — see below.",
+    body: "If something has gone wrong. Note that complaints about a card or a bank go to the issuer rather than to us. See below.",
   },
 ];
 
@@ -85,7 +85,7 @@ export default function ContactPage() {
             One inbox, <span className="text-gradient">for feedback.</span>
           </h1>
           <p className="mt-6 max-w-2xl text-lg text-muted">
-            Fils is a prototype, so there&apos;s no support team — but there is somewhere to
+            Fils is a prototype, so there&apos;s no support team, but there is somewhere to
             send what we got wrong, and it&apos;s read. The channels a real company would
             have are listed below with their addresses left blank, because publishing one
             nobody monitors is just a slower way of ignoring you.
@@ -155,7 +155,7 @@ export default function ContactPage() {
             </p>
             <p>
               If your complaint is about a card, a fee, or something an issuer did, raise it
-              with that bank first — and escalate to Sanadak, the UAE&apos;s ombudsman unit for
+              with that bank first, and escalate to Sanadak, the UAE&apos;s ombudsman unit for
               the financial sector, if their answer doesn&apos;t satisfy you.
             </p>
             <p>
