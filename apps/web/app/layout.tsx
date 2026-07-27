@@ -117,11 +117,29 @@ const clerkAppearance = {
   },
 };
 
+// Copy overrides for Clerk's hosted UI. why: the sign-up verification step is
+// where people get stuck - the mail lands in spam often enough that "nothing
+// arrived" is really "look in the junk folder". Both the link and the code
+// flavours of the step are overridden because which one Clerk renders depends on
+// the instance's verification setting.
+const clerkLocalization = {
+  signUp: {
+    emailLink: {
+      formSubtitle:
+        "Use the verification link sent to your email address. If it is not there in a minute, check your spam or junk folder.",
+    },
+    emailCode: {
+      formSubtitle:
+        "Enter the verification code sent to your email address. If it is not there in a minute, check your spam or junk folder.",
+    },
+  },
+};
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${display.variable} ${sans.variable}`}>
       <body className="min-h-screen bg-bg text-fg antialiased">
-        <ClerkProvider appearance={clerkAppearance}>
+        <ClerkProvider appearance={clerkAppearance} localization={clerkLocalization}>
           {/* Skip link — first focusable element, visible only when focused. */}
           <a
             href="#main-content"
