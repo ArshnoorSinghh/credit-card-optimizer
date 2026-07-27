@@ -95,11 +95,10 @@ export function Navbar() {
             </Link>
           </Show>
           <Show when="signed-in">
-            <Link href="/dashboard" className="hidden sm:block">
-              <Button variant="ghost" size="sm">
-                Wallet
-              </Button>
-            </Link>
+            {/* Just the account control here. A "Wallet" button used to sit
+                beside it, duplicating the /dashboard entry already in LINKS —
+                which covers every breakpoint: the desktop row at md+, the
+                drawer below it. Two doors to one room, side by side. */}
             <UserButton />
           </Show>
 

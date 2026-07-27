@@ -6,15 +6,17 @@ import { cn } from "@/lib/cn";
 
 /*
   Button — the primary interactive primitive. Variants:
-    - brand:   solid flame fill, the main CTA (glows on hover)
-    - solid:   soft raised surface
-    - outline: hairline border, ghost fill
-    - ghost:   text-only, for low-emphasis actions
+    - brand:          solid flame fill, the main CTA (glows on hover)
+    - solid:          soft raised surface
+    - outline:        hairline border, ghost fill
+    - outline-strong: outline for the hero only — terracotta border over a warm
+                      wash, so it survives the BurjSunrise backdrop
+    - ghost:          text-only, for low-emphasis actions
   Motion: subtle scale on hover/press (Framer Motion) — the "buttons feel alive"
   rule from the design brief.
 */
 
-type Variant = "brand" | "solid" | "outline" | "ghost";
+type Variant = "brand" | "solid" | "outline" | "outline-strong" | "ghost";
 type Size = "sm" | "md" | "lg";
 
 const base =
@@ -25,23 +27,24 @@ const base =
 const variants: Record<Variant, string> = {
   brand: "bg-flame text-white shadow-glow hover:shadow-glow-lg",
   solid: "bg-surface-2 text-fg border border-line hover:border-line-strong",
-  // why a terracotta hairline over a warm tint, and not a stronger neutral:
-  // this variant carried `border-line-strong` — a 20%-opacity brown hairline —
-  // which all but disappeared on the eggshell canvas, worst of all in the hero
-  // where BurjSunrise washes warm light behind it. It read as text, not as a
-  // button.
+  outline: "border border-line-strong text-fg hover:bg-black/[0.04]",
+  // The hero's secondary CTA, and only the hero's. `outline` alone leans on
+  // `border-line-strong` — a 20%-opacity brown hairline measuring 1.46:1 on the
+  // eggshell canvas, under half the 3:1 WCAG floor for a non-text boundary. That
+  // is survivable in dense chrome where surrounding structure implies the
+  // control, but not against BurjSunrise, which washes warm light straight
+  // behind the button and leaves it reading as text rather than a target.
   //
-  // `clay` measures 4.23:1 on the canvas, clearing the 3:1 WCAG floor for a
-  // non-text boundary (`flame` is only 2.77:1 there, so it is the wrong pick for
-  // the border even though it is the fill accent). The label stays `text-fg`
-  // rather than going clay: at 16px, clay's 4.23:1 is under the 4.5:1 AA floor
-  // for body text — it clears the bar only at heading sizes.
+  // `clay` measures 4.23:1 on the canvas so the boundary clears 3:1. `flame` is
+  // the intuitive pick — it is the system's border/fill accent — but only makes
+  // 2.77:1 there, so it stays the wash. The label stays `text-fg` (13.26:1 on
+  // the tint); clay as a 16px label would be 3.95:1, under the 4.5:1 AA floor it
+  // clears only at heading sizes.
   //
-  // The 7% flame wash gives it a surface so it reads as a target, while staying
-  // far enough from the saturated `brand` fill + glow that the primary CTA next
-  // to it is still unmistakably primary.
-  outline:
-    "border border-clay bg-flame/[0.07] text-fg hover:bg-flame/[0.14]",
+  // The wash lands 1.07:1 off the canvas: enough to read as a surface, nowhere
+  // near the saturated `brand` fill + glow beside it, so the primary CTA stays
+  // unmistakably primary.
+  "outline-strong": "border border-clay bg-flame/[0.07] text-fg hover:bg-flame/[0.14]",
   ghost: "text-muted hover:text-fg hover:bg-black/[0.04]",
 };
 

@@ -183,7 +183,7 @@ export default function LandingPage() {
                   </Button>
                 </Link>
                 <Link href="/sign-up">
-                  <Button variant="outline" size="lg">
+                  <Button variant="outline-strong" size="lg">
                     Sign up free
                   </Button>
                 </Link>
@@ -196,7 +196,7 @@ export default function LandingPage() {
                   </Button>
                 </Link>
                 <Link href="/dashboard">
-                  <Button variant="outline" size="lg">
+                  <Button variant="outline-strong" size="lg">
                     My wallet
                   </Button>
                 </Link>
