@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Reveal, Stagger, StaggerItem } from "@/components/ui/reveal";
 import { Footer } from "@/components/footer";
+import { SignedInOnly, SignedOutOnly } from "@/components/signed-out-only";
 import { CARD_COUNT, BANK_COUNT, PORTFOLIO_COUNT_ROUNDED } from "@/lib/marketing-stats";
 
 /*
@@ -261,16 +262,34 @@ export default function AboutPage() {
                 See what the model says about your wallet
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-lg text-muted">
-                A minute of sliders, no account, no card details. Or tell us what you think
-                we&apos;ve got wrong. We read everything.
+                <SignedOutOnly>
+                  A minute of sliders, no account, no card details. Or tell us what you think
+                  we&apos;ve got wrong. We read everything.
+                </SignedOutOnly>
+                <SignedInOnly>
+                  A minute of sliders, no card details. Or tell us what you think we&apos;ve got
+                  wrong. We read everything.
+                </SignedInOnly>
               </p>
               <div className="mt-9 flex flex-wrap justify-center gap-3">
-                <Link href="/onboarding">
-                  <Button size="lg">
-                    Try the demo
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
+                {/* Signed in, the demo is behind them — the same heading is
+                    answered by their own wallet rather than a sample one. */}
+                <SignedOutOnly>
+                  <Link href="/onboarding">
+                    <Button size="lg">
+                      Try the demo
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </SignedOutOnly>
+                <SignedInOnly>
+                  <Link href="/dashboard">
+                    <Button size="lg">
+                      Open my wallet
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </SignedInOnly>
                 <Link href="/contact">
                   <Button variant="outline" size="lg">
                     <MessageSquare className="h-4 w-4" />
