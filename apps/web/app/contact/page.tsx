@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Reveal, Stagger, StaggerItem } from "@/components/ui/reveal";
 import { Footer } from "@/components/footer";
+import { SignedInOnly, SignedOutOnly } from "@/components/signed-out-only";
 import { SUGGESTIONS_EMAIL } from "@/lib/legal";
 
 /*
@@ -208,12 +209,24 @@ export default function ContactPage() {
                 The fastest useful message is one sent after you&apos;ve seen your own numbers.
               </p>
               <div className="mt-9 flex flex-wrap justify-center gap-3">
-                <Link href="/onboarding">
-                  <Button size="lg">
-                    Try the demo
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
+                {/* "seen your own numbers" is the point of this CTA — for an
+                    account holder those numbers are in the wallet, not a demo. */}
+                <SignedOutOnly>
+                  <Link href="/onboarding">
+                    <Button size="lg">
+                      Try the demo
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </SignedOutOnly>
+                <SignedInOnly>
+                  <Link href="/dashboard">
+                    <Button size="lg">
+                      See my numbers
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </SignedInOnly>
                 <Link href="/about">
                   <Button variant="outline" size="lg">
                     About Fils

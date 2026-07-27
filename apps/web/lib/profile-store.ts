@@ -88,6 +88,39 @@ interface ServerState {
   bank: string | null;
 }
 
+/**
+ * True when the account has never persisted anything — i.e. a brand-new sign-up.
+ * Distinguishing this from "saved, but empty" is the whole point: only a fresh
+ * account may have its state replaced by whatever the guest built locally.
+ */
+export function isUnwrittenServerState(s: ServerState): boolean {
+  return s.spending === null && s.cardIds.length === 0 && s.salaryAed === null && s.bank === null;
+}
+
+/** True when the local (guest) profile holds work worth carrying into the account. */
+export function hasLocalWork(p: StoredProfile): boolean {
+  return p.onboarded || p.cardIds.length > 0;
+}
+
+/**
+ * The PUT body that carries a guest profile into a fresh account.
+ *
+ * `spending` is only sent when the guest actually completed onboarding: the
+ * server derives `onboarded` from `spending !== null`, so posting the default
+ * sliders for someone who only picked a few held cards would mark them set up
+ * and suppress the dashboard's "finish setting up" prompt.
+ */
+export function adoptionPatch(p: StoredProfile): Record<string, unknown> {
+  const body: Record<string, unknown> = {};
+  if (p.onboarded) {
+    body.spending = p.spending;
+    body.salaryAed = p.profile.monthlySalaryAed;
+  }
+  if (p.cardIds.length > 0) body.cardIds = p.cardIds;
+  if (p.bank) body.bank = p.bank;
+  return body;
+}
+
 function serverToStored(s: ServerState): StoredProfile {
   return {
     spending: { ...DEFAULTS.spending, ...(s.spending ?? {}) },
@@ -125,11 +158,38 @@ export function useProfileStore(): ProfileStore {
     let cancelled = false;
     if (isSignedIn) {
       // Show the local cache immediately, then reconcile with the server.
-      setState(loadProfile());
+      const local = loadProfile();
+      setState(local);
       fetch("/api/profile")
         .then((r) => (r.ok ? (r.json() as Promise<ServerState>) : null))
         .then((s) => {
           if (cancelled || !s) return;
+
+          // The guest -> sign-up handover. The landing page's funnel is "try the
+          // demo, then sign up", so by the time we get here the person has often
+          // just spent a minute on the entry flow — and a fresh account returns
+          // an empty state, which used to overwrite all of it with defaults (in
+          // React state AND in the sessionStorage cache below). They landed on a
+          // dashboard asking them to "finish setting up" work they had finished.
+          //
+          // Guarded on the account being genuinely unwritten, so this can only
+          // ever fill a vacuum: an existing account's saved state always wins,
+          // and a stale guest blob in a shared browser can never clobber it.
+          if (isUnwrittenServerState(s) && hasLocalWork(local)) {
+            saveProfile(local);
+            const body = adoptionPatch(local);
+            if (Object.keys(body).length > 0) {
+              void fetch("/api/profile", {
+                method: "PUT",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify(body),
+              }).catch(() => {
+                /* the local cache still holds it; the next save() retries */
+              });
+            }
+            return;
+          }
+
           const merged = serverToStored(s);
           setState(merged);
           saveProfile(merged);

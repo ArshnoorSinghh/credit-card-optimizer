@@ -71,8 +71,8 @@ export default function HubPage() {
           <Badge tone="brand">Home</Badge>
           <h1 className="mt-4 text-4xl font-semibold md:text-5xl">Where would you like to start?</h1>
           <p className="mt-3 max-w-xl text-lg text-muted">
-            Pick your path. You can switch between them at any time, and nothing here needs an
-            account to try.
+            Pick your path. You can switch between them at any time
+            {signedIn ? ", and everything you set is saved to your wallet." : ", and nothing here needs an account to try."}
           </p>
         </Reveal>
 

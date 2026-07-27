@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
@@ -24,6 +24,7 @@ import { CountTo } from "@/components/count-to";
 import { aed } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { useToast } from "@/components/ui/toast";
+import { useProfileStore } from "@/lib/profile-store";
 import {
   AVAILABLE_CURRENCIES,
   DEFAULT_HOLDINGS,
@@ -75,9 +76,24 @@ const URGENCY_LABEL: Record<BurnItem["urgency"], string> = {
 let nextId = DEFAULT_HOLDINGS.length + 1;
 
 export default function PointsPage() {
+  // DEFAULT_HOLDINGS is sample data — 60k Skywards, 120k TouchPoints, 40k FAB,
+  // with a seeded expiry. It exists so a guest sees the engine do something real
+  // on arrival. It must never reach a signed-in user: rendered under "Your
+  // holdings" with no marking, it reads as their own balances, and the burn
+  // warnings it drives are advice about points nobody holds. Signed in, the list
+  // starts empty and the panel asks them to add what they hold.
+  const { signedIn, ready } = useProfileStore();
   const [rows, setRows] = useState<Row[]>(
     DEFAULT_HOLDINGS.map((h, i) => ({ ...h, id: i + 1 })),
   );
+  const [cleared, setCleared] = useState(false);
+
+  useEffect(() => {
+    if (!ready || cleared || !signedIn) return;
+    setRows([]);
+    setCleared(true);
+  }, [ready, signedIn, cleared]);
+
   const [goal, setGoal] = useState<RedemptionGoal>("max_value");
   const [premiumCabin, setPremiumCabin] = useState(false);
 
@@ -133,6 +149,12 @@ export default function PointsPage() {
                 Your holdings
               </h3>
               <div className="space-y-2">
+                {rows.length === 0 && (
+                  <p className="rounded-[var(--radius-md)] border border-dashed border-line px-3 py-4 text-sm text-muted">
+                    Nothing added yet. Add the miles and points you hold below to see what
+                    they&apos;re worth and what&apos;s at risk of expiring.
+                  </p>
+                )}
                 <AnimatePresence initial={false}>
                   {rows.map((h) => (
                     <motion.div

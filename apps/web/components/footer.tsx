@@ -1,9 +1,16 @@
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { SignedOutOnly } from "@/components/signed-out-only";
 
 /* Footer — quiet, link-dense, sits on the darkest surface. */
 
-const COLS = [
+// `signedOutOnly` hides a link once there is an account: "Try the demo" is an
+// invitation to people who have not committed yet, and reads as a downgrade to
+// someone whose real wallet is one column to the left.
+const COLS: {
+  title: string;
+  links: { href: string; label: string; signedOutOnly?: boolean }[];
+}[] = [
   {
     title: "Product",
     links: [
@@ -20,8 +27,8 @@ const COLS = [
       { href: "/suggestions", label: "Send feedback" },
       { href: "/contact", label: "Contact" },
       { href: "/#how", label: "How it works" },
-      { href: "/onboarding", label: "Try the demo" },
-      { href: "/sign-up", label: "Create account" },
+      { href: "/onboarding", label: "Try the demo", signedOutOnly: true },
+      { href: "/sign-up", label: "Create account", signedOutOnly: true },
     ],
   },
   {
@@ -55,13 +62,23 @@ export function Footer() {
           <div key={col.title}>
             <h4 className="mb-3 text-sm font-semibold text-fg">{col.title}</h4>
             <ul className="space-y-2.5">
-              {col.links.map((l, i) => (
-                <li key={i}>
-                  <Link href={l.href} className="text-sm text-muted transition-colors hover:text-fg">
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
+              {col.links.map((l, i) => {
+                const item = (
+                  <li key={i}>
+                    <Link
+                      href={l.href}
+                      className="text-sm text-muted transition-colors hover:text-fg"
+                    >
+                      {l.label}
+                    </Link>
+                  </li>
+                );
+                return l.signedOutOnly ? (
+                  <SignedOutOnly key={i}>{item}</SignedOutOnly>
+                ) : (
+                  item
+                );
+              })}
             </ul>
           </div>
         ))}
