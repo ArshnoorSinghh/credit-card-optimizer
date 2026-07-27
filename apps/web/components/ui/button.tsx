@@ -44,7 +44,15 @@ const variants: Record<Variant, string> = {
   // The wash lands 1.07:1 off the canvas: enough to read as a surface, nowhere
   // near the saturated `brand` fill + glow beside it, so the primary CTA stays
   // unmistakably primary.
-  "outline-strong": "border border-clay bg-flame/[0.07] text-fg hover:bg-flame/[0.14]",
+  //
+  // Hover fills with clay — the button's own border colour flooding inward —
+  // and flips the label white. Clay rather than flame because white needs a
+  // ground dark enough to sit on: it makes 4.75:1 on clay but only 3.12:1 on
+  // flame, under the AA floor. Deepening the wash instead would not work at
+  // all; white on flame/14% is 1.29:1. `transition-colors` in the base class
+  // carries both properties, so the fill and the label cross together.
+  "outline-strong":
+    "border border-clay bg-flame/[0.07] text-fg hover:bg-clay hover:text-white",
   ghost: "text-muted hover:text-fg hover:bg-black/[0.04]",
 };
 
