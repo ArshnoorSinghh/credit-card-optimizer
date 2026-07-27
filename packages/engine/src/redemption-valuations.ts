@@ -210,7 +210,7 @@ export const REDEMPTION_VALUATIONS: RedemptionValuationTable = {
       route("card_bill_cashback", "card_bill", 0.75, "high", "min 500 PP + AED 375 outstanding balance; NOT adopted into Engine 1 — earn rate needs verification"),
       route("rewards_hub", "voucher", 0.75, "high"),
     ],
-    note: "transfer_to_miles available but ratio unresearched — not quantified here",
+    note: "transfer to miles available but ratio unresearched — not quantified here",
   },
 
   // FAB Rewards — cash-capable. Note the sourced conflict on the card-bill rate.
@@ -221,7 +221,7 @@ export const REDEMPTION_VALUATIONS: RedemptionValuationTable = {
       route("cashback", "card_bill", 0.007, "high", "FAB FAQ PDF states 0.004 — CONFLICT, verify"),
       route("voucher", "voucher", 0.007, "medium"),
     ],
-    note: "transfer_to_miles available",
+    note: "transfer to miles available",
   },
 
   // ADIB Exceed — cash-capable, everything anchored to the official 1 pt = AED 2.00.
@@ -262,7 +262,7 @@ export const REDEMPTION_VALUATIONS: RedemptionValuationTable = {
       route("amazon_giftcard", "voucher", 0.0033, "high"),
       route("travel", "voucher", 0.00329, "high"),
     ],
-    note: "Mashreq Vantage/Salaam; transfer to Skywards 32:1 or Etihad 22:1 — see conversions.ts. NOT present in cards.json since the 2026-07 Amex-network cleanup removed mashreq_solitaire_amex; research kept here for if a Salaam card returns",
+    note: "Mashreq Vantage/Salaam; transfer to Skywards 32:1 or Etihad 22:1 — see conversions.ts. NOT present in cards.json since the 2026-07 Amex-network cleanup removed the Mashreq Solitaire Amex; research kept here for if a Salaam card returns",
   },
 
   // Citi ThankYou (UAE) — cash-capable. Both routes offset card spend.
@@ -273,7 +273,7 @@ export const REDEMPTION_VALUATIONS: RedemptionValuationTable = {
       route("cash_for_points", "card_bill", 0.0333, "high", "travel-spend rebate"),
       route("pay_with_points", "card_bill", 0.03, "medium"),
     ],
-    note: "transfer_to_miles available",
+    note: "transfer to miles available",
   },
 
   // Standard Chartered 360° — cash-capable. NOTE: SC cards in cards.json earn AED

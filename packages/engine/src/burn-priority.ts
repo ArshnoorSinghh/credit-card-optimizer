@@ -175,7 +175,8 @@ export function burnPriority(
 
     const rate = bestRoute(currency, table);
     const valueAtRiskAed = balance * rate.aedPerUnit;
-    if (rate.note) flags.push(`best-rate basis: ${rate.type} — ${rate.note}`);
+    // Route types are snake_case keys in the table; spell them out for the reader.
+    if (rate.note) flags.push(`best-rate basis: ${rate.type.replace(/_/g, " ")} — ${rate.note}`);
 
     // Versatility = number of distinct redemption CLASSES (genuine flexibility): a
     // currency with a card-bill route escapes more ways than a voucher-only one.

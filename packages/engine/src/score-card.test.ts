@@ -135,7 +135,8 @@ describe("scoreCard — free-for-life points card (fab_rewards_indulge)", () => 
   it("flags the unmodeled threshold bonus and the medium-confidence valuation", () => {
     expect(score.uncertain).toBe(true);
     expect(score.flags.some((f) => /Valuation of "FAB Rewards"/.test(f.message))).toBe(true);
-    expect(score.flags.some((f) => /monthly_spend_bonus.*Threshold lump bonus/i.test(f.message))).toBe(true);
+    // "Monthly Spend Bonus", not the raw monthly_spend_bonus key.
+    expect(score.flags.some((f) => /Monthly Spend Bonus.*Threshold lump bonus/i.test(f.message))).toBe(true);
   });
 });
 

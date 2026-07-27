@@ -55,7 +55,7 @@ export const DEFAULT_VALUATIONS: ValuationTable = {
   // Point/AED) imply a >75% return — implausible. The earn rate AND per-point value
   // both need cofounder verification before we move this off 0.01. See the
   // data_caveat flag on enbd_visa_flexi and the implausibility guardrail in scoreCard.
-  "Plus Points": { aedPerUnit: 0.01, confidence: "low", note: "HELD at 0.01 pending earn-rate + per-point verification (research suggests ~0.75; would imply implausible >75% return on enbd_visa_flexi)" },
+  "Plus Points": { aedPerUnit: 0.01, confidence: "low", note: "HELD at 0.01 pending earn-rate + per-point verification (research suggests ~0.75; would imply implausible >75% return on the Emirates NBD Visa Flexi)" },
   // ADCB TouchPoints: primary = in-store instant redemption 0.005 (research 2026-07);
   // NO card-bill route exists. // was 0.01.
   "TouchPoints (convertible to miles)": { aedPerUnit: 0.005, confidence: "high", note: "ADCB TouchPoints — in-store instant redemption (research 2026-07)" },
@@ -90,7 +90,7 @@ export const DEFAULT_VALUATIONS: ValuationTable = {
   "AED (Booking.com credit)": {
     aedPerUnit: 0.85,
     confidence: "low",
-    note: "card data conflicts with issuer's current published structure — this currency may not exist; full card re-verification required (adib_booking_signature).",
+    note: "card data conflicts with issuer's current published structure — this currency may not exist; full card re-verification required (ADIB Booking.com Signature).",
   },
 
   // RAKBANK cashback: face value like any cashback, but it EXPIRES 15 months after

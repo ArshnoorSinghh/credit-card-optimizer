@@ -568,16 +568,22 @@ export function assessValuationFragility(
       // turns on a number we admit we don't know. Medium confidence is a softer
       // "low" because the value is defensible, just not firm.
       level: f.confidence === "low" ? ("unknown" as const) : ("low" as const),
-      message: fragilityMessage(f),
+      message: fragilityMessage(f, (id) => byId.get(id)?.name ?? id),
     }));
 
   return { findings, flags, optimizerRuns };
 }
 
-/** The user-facing sentence. Reports the asymmetric band, not a misleading single ±. */
-function fragilityMessage(f: ValuationFragility): string {
+/**
+ * The user-facing sentence. Reports the asymmetric band, not a misleading single ±.
+ *
+ * `nameOf` turns the finding's card ids into the names on the cards — the flag is
+ * read by the person the recommendation is for, and "rakbank_titanium" is a
+ * database key, not a card they own.
+ */
+function fragilityMessage(f: ValuationFragility, nameOf: (id: string) => string): string {
   const pct = (r: number) => `${(r * 100).toFixed(0)}%`;
-  const cards = f.cardIds.join(", ");
+  const cards = f.cardIds.map(nameOf).join(", ");
   const sides: string[] = [];
   if (f.stableBand.from !== null) {
     sides.push(`${pct((f.baselineAedPerUnit - f.stableBand.from) / f.baselineAedPerUnit)} less`);

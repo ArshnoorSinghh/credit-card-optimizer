@@ -270,7 +270,8 @@ describe("excluded_spend — spend in an excluded segment earns nothing", () => 
       excluded_spend: [{ category: "internationl", reason: "typo" }],
     });
     const score = scoreCard({ international: 1000 }, card);
-    expect(score.flags.some((f) => /Unknown excluded_spend category "internationl"/.test(f.message))).toBe(true);
+    // Reads as prose, not as a storage key: "Internationl", not "internationl".
+    expect(score.flags.some((f) => /Unknown excluded spend category "Internationl"/.test(f.message))).toBe(true);
     // Exclusion NOT applied, so the spend still earns — loudly, not silently.
     expect(score.grossAnnualValue.min).toBeCloseTo(120, 6);
   });

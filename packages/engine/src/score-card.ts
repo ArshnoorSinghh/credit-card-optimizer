@@ -434,10 +434,10 @@ export function buildEarnOptions(card: Card): { options: EarnOption[]; flags: Sc
   const options: EarnOption[] = card.rewards.categories.map((cat: RewardCategory) => {
     const rule = MATCH_TABLE[cat.category] ?? {
       kind: "unmatched" as const,
-      reason: `Unknown category "${cat.category}" — not scored`,
+      reason: `Unknown category "${label(cat.category)}" — not scored`,
     };
     if (!MATCH_TABLE[cat.category]) {
-      flags.push({ level: "unknown", message: `Unrecognized reward category "${cat.category}"` });
+      flags.push({ level: "unknown", message: `Unrecognized reward category "${label(cat.category)}"` });
     }
     return {
       cardCategory: cat.category,
@@ -670,7 +670,7 @@ function applyExcludedSpend(
     if (!(SPEND_CATEGORIES as readonly string[]).includes(e.category)) {
       flags.push({
         level: "unknown",
-        message: `Unknown excluded_spend category "${e.category}" on ${card.id} — exclusion NOT applied`,
+        message: `Unknown excluded spend category "${label(e.category)}" on ${card.name} — exclusion NOT applied`,
       });
       continue;
     }
@@ -689,7 +689,7 @@ function applyExcludedSpend(
     if (o.rule.kind === "categories") {
       const kept = o.rule.categories.filter((c) => !known.has(c));
       return kept.length === 0
-        ? { ...o, rule: { kind: "unmatched", reason: `all categories excluded on ${card.id}` } }
+        ? { ...o, rule: { kind: "unmatched", reason: `all categories excluded on ${card.name}` } }
         : { ...o, rule: { kind: "categories", categories: kept } };
     }
     return o; // already unmatched
@@ -698,8 +698,15 @@ function applyExcludedSpend(
   return { options: narrowed, flags };
 }
 
-/** Title-case a category key for a human-readable flag ("international" -> "International"). */
-function label(category: string): string {
+/**
+ * Title-case a category key for a human-readable flag ("international" ->
+ * "International", "video_streaming" -> "Video Streaming").
+ *
+ * Every flag message that names a category runs through this. The keys are
+ * snake_case because that is how the source data spells them, and a receipt the
+ * user reads should not leak the storage format.
+ */
+export function label(category: string): string {
   return category.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
@@ -1219,20 +1226,22 @@ export function scoreCard(
       merchantAssumption: o.merchantAssumption,
     });
 
+    const on = label(o.option.cardCategory);
+
     if (rate.confidence === "unknown") {
       uncertain = true;
       flags.push({
         level: "unknown",
-        message: `Unresolved rate on ${o.option.cardCategory} ("${rate.raw}") — scored as a range`,
+        message: `Unresolved rate on ${on} ("${rate.raw}") — scored as a range`,
       });
     } else if (rate.confidence === "low") {
       uncertain = true;
-      flags.push({ level: "low", message: `Low-confidence rate on ${o.option.cardCategory} ("${rate.raw}")` });
+      flags.push({ level: "low", message: `Low-confidence rate on ${on} ("${rate.raw}")` });
     }
     if (o.earning.unbounded) {
       flags.push({
         level: "unknown",
-        message: `${o.option.cardCategory} has an unbounded variable rate — upside not scored`,
+        message: `${on} has an unbounded variable rate — upside not scored`,
       });
     }
     if (o.capBound) {
@@ -1240,14 +1249,14 @@ export function scoreCard(
       // dropped — it earns the card's base rate (the unified reroute rule).
       flags.push({
         level: "low",
-        message: `${o.capBound} cap reached on ${o.option.cardCategory} — over-cap spend earns the base rate`,
+        message: `${o.capBound} cap reached on ${on} — over-cap spend earns the base rate`,
       });
     }
     if (o.merchantAssumption) {
       uncertain = true;
       flags.push({
         level: "low",
-        message: `${o.option.cardCategory}: assumes ${o.spendCategories.join("/")} spend occurs at ${o.merchantAssumption}`,
+        message: `${on}: assumes ${o.spendCategories.map(label).join("/")} spend occurs at ${o.merchantAssumption}`,
       });
     }
   }
@@ -1255,7 +1264,7 @@ export function scoreCard(
   // Report unmatched (un-scoreable) categories once, as a flag.
   for (const o of cd.options) {
     if (o.rule.kind === "unmatched") {
-      flags.push({ level: "low", message: `${o.cardCategory}: ${o.rule.reason}` });
+      flags.push({ level: "low", message: `${label(o.cardCategory)}: ${o.rule.reason}` });
     }
   }
   // Spend that couldn't earn anywhere (every option's cap full) — rare for one card.
