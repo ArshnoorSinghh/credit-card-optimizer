@@ -2,7 +2,7 @@
 
 Smarter UAE credit cards. An optimization engine that computes the best card portfolio for how you spend, and the best way to redeem the points you earn.
 
-**Live:** https://credit-card-optimizer-web.vercel.app
+**Live:** https://optimizer-fils1.vercel.app/
 
 ## Overview
 
