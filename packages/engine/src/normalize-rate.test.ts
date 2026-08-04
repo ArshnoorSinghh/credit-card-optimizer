@@ -224,9 +224,9 @@ describe("normalizeRate — cards.json sweep", () => {
     // the normalizer was extended for branded currencies ("5 FAB Rewards per AED 1"),
     // per-AED-N denominators ("3.5 miles per AED 10") and bounded "up to" ceilings.
     // Update deliberately if the data changes — a diff here means a rate changed tier.
-    //   tier 1 (clean/high):  129
-    //   tier 2 (verify/low):   35  — scoped/conditional rates that parse to a number
-    //   tier 3 (unresolved):   29  — unpublished rates, threshold/quarter lump bonuses,
+    //   tier 1 (clean/high):  143
+    //   tier 2 (verify/low):   29  — scoped/conditional rates that parse to a number
+    //   tier 3 (unresolved):   26  — threshold/quarter lump bonuses,
     //                                "up to" ceilings, and the DIB Prime "0 Wala'a" EEA line
     //
     // 2026-08-04, two changes in sequence. Both are recorded because the net
@@ -240,9 +240,26 @@ describe("normalizeRate — cards.json sweep", () => {
     //     "N% back in <Currency>" / "back as <Currency>" forms whose only "scope"
     //     named the reward currency. Tier 3 is UNCHANGED, which is the check that
     //     this second fix touched nothing the first one did. Section D8.
-    expect(byTier(1).length).toBe(129);
-    expect(byTier(2).length).toBe(35);
-    expect(byTier(3).length).toBe(29);
+    //   129/35/29 -> 139/29/29, and the string TOTAL rises 193 -> 197. Six compound
+    //     "X per AED 1 local; Y per AED 1 international" base rates were split in
+    //     cards.json: each base keeps its local clause (6 strings tier 2 -> tier 1)
+    //     and four of them gained a real `international_spend` category (4 NEW
+    //     tier-1 strings). 129 + 6 + 4 = 139, 35 - 6 = 29, tier 3 untouched — the
+    //     arithmetic closing exactly is the check that nothing else moved. The other
+    //     two (adcb_lulu_platinum, adcb_touchpoints_platinum) did NOT gain a
+    //     category: they already carry a LOWER uk_and_eea_spend rate that a blanket
+    //     international rate would shadow, since both map to `international`. D9.
+    //   139/29/29 -> 143/29/26, total 197 -> 198. Six cards whose rates were
+    //     recorded as unpublished prose were resolved (D10): three category-only
+    //     cashback cards got an explicit conservative 0% base (3 x tier3 -> tier1);
+    //     ei_cashback gained a 5% telecom category from its official page (+1 NEW
+    //     tier-1 string, hence the total moving); and two ceiling-only cards had
+    //     unparseable prose trimmed to a bare "Up to X per AED N" so it BOUNDS
+    //     instead of failing every pattern — those stay tier 3 by design.
+    //     +3 -3 for the zeros, +1 for the new category. Tier 2 untouched.
+    expect(byTier(1).length).toBe(143);
+    expect(byTier(2).length).toBe(29);
+    expect(byTier(3).length).toBe(26);
   });
 
   it("never assigns a numeric value to a tier-3 rate", () => {
