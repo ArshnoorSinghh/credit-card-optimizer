@@ -162,9 +162,30 @@ const EXPLICITLY_VARIABLE = /variable|customi[sz]/i;
 const BENIGN_SCOPE =
   /^(?:on\s+)?(?:all|eligible|general|standard|other|domestic|local|worldwide|non-?aed|international|weekday|weekend)[a-z\s]*?(?:spend|purchases|transactions|retail|retail spend)?$/i;
 
+/*
+  Two pieces of trailing text that LOOK like conditions but state nothing the
+  structured data doesn't already carry. Both were driving false tier-2s.
+
+  CURRENCY_DEFINITION — "(10 UPoints = AED 1)", "(1 Plus Point = AED 1)". A
+  conversion definition, not a condition. It was tripping the "(" test below.
+
+  PAID_IN — "back in UPoints", "back as Wala'a Rewards", "back as talabat
+  credit". Names the reward currency, which `rewards.currency` already holds and
+  valuations.ts already prices. "6.25% back in UPoints" is exactly as certain as
+  "6.25%", and treating it as low-confidence discarded ~10 clean rate strings.
+
+  Both are stripped BEFORE the benign test, so anything that survives is a real
+  scope. "back in UPoints on eligible non-Emaar spend" still reduces to "on
+  eligible non-Emaar spend" and stays tier 2 — non-Emaar is a genuine condition.
+*/
+const CURRENCY_DEFINITION = /\(\s*[\d,.]+\s+[A-Za-z'’\s]+?=\s*AED\s*[\d,.]+\s*\)/gi;
+const PAID_IN = /^back\s+(?:in|as)\s+[A-Za-z0-9'’\-]+(?:\s+[A-Za-z0-9'’\-]+)*?(?=\s+on\b|$)/i;
+
 /** True when a percent/branded-rate's trailing scope is a benign blanket (stays high). */
 function isBenignScope(scope: string): boolean {
-  const s = scope.trim().replace(/^and\s+/i, "");
+  let s = scope.trim().replace(/^and\s+/i, "");
+  s = s.replace(CURRENCY_DEFINITION, "").trim();
+  s = s.replace(PAID_IN, "").trim();
   if (s === "") return true;
   // A comma, semicolon, parenthesis, or tiering keyword marks a specific/complex
   // condition the structured data doesn't capture -> not benign.
@@ -187,19 +208,37 @@ export function normalizeRate(raw: string, ctx: RateContext = {}): NormalizedRat
     const ceiling = Number(upTo[1]) / 100;
     const capModeled =
       (ctx.monthlyCap ?? null) !== null || (ctx.annualCap ?? null) !== null;
-    if (capModeled) {
-      // The cap fields express the constraint; treat the headline as the real
-      // rate. (No card in today's data hits this branch, but future ones may.)
-      return { raw, value: ceiling, unit: "percent", confidence: "high" };
-    }
-    // No cap: the earned rate depends on an unmodeled choice. Bound it, 0..X.
+    /*
+      A ceiling is a ceiling, capped or not — bound it 0..X either way.
+
+      This USED to fork on `capModeled` and return the ceiling as a certain,
+      high-confidence rate, reasoning that the cap (not a discounted rate)
+      expressed the constraint. That is defensible for one card and wrong in
+      aggregate, which is how it was found: `optimizePortfolio` selects the best
+      3 cards BY that rate, so scoring every card at its advertised maximum makes
+      the chosen portfolio a maximum-of-maxima. The gap study read a median
+      optimal return of 9.4% of total annual spend; no UAE portfolio returns that.
+      The bias lived in the selection step, so no per-card check could see it.
+
+      The cap has NOT stopped doing its job — it still bounds the AED outcome
+      downstream via the cap machinery, independently of this rate's confidence.
+      What changes is that we no longer assert the user earns the ceiling rate up
+      to that cap. `capModeled` is retained only to distinguish the two notes,
+      because "capped ceiling" and "uncapped ceiling" are different review tasks:
+      the first needs the tier table, the second needs a cap.
+
+      Cost: most "Up to X%" cards become tier 3 and score as a range, widening
+      portfolio results. That width is real and was previously hidden.
+    */
     return {
       raw,
       value: null,
       unit: "percent",
       confidence: "unknown",
       range: { min: 0, max: ceiling },
-      note: "Ceiling only; actual rate depends on an unmodeled choice/condition",
+      note: capModeled
+        ? "Ceiling only; a cap bounds the AED outcome but the earned RATE still depends on an unmodeled tier/condition"
+        : "Ceiling only; actual rate depends on an unmodeled choice/condition",
     };
   }
 
