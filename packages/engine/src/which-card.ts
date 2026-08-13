@@ -195,12 +195,19 @@ function earningsFor(
   category: SpendCategory,
   monthlySpend: number,
   valuations: ValuationTable,
+  // True when the caller resolved a MERCHANT (so applyMerchantLocks has already
+  // dropped bonuses locked elsewhere and every surviving lock genuinely applies).
+  // Passed through to the scorer, which otherwise bounds merchant-locked bonuses
+  // 0..full because a generic profile can't confirm where the spend happened.
+  merchantResolved = false,
 ): CardRecommendation | null {
   // A profile with exactly one category: everything else is 0 spend. This is what
   // makes the reuse exact — caps, reroutes and matching all behave as they do in a
   // full profile, just with one category present.
   const profile: SpendingProfile = { [category]: monthlySpend };
-  const score = scoreCard(profile, card, valuations);
+  const score = scoreCard(profile, card, valuations, {
+    merchantLocksResolved: merchantResolved,
+  });
 
   // Benched cards carry a data defect we can't correct; they're never recommended.
   if (score.benched) return null;
@@ -254,9 +261,11 @@ export function bestCardForCategory(
   category: SpendCategory,
   monthlySpend: number,
   valuations: ValuationTable = DEFAULT_VALUATIONS,
+  /** Set when a merchant was resolved and merchant locks were applied upstream. */
+  merchantResolved = false,
 ): CardRecommendation | null {
   const scored = userCards
-    .map((c) => earningsFor(c, category, monthlySpend, valuations))
+    .map((c) => earningsFor(c, category, monthlySpend, valuations, merchantResolved))
     .filter((c): c is CardRecommendation => c !== null);
   return pickBest(scored);
 }
@@ -276,9 +285,11 @@ export function bestCardOverall(
   category: SpendCategory,
   monthlySpend: number,
   valuations: ValuationTable = DEFAULT_VALUATIONS,
+  /** Set when a merchant was resolved and merchant locks were applied upstream. */
+  merchantResolved = false,
 ): CardRecommendation | null {
   const scored = allCards
-    .map((c) => earningsFor(c, category, monthlySpend, valuations))
+    .map((c) => earningsFor(c, category, monthlySpend, valuations, merchantResolved))
     .filter((c): c is CardRecommendation => c !== null);
   return pickBest(scored);
 }
@@ -334,10 +345,19 @@ export function askWhichCard(input: AskWhichCardInput): WhichCardResult {
   // --- From here on a merchant and a category share the SAME scoring path; the only
   // difference is that a known merchant lets us drop bonuses locked to a different
   // one. So the two agree EXCEPT where a merchant-locked bonus is involved — asking
-  // "Carrefour" won't credit a LuLu-only bonus, while the generic "groceries" still
-  // will (flagged as an assumption, since a category can't say where you shopped). ---
+  // "Carrefour" won't credit a LuLu-only bonus. Asking the generic "groceries" still
+  // sees the LuLu bonus, but only as a 0..full RANGE: a category can't say where you
+  // shopped, so the bonus is bounded rather than assumed. Resolving the merchant is
+  // exactly what collapses that range back to the card's real rate. ---
+  const merchantResolved = merchant !== undefined;
   const forScoring = merchant ? userCards.map((c) => applyMerchantLocks(c, merchant)) : userCards;
-  const bestOwnedCard = bestCardForCategory(forScoring, resolvedCategory, monthlySpend, valuations);
+  const bestOwnedCard = bestCardForCategory(
+    forScoring,
+    resolvedCategory,
+    monthlySpend,
+    valuations,
+    merchantResolved,
+  );
 
   const answer: WhichCardAnswer = {
     status: "ok",
@@ -362,7 +382,13 @@ export function askWhichCard(input: AskWhichCardInput): WhichCardResult {
   if (includeUnowned) {
     const ownedIds = new Set(userCards.map((c) => c.id));
     const allForScoring = merchant ? allCards.map((c) => applyMerchantLocks(c, merchant)) : allCards;
-    const overall = bestCardOverall(allForScoring, resolvedCategory, monthlySpend, valuations);
+    const overall = bestCardOverall(
+      allForScoring,
+      resolvedCategory,
+      monthlySpend,
+      valuations,
+      merchantResolved,
+    );
     // Nothing to suggest if the best card is one they already hold.
     if (overall && !ownedIds.has(overall.cardId)) {
       const improvementAed = overall.annualEarningsAed - (bestOwnedCard?.annualEarningsAed ?? 0);

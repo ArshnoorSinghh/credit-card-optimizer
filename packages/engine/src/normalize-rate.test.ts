@@ -58,12 +58,27 @@ describe("normalizeRate — tier 1 (clean, high confidence)", () => {
     });
   });
 
-  it("parses 'up to X%' as X% when a cap models the constraint", () => {
-    expect(normalizeRate("Up to 5%", { monthlyCap: 200 })).toMatchObject({
-      value: 0.05,
+  it("does not lower confidence for a phrase that only names the reward currency", () => {
+    // "back in UPoints" restates rewards.currency; it is not a condition on earning,
+    // so the rate stays a clean tier-1 parse.
+    expect(normalizeRate("6.25% back in UPoints", { rewardCurrency: "UPoints" })).toMatchObject({
+      value: 0.0625,
       unit: "percent",
       confidence: "high",
     });
+    // "back as X" is the same construction, and the label need only name the currency
+    // — dib_shams_infinite writes "Wala'a Rewards" where its currency is "DIB Wala'a Rewards".
+    expect(
+      normalizeRate("5% back as Wala’a Rewards", { rewardCurrency: "DIB Wala’a Rewards" }),
+    ).toMatchObject({ value: 0.05, unit: "percent", confidence: "high" });
+  });
+
+  it("ignores a parenthetical that only defines the currency's exchange rate", () => {
+    expect(
+      normalizeRate("1.5% back in Plus Points on general eligible spend (1 Plus Point = AED 1)", {
+        rewardCurrency: "Plus Points",
+      }),
+    ).toMatchObject({ value: 0.015, unit: "percent", confidence: "high" });
   });
 });
 
@@ -81,6 +96,30 @@ describe("normalizeRate — tier 2 (parses but condition missing, low confidence
       confidence: "low",
     });
   });
+
+  it("still flags 'back in X' when X is NOT this card's reward currency", () => {
+    // The exemption is narrow: it only covers a phrase that names the card's OWN
+    // payout currency. Anything else is a real scope and must keep flagging low —
+    // otherwise the exemption would launder arbitrary conditions into tier 1.
+    expect(normalizeRate("5% back in Skywards Miles", { rewardCurrency: "Plus Points" })).toMatchObject({
+      confidence: "low",
+    });
+    // ...and with no currency context at all, the conservative old behaviour holds.
+    expect(normalizeRate("5% back in Plus Points")).toMatchObject({ confidence: "low" });
+  });
+
+  it("keeps flagging a parenthetical that states a real condition", () => {
+    // Only "<N> <currency> = AED <M>" definitions are exempt. An enumeration of
+    // categories, or a promotional qualifier, still marks the rate as scoped.
+    expect(
+      normalizeRate(
+        "0.15% on select low-interchange categories (utilities, government, education)",
+      ),
+    ).toMatchObject({ confidence: "low" });
+    expect(
+      normalizeRate("0.3 AirRewards Points per AED 1 on eligible local spend (1.5 points per AED 5)"),
+    ).toMatchObject({ confidence: "low" });
+  });
 });
 
 describe("normalizeRate — tier 3 (unresolvable, unknown confidence)", () => {
@@ -92,6 +131,24 @@ describe("normalizeRate — tier 3 (unresolvable, unknown confidence)", () => {
       confidence: "unknown",
       range: { min: 0, max: 0.05 },
     });
+  });
+
+  it("bounds 'up to X%' as 0..X EVEN WHEN a cap models the constraint", () => {
+    // Regression lock for the rate-ceiling selection bias. This used to return
+    // { value: 0.05, confidence: "high" } on the reasoning that the cap expresses
+    // the constraint — sound per card, but unsound once optimizePortfolio picks the
+    // best of ~53 cards on these numbers, which makes the winner a maximum-of-maxima.
+    // The ceiling must stay a range so the uncertainty reaches the ranking.
+    const r = normalizeRate("Up to 5%", { monthlyCap: 200 });
+    expect(r).toMatchObject({
+      value: null,
+      unit: "percent",
+      confidence: "unknown",
+      range: { min: 0, max: 0.05 },
+    });
+    // The cap context still shapes the explanation, so the review list can tell the
+    // two cases apart even though they now share a tier.
+    expect(r.note).toContain("cap bounds the payout");
   });
 
   it("emits an unbounded range for explicitly variable rates", () => {
@@ -130,12 +187,15 @@ describe("normalizeRate — cards.json sweep", () => {
 
   const rows: Row[] = [];
   for (const card of cardsData) {
-    const base = normalizeRate(card.rewards.base_rate);
+    // Mirrors score-card.ts's buildEarnOptions exactly (caps + reward currency), so
+    // the tiers counted here are the tiers the scorer actually sees.
+    const base = normalizeRate(card.rewards.base_rate, { rewardCurrency: card.rewards.currency });
     rows.push({ tier: rateTier(base), rate: base, where: `${card.id} base_rate` });
     for (const cat of card.rewards.categories) {
       const r = normalizeRate(cat.rate, {
         monthlyCap: cat.monthly_cap,
         annualCap: cat.annual_cap,
+        rewardCurrency: card.rewards.currency,
       });
       rows.push({ tier: rateTier(r), rate: r, where: `${card.id} ${cat.category}` });
     }
@@ -165,17 +225,28 @@ describe("normalizeRate — cards.json sweep", () => {
   });
 
   it("matches the reviewed tier counts", () => {
-    // Locked to the 2026-07 hand-verified dataset (53 cards, 193 rate strings), after
-    // the normalizer was extended for branded currencies ("5 FAB Rewards per AED 1"),
-    // per-AED-N denominators ("3.5 miles per AED 10") and bounded "up to" ceilings.
+    // Locked to the 2026-08 rate-ceiling-bias pass (53 cards, 197 rate strings).
     // Update deliberately if the data changes — a diff here means a rate changed tier.
-    //   tier 1 (clean/high):  126
-    //   tier 2 (verify/low):   46  — scoped/conditional rates that parse to a number
-    //   tier 3 (unresolved):   21  — unpublished rates, threshold/quarter lump bonuses,
+    //   tier 1 (clean/high):  139
+    //   tier 2 (verify/low):   29  — scoped/conditional rates that parse to a number
+    //   tier 3 (unresolved):   29  — unpublished rates, threshold/quarter lump bonuses,
     //                                "up to" ceilings, and the DIB Prime "0 Wala'a" EEA line
-    expect(byTier(1).length).toBe(126);
-    expect(byTier(2).length).toBe(46);
-    expect(byTier(3).length).toBe(21);
+    //
+    // How this moved from the previous 126 / 46 / 21 over 193 strings:
+    //   -8 t1 / +8 t3  the 8 capped "Up to X%" rates (rakbank_titanium x4,
+    //                  rakbank_world x4) now bound as 0..X instead of resolving to
+    //                  their ceiling — the rate-ceiling selection-bias fix.
+    //  +11 t1 / -11 t2 two normalizer false positives retired: a phrase naming the
+    //                  card's own reward currency ("back in UPoints") and a
+    //                  parenthetical defining it ("(10 UPoints = AED 1)") are no
+    //                  longer read as unmodelled scopes.
+    //  +10 t1 / -6 t2  six compound "X/AED local; Y/AED international" base rates
+    //                  split or de-compounded (+4 new international_spend strings,
+    //                  which is why the total rises 193 -> 197).
+    expect(byTier(1).length).toBe(139);
+    expect(byTier(2).length).toBe(29);
+    expect(byTier(3).length).toBe(29);
+    expect(rows.length).toBe(197);
   });
 
   it("never assigns a numeric value to a tier-3 rate", () => {

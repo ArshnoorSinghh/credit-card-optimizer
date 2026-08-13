@@ -76,6 +76,38 @@ describe("cards.json conforms to the Card type", () => {
     }
   });
 
+  // ── Regression locks from the 2026-08 rate-ceiling-bias pass ────────────────
+  // These guard DATA defects that the type system cannot express but that
+  // materially overstate rewards. Each one was a live bug; see CARD_DATA_CHANGELOG.md.
+
+  it("never hides a second earn rate inside a semicolon-joined base_rate", () => {
+    // A base_rate of the form "X per AED 1 on local spend; Y per AED 1 on
+    // international spend" is a TRAP: the normalizer parses only the leading number,
+    // so Y is silently dropped while the string still claims the card pays it. Six
+    // cards carried this shape. The fix is to either promote the second clause to a
+    // real reward category (so it is scored) or drop it (so it isn't advertised) —
+    // never to leave both halves in one string.
+    for (const card of cards) {
+      const compound = /;\s*[\d.]+\s+[^;]*\bper\s+AED\b[^;]*\b(international|non-?AED|foreign)/i;
+      expect(
+        compound.test(card.rewards.base_rate),
+        `${card.id} base_rate hides an unparsed international rate: "${card.rewards.base_rate}"`,
+      ).toBe(false);
+    }
+  });
+
+  it("gates rakbank_world's headline tiers behind a minimum monthly spend", () => {
+    // rakbank_world advertises "Up to 10%" categories with an AED 1,100 overall cap
+    // and previously had min_monthly_spend_required_aed: 0, so the engine paid the
+    // top tier at every spend level. It was the single largest contributor to the
+    // inflated optimum. The threshold itself is an unverified modelling assumption
+    // recorded in the card's data_caveat — this test locks that it stays non-zero.
+    const rw = cards.find((c) => c.id === "rakbank_world");
+    expect(rw).toBeDefined();
+    expect(rw!.rewards.min_monthly_spend_required_aed).toBeGreaterThan(0);
+    expect(rw!.data_caveat).toContain("UNSOURCED");
+  });
+
   // Same reasoning for excluded_spend: a category the scorer doesn't recognise
   // means the exclusion never applies.
   it("declares excluded_spend against real spend categories with a stated reason", () => {

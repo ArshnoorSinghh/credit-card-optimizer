@@ -1576,7 +1576,7 @@
     "rewards": {
       "type": "points",
       "currency": "LuLu Points",
-      "base_rate": "1.25 LuLu Points per AED 1 on eligible local spend; 1.75 LuLu Points per AED 1 on eligible international spend",
+      "base_rate": "1.25 LuLu Points per AED 1 on eligible local spend",
       "categories": [
         {
           "category": "lulu_stores",
@@ -1619,7 +1619,7 @@
       "Airport lounge access subject to Mastercard conditions"
     ],
     "source_url": "https://www.adcb.com/en/personal/cards/credit-cards/ADCB-lulu-credit-card",
-    "data_caveat": "The live official page publishes the reduced category schedule but still describes the remaining general rate as up to 1.25 points."
+    "data_caveat": "The live official page publishes the reduced category schedule but still describes the remaining general rate as up to 1.25 points. The base rate previously also carried a general '1.75 LuLu Points per AED 1 on eligible international spend' clause. That clause was DROPPED rather than split into an international_spend category: this card already carries an explicit uk_and_eea_spend carve-out at the REDUCED rate of 0.4 points per AED 1, and a blanket 1.75 international rate would shadow that carve-out in the allocator, overstating international earning. The 1.75 figure is unverified against ADCB's current schedule and is not modelled."
   },
   {
     "id": "adcb_touchpoints_platinum",
@@ -1642,7 +1642,7 @@
     "rewards": {
       "type": "points",
       "currency": "ADCB TouchPoints",
-      "base_rate": "1.0 TouchPoint per AED 1 on eligible local spend; 1.5 TouchPoints per AED 1 on eligible international spend",
+      "base_rate": "1.0 TouchPoint per AED 1 on eligible local spend",
       "categories": [
         {
           "category": "supermarkets_auto_dealers_insurance_fast_food",
@@ -1677,7 +1677,7 @@
       "Visa Platinum benefits"
     ],
     "source_url": "https://www.adcb.com/en/personal/cards/credit-cards/touchpoint-platinum-cc",
-    "data_caveat": "The current product page confirms reduced category rates and eligibility but does not expose the general earn rate or fee in accessible text. No value was inferred."
+    "data_caveat": "The current product page confirms reduced category rates and eligibility but does not expose the general earn rate or fee in accessible text. No value was inferred. The base rate previously also carried a general '1.5 TouchPoints per AED 1 on eligible international spend' clause. That clause was DROPPED rather than split into an international_spend category: this card already carries an explicit uk_and_eea_spend carve-out at the REDUCED rate of 0.4 TouchPoints per AED 1, and a blanket 1.5 international rate would shadow that carve-out in the allocator, overstating international earning. The 1.5 figure is unverified against ADCB's current schedule and is not modelled."
   },
   {
     "id": "adcb_touchpoints_gold_titanium",
@@ -1700,11 +1700,17 @@
     "rewards": {
       "type": "points",
       "currency": "ADCB TouchPoints",
-      "base_rate": "0.5 TouchPoints per AED 1 on eligible local spend; 0.75 TouchPoints per AED 1 on eligible international spend",
+      "base_rate": "0.5 TouchPoints per AED 1 on eligible local spend",
       "categories": [
         {
           "category": "monthly_spend_bonus",
           "rate": "5,000 bonus TouchPoints when eligible monthly spend reaches AED 5,000",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "international_spend",
+          "rate": "0.75 TouchPoints per AED 1",
           "monthly_cap": null,
           "annual_cap": null
         }
@@ -2151,7 +2157,7 @@
     "rewards": {
       "type": "points",
       "currency": "DIB Wala’a Rewards",
-      "base_rate": "1 Wala'a Reward per AED 1 on eligible local spend; 2 Wala'a Rewards per AED 1 on eligible international spend",
+      "base_rate": "1 Wala'a Reward per AED 1 on eligible local spend",
       "categories": [
         {
           "category": "dining",
@@ -2163,6 +2169,12 @@
           "category": "travel_flights_hotels",
           "rate": "10 Wala’a Rewards per AED 1, advertised as 5% back",
           "monthly_cap": 10000,
+          "annual_cap": null
+        },
+        {
+          "category": "international_spend",
+          "rate": "2 Wala'a Rewards per AED 1",
+          "monthly_cap": null,
           "annual_cap": null
         }
       ],
@@ -2203,7 +2215,7 @@
     "rewards": {
       "type": "points",
       "currency": "DIB Wala’a Rewards",
-      "base_rate": "2 Wala'a Rewards per AED 1 on eligible local spend; 4 Wala'a Rewards per AED 1 on eligible international spend",
+      "base_rate": "2 Wala'a Rewards per AED 1 on eligible local spend",
       "categories": [
         {
           "category": "dining",
@@ -2214,6 +2226,12 @@
         {
           "category": "travel_flights_hotels",
           "rate": "5% back as Wala’a Rewards",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "international_spend",
+          "rate": "4 Wala'a Rewards per AED 1",
           "monthly_cap": null,
           "annual_cap": null
         }
@@ -2400,7 +2418,7 @@
         }
       ],
       "overall_cap": 1100,
-      "min_monthly_spend_required_aed": 0
+      "min_monthly_spend_required_aed": 10000
     },
     "redemption": {
       "currency": "AED cashback",
@@ -2411,7 +2429,7 @@
       "Mastercard lounge and travel benefits subject to conditions"
     ],
     "source_url": "https://www.rakbank.ae/en/cards/credit-cards/world-credit-card",
-    "data_caveat": "The live product page confirms the headline categories but does not expose the tier thresholds, application salary or annual fee in accessible text. Maximum rates and caps are preserved and should not be treated as unconditional."
+    "data_caveat": "The live product page confirms the headline categories but does not expose the tier thresholds, application salary or annual fee in accessible text. Maximum rates and caps are preserved and should not be treated as unconditional. min_monthly_spend_required_aed was 0, which let the engine pay the top 'Up to 10%' tier at any spend level; it is now 10000 to model that the headline tiers are unlocked by a high monthly spend. UNSOURCED: the 10,000 figure is a reviewed modelling assumption supplied by the engine owner, NOT a published RAKBANK threshold — the tier table is still not exposed on the product page. Confirm against the card's T&C before treating it as fact."
   },
   {
     "id": "rakbank_air_arabia_platinum",
@@ -2645,11 +2663,17 @@
     "rewards": {
       "type": "points",
       "currency": "360 Rewards Points",
-      "base_rate": "1 360 Rewards Point per AED 1 on eligible local spend; 2 points per AED 1 on eligible international spend",
+      "base_rate": "1 360 Rewards Point per AED 1 on eligible local spend",
       "categories": [
         {
           "category": "fuel_school_fees_utilities_government",
           "rate": "0.2 360 Rewards Points per AED 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "international_spend",
+          "rate": "2 points per AED 1",
           "monthly_cap": null,
           "annual_cap": null
         }

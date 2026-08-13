@@ -78,6 +78,18 @@ export interface NormalizedRate {
 export interface RateContext {
   monthlyCap?: number | null;
   annualCap?: number | null;
+  /**
+   * The card's `rewards.currency`, when known.
+   *
+   * why the normalizer needs it: many rate strings name the payout currency inline
+   * ("6.25% back in UPoints", "1.25% back as talabat credit"). That phrase reads as
+   * a trailing SCOPE to the parser, but it is not a condition — it restates a fact
+   * already carried by `rewards.currency`, so it must not cost the rate confidence.
+   * Distinguishing "names this card's currency" from "names a real restriction"
+   * cannot be done from the string alone, hence the context. Absent = fall back to
+   * treating any such phrase as a scope (the old, conservative behaviour).
+   */
+  rewardCurrency?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -162,9 +174,60 @@ const EXPLICITLY_VARIABLE = /variable|customi[sz]/i;
 const BENIGN_SCOPE =
   /^(?:on\s+)?(?:all|eligible|general|standard|other|domestic|local|worldwide|non-?aed|international|weekday|weekend)[a-z\s]*?(?:spend|purchases|transactions|retail|retail spend)?$/i;
 
+// A parenthetical that only DEFINES the reward currency's exchange rate:
+// "(10 UPoints = AED 1)", "(1 Plus Point = AED 1)". It states the unit's value, not
+// a condition on earning, so it must not make the rate look scoped.
+// why so tightly anchored (leading digits AND an "=" AND an AED amount): the same
+// "(" test legitimately catches real conditions elsewhere in the data — e.g. FAB's
+// "(utilities, government, education, real estate, telecom)" enumerating which
+// categories get the stub rate, Mashreq's "(up to 2% during promotional periods)",
+// and RAKBANK's "(1.5 points per AED 5)" restating a rate. None of those match this
+// pattern, so they keep flagging low exactly as before.
+const CURRENCY_DEFINITION = /\(\s*\d[\d.,]*\s+[^()=]*?=\s*AED\s*[\d.,]+\s*\)/gi;
+
+// A leading "back in <currency>" / "back as <currency>" phrase, captured up to the
+// next " on ..." clause (or the end of the string).
+const REWARD_CURRENCY_NAMING = /^back\s+(?:in|as)\s+(.+?)(?=\s+on\b|$)/i;
+
+/** Normalize a currency label for comparison: case, apostrophe style, whitespace. */
+function normalizeCurrencyLabel(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[’']/g, "'") // data mixes U+2019 and U+0027 in "Wala'a"
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * True when `phrase` names the card's reward currency.
+ *
+ * Matched on whole words rather than by equality because the rate strings and the
+ * `rewards.currency` field are written by different hands and don't always agree on
+ * the issuer prefix — dib_shams_infinite says "5% back as Wala'a Rewards" while its
+ * currency field reads "DIB Wala'a Rewards". Requiring an exact match would leave
+ * that pair flagged for a difference in labelling, not in substance.
+ */
+function namesRewardCurrency(phrase: string, rewardCurrency: string | undefined): boolean {
+  if (!rewardCurrency) return false;
+  const p = normalizeCurrencyLabel(phrase);
+  const c = normalizeCurrencyLabel(rewardCurrency);
+  if (p === "" || c === "") return false;
+  return c === p || c.startsWith(`${p} `) || c.endsWith(` ${p}`) || c.includes(` ${p} `);
+}
+
 /** True when a percent/branded-rate's trailing scope is a benign blanket (stays high). */
-function isBenignScope(scope: string): boolean {
-  const s = scope.trim().replace(/^and\s+/i, "");
+function isBenignScope(scope: string, rewardCurrency?: string): boolean {
+  let s = scope.trim().replace(/^and\s+/i, "");
+
+  // Strip the two things that LOOK like conditions but aren't, BEFORE the
+  // punctuation/keyword test below — otherwise the stripped text's own "(" or
+  // currency name would still reject it.
+  s = s.replace(CURRENCY_DEFINITION, "").trim();
+  const naming = REWARD_CURRENCY_NAMING.exec(s);
+  if (naming && namesRewardCurrency(naming[1] ?? "", rewardCurrency)) {
+    s = s.slice(naming[0].length).trim();
+  }
+
   if (s === "") return true;
   // A comma, semicolon, parenthesis, or tiering keyword marks a specific/complex
   // condition the structured data doesn't capture -> not benign.
@@ -187,19 +250,41 @@ export function normalizeRate(raw: string, ctx: RateContext = {}): NormalizedRat
     const ceiling = Number(upTo[1]) / 100;
     const capModeled =
       (ctx.monthlyCap ?? null) !== null || (ctx.annualCap ?? null) !== null;
-    if (capModeled) {
-      // The cap fields express the constraint; treat the headline as the real
-      // rate. (No card in today's data hits this branch, but future ones may.)
-      return { raw, value: ceiling, unit: "percent", confidence: "high" };
-    }
-    // No cap: the earned rate depends on an unmodeled choice. Bound it, 0..X.
+    // why BOTH branches emit a 0..X range, and neither returns the ceiling as a
+    // certain value:
+    //
+    // The old fork returned `value: ceiling, confidence: "high"` whenever the card
+    // carried a cap field, on the reasoning that the cap — not a discounted rate —
+    // expresses the constraint. Read one card at a time that reasoning is sound: a
+    // "Up to 10%, max AED 300/mo" category really can pay 10% up to the cap.
+    //
+    // It is unsound under SELECTION. optimizePortfolio scores all ~53 cards on this
+    // rate and keeps the best three. Taking every ceiling at face value means the
+    // winner is chosen by whichever card advertises the most optimistic headline,
+    // so the optimum is a maximum-of-maxima: an estimator biased upward by exactly
+    // the spread of the ceilings, and biased MORE the more cards are considered.
+    // Measured over a weighted UAE population this inflated the median optimal
+    // return to ~9.6% of annual spend, roughly 3x anything real cards pay.
+    //
+    // The bias is in the SELECTION, not in the per-card arithmetic — so the fix
+    // belongs here, at the point where an unqualified ceiling becomes a certainty,
+    // rather than in the optimizer. Emitting 0..X makes the uncertainty explicit:
+    // the scorer routes on the midpoint and reports a min/max band, so a card whose
+    // advertised ceiling is unverified can no longer beat a card with a known flat
+    // rate purely on the strength of its marketing. This is CLAUDE.md's rule that
+    // flagged rates propagate as ranges rather than silent point estimates.
+    //
+    // The cap context is still consulted — not to change the tier, but to say WHY
+    // the rate is uncertain, so the review list distinguishes the two cases.
     return {
       raw,
       value: null,
       unit: "percent",
       confidence: "unknown",
       range: { min: 0, max: ceiling },
-      note: "Ceiling only; actual rate depends on an unmodeled choice/condition",
+      note: capModeled
+        ? "Ceiling only; the cap bounds the payout but the rate itself is conditional (tiered/promotional), so it is scored as a range, not the headline"
+        : "Ceiling only; actual rate depends on an unmodeled choice/condition",
     };
   }
 
@@ -233,7 +318,7 @@ export function normalizeRate(raw: string, ctx: RateContext = {}): NormalizedRat
     // noUncheckedIndexedAccess even though `(.*)` always captures (possibly "").
     const scope = (pct[2] ?? "").trim();
     // Blanket rate (no scope, or a generic blanket scope) is clean -> high.
-    if (isBenignScope(scope)) {
+    if (isBenignScope(scope, ctx.rewardCurrency)) {
       return { raw, value, unit: "percent", confidence: "high" };
     }
     // A specific scope ("on Emaar purchases", "on dnata travel") means this rate
@@ -282,7 +367,7 @@ export function normalizeRate(raw: string, ctx: RateContext = {}): NormalizedRat
           : /\bmile/i.test(currencyPhrase)
             ? "miles_per_aed"
             : "points_per_aed";
-      if (isBenignScope(scope)) {
+      if (isBenignScope(scope, ctx.rewardCurrency)) {
         return { raw, value, unit, confidence: "high" };
       }
       return {

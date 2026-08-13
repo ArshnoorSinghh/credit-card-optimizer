@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import cardsData from "../data/cards.json";
 import type { Card, RewardType } from "./card";
-import type { SpendingProfile } from "./score-card";
+import { scoreCard, type SpendingProfile } from "./score-card";
+import { normalizeRate } from "./normalize-rate";
 import { optimizePortfolio, type UserProfile } from "./optimize-portfolio";
 
 const realCards = cardsData as Card[];
@@ -328,5 +329,103 @@ describe("optimizePortfolio — full 51-card smoke test", () => {
 
     // The overall recommendation is one of the three per-size winners.
     expect([result.best1, result.best2, result.best3]).toContain(result.overallBest);
+  });
+
+  /**
+   * Case 8 — regression lock for the rate-ceiling SELECTION bias.
+   *
+   * Individually, reading "Up to 10%" as a flat 10% because the card carries a cap
+   * field is a defensible reading of ONE card. But optimizePortfolio scores every
+   * eligible card on those numbers and keeps the best, so resolving each ceiling to
+   * its headline made the winner a maximum-of-maxima — an estimator biased upward by
+   * the spread of the ceilings, and biased more the more cards are considered.
+   *
+   * rakbank_world is the clearest case: four "Up to 10%"/"Up to 3%" categories, an
+   * AED 1,100 overall cap and (until this pass) no minimum-spend gate. On the
+   * grocery/dining/travel profile below it used to rank as the single BEST card in
+   * the dataset, claiming a fully certain AED 10,410/yr — 8.67% of annual spend,
+   * reported with a zero-width range as if it were a known fact.
+   *
+   * This test pins the two things the fix must guarantee. It deliberately does NOT
+   * assert a global plausibility bound on `overallBest`: that number is still
+   * inflated on some profiles by the SEPARATE, pre-existing merchant-lock optimism
+   * (emaar_* / talabat bonuses assumed to apply to all generic spend), which is
+   * flagged-by-design and out of scope here. See CARD_DATA_CHANGELOG.md.
+   */
+  it("never resolves an 'up to' ceiling into a certain rate when ranking", () => {
+    const ceilingProfile: SpendingProfile = {
+      groceries: 3000, dining: 3000, travel: 3000, other: 1000,
+    };
+    const richEnough: UserProfile = { monthlySalaryAed: 30000, uaeResident: true };
+
+    const rakWorld = realCards.find((c) => c.id === "rakbank_world")!;
+    const score = scoreCard(ceilingProfile, rakWorld);
+
+    // 1. The ceiling must reach the ranking as a genuine BAND, not a point estimate.
+    //    Pre-fix this range was [10410, 10410]; it is now [-750, 10410] — the fee is
+    //    certain, the "up to" reward is not.
+    expect(score.netAnnualValueRange.max).toBeGreaterThan(score.netAnnualValueRange.min);
+    expect(score.uncertain).toBe(true);
+
+    // 2. A card built entirely on unverified ceilings must no longer outrank every
+    //    card with a known flat rate purely on the strength of its marketing.
+    const best1 = optimizePortfolio(ceilingProfile, richEnough, realCards).best1!;
+    expect(best1.cardIds).not.toContain("rakbank_world");
+
+    // 3. Structural: no "Up to X%" rate anywhere in the dataset carries a numeric
+    //    value. This is what makes (1) hold for every such card, not just this one.
+    for (const card of realCards) {
+      for (const cat of card.rewards.categories) {
+        if (!/^up\s+to\s+[\d.]+\s*%/i.test(cat.rate)) continue;
+        const r = normalizeRate(cat.rate, {
+          monthlyCap: cat.monthly_cap,
+          annualCap: cat.annual_cap,
+          rewardCurrency: card.rewards.currency,
+        });
+        expect(r.value, `${card.id}/${cat.category} resolved "${cat.rate}" to a certain value`).toBeNull();
+        expect(r.range?.max).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  /**
+   * Case 9 — regression lock for MERCHANT-LOCK optimism.
+   *
+   * Structurally identical to case 8, in the merchant dimension. MATCH_TABLE maps a
+   * merchant-locked bonus onto its nearest canonical category (emaar_malls -> other,
+   * lulu_supermarket -> groceries, first_10_talabat_orders -> dining), and the scorer
+   * used to credit it against ALL of that category's spend. Under selection that made
+   * the optimizer pick whichever card carried the most optimistic merchant assumption
+   * — and stack several at once, simultaneously assuming all your general retail is at
+   * Emaar, all your groceries at LuLu and all your dining through Talabat.
+   *
+   * The fix bounds each such bonus 0..full for a generic profile. It must NOT zero the
+   * card, and it must NOT touch the path where the merchant is actually known.
+   */
+  it("bounds merchant-locked bonuses rather than assuming or zeroing them", () => {
+    const merchantCard = mkCard("merchant-locked", {
+      // 10% but only at LuLu; mapped to groceries, which the profile spends on.
+      categories: [{ category: "lulu_supermarket", rate: "10%" }],
+      base_rate: "0% on all spend",
+    });
+    const flatCard = mkCard("flat", { base_rate: "2% on all spend" });
+    const spend: SpendingProfile = { groceries: 1000 };
+
+    const locked = scoreCard(spend, merchantCard);
+    // Bounded, not assumed: 0..10% on 12,000/yr -> range [0, 1200], midpoint 600.
+    expect(locked.netAnnualValueRange.min).toBeCloseTo(0, 6);
+    expect(locked.netAnnualValueRange.max).toBeCloseTo(1200, 6);
+    expect(locked.netAnnualValue).toBeCloseTo(600, 6);
+    expect(locked.uncertain).toBe(true);
+
+    // Bounded, not zeroed: it still beats a flat 2% (240/yr) on expected value, so a
+    // genuinely strong merchant card is not driven out of the recommendation.
+    expect(locked.netAnnualValue).toBeGreaterThan(scoreCard(spend, flatCard).netAnnualValue);
+
+    // The escape hatch still works: a caller that KNOWS the merchant gets the exact
+    // full rate back, with no range. This is the which-card path.
+    const confirmed = scoreCard(spend, merchantCard, undefined, { merchantLocksResolved: true });
+    expect(confirmed.netAnnualValue).toBeCloseTo(1200, 6);
+    expect(confirmed.netAnnualValueRange.min).toBeCloseTo(1200, 6);
   });
 });
