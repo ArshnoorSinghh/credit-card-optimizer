@@ -156,12 +156,22 @@ describe("askWhichCard — merchant vs category: equal EXCEPT merchant-locked bo
   it("DIVERGE where a bonus is locked to another merchant: no LuLu card for Carrefour", () => {
     const base = { monthlySpend: SPEND, userCards: [luluCard], includeUnowned: false };
 
-    // Generic "groceries" can't know where you shopped, so the LuLu bonus is credited
-    // (and flagged as an assumption) — 5% = 1800/yr.
+    // Generic "groceries" can't know where you shopped. The LuLu bonus is neither
+    // assumed nor dropped: it is BOUNDED 0..5% and reported at the midpoint of that
+    // range, so 1800/yr of upside becomes 900/yr of expected value.
+    //
+    // why this changed (2026-08): crediting the full 1800 here treated "some of my
+    // groceries are at LuLu" as "all of them are". Harmless on one card, but
+    // optimizePortfolio picks the best of ~53 cards on these numbers, so it always
+    // selected whichever card carried the most optimistic merchant assumption — and
+    // could stack three such assumptions at once. See CARD_DATA_CHANGELOG Section E.
     const generic = askWhichCard({ ...base, merchantOrCategory: "groceries" });
     if (generic.status !== "ok") throw new Error("expected ok");
-    expect(generic.bestOwnedCard?.annualEarningsAed).toBe(1800);
+    expect(generic.bestOwnedCard?.annualEarningsAed).toBe(900);
     expect(generic.bestOwnedCard?.viaCardCategory).toBe("lulu_supermarket");
+    // The card is bounded, not zeroed — its full rate is still the top of the range,
+    // and the answer says so rather than hiding the assumption behind a point estimate.
+    expect(generic.bestOwnedCard?.uncertain).toBe(true);
 
     // Naming Carrefour proves the LuLu bonus does NOT apply, so it's dropped and the
     // spend falls to the 1% base — exactly what happens at the till. 360/yr.

@@ -710,10 +710,89 @@ function label(category: string): string {
   return category.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-export function precomputeCardData(card: Card, valuations: ValuationTable = DEFAULT_VALUATIONS): CardData {
+/**
+ * Options that change what the scorer is allowed to ASSUME, as opposed to what the
+ * card data says. Kept separate from the valuation table because these are caller
+ * capabilities ("I know something scoreCard cannot see"), not data.
+ */
+export interface ScoringOptions {
+  /**
+   * Set ONLY by a caller that knows which merchant the spend is at — today that is
+   * `which-card.ts`, which resolves a merchant name and drops every bonus locked to
+   * a different one before scoring. Any merchant-locked bonus that survives that
+   * filter genuinely applies, so it is scored at its full rate.
+   *
+   * Default (false) is the generic-spending-profile case, where the merchant is
+   * unknowable and merchant-locked bonuses are bounded instead of assumed — see
+   * `boundMerchantLockedRates`.
+   */
+  merchantLocksResolved?: boolean;
+}
+
+/**
+ * Bound every merchant-locked bonus by the thing a generic spending profile cannot
+ * know: WHERE the spend happened.
+ *
+ * why this exists (2026-08): `MATCH_TABLE` maps a merchant-locked bonus to its
+ * nearest canonical category — "emaar_malls" -> other, "lulu_supermarket" ->
+ * groceries, "first_10_talabat_orders" -> dining — and the scorer then applied the
+ * bonus to ALL of that category's spend, flagging it as an optimistic assumption but
+ * still crediting it in full. Read one card at a time that is defensible: a LuLu
+ * shopper really does earn 8 points/AED at LuLu.
+ *
+ * It is not defensible under SELECTION, and it is the same maximum-of-maxima defect
+ * the "Up to X%" ceiling fork had. `optimizePortfolio` scores ~53 cards and keeps the
+ * best 1-3, so it will always pick whichever card carries the most optimistic
+ * merchant assumption — and worse, it can pick THREE cards exploiting three
+ * DIFFERENT merchant assumptions at once, simultaneously assuming the user does all
+ * their general retail at Emaar malls, all their groceries at LuLu, and all their
+ * dining through Talabat. Measured over a weighted UAE population these assumptions
+ * were worth ~2.65 percentage points of the reported optimal return.
+ *
+ * The honest bound is 0..full: we know the user spends 0% to 100% of the category at
+ * that merchant and cannot narrow it further without asking. So the rate becomes a
+ * range, exactly as an unqualified "up to" ceiling does, which means:
+ *   - the flow routes on the MIDPOINT (a neutral prior over the unknown share),
+ *     so a merchant card is neither assumed nor ignored;
+ *   - the reported value is a band, so the uncertainty reaches the ranking instead
+ *     of hiding behind a flag nobody sorts on;
+ *   - no realization share is invented — 0..full is a true bound, not a guess.
+ *
+ * The card is NOT zeroed (the original design's stated concern): its upside still
+ * shows in the max of the range, and `which-card`, which does know the merchant,
+ * still scores it exactly.
+ */
+function boundMerchantLockedRates(options: EarnOption[]): EarnOption[] {
+  return options.map((o): EarnOption => {
+    if (o.rule.kind !== "categories" || o.rule.merchant === undefined) return o;
+    const rate = o.rate;
+    // Already unresolved (e.g. a merchant-locked "Up to X%"): its range already
+    // starts at 0, so there is nothing further to bound.
+    if (rate.value === null) return o;
+    return {
+      ...o,
+      rate: {
+        ...rate,
+        value: null,
+        confidence: "unknown",
+        range: { min: 0, max: rate.value },
+        note: `Bonus pays only at ${o.rule.merchant}; a generic spending profile can't confirm what share of this category is spent there, so it is bounded 0..${rate.raw}`,
+      },
+    };
+  });
+}
+
+export function precomputeCardData(
+  card: Card,
+  valuations: ValuationTable = DEFAULT_VALUATIONS,
+  scoringOptions: ScoringOptions = {},
+): CardData {
   const built = buildEarnOptions(card);
   const excludedResult = applyExcludedSpend(card, built.options);
-  const options = excludedResult.options;
+  // Merchant locks are bounded unless the caller has already resolved the merchant.
+  const options = scoringOptions.merchantLocksResolved
+    ? excludedResult.options
+    : boundMerchantLockedRates(excludedResult.options);
   const flags = [...built.flags, ...excludedResult.flags];
   const valuation = resolveValuation(card.rewards.currency, valuations);
   return {
@@ -1173,6 +1252,7 @@ export function scoreCard(
   spending: SpendingProfile,
   card: Card,
   valuations: ValuationTable = DEFAULT_VALUATIONS,
+  scoringOptions: ScoringOptions = {},
 ): CardScore {
   const valuation = resolveValuation(card.rewards.currency, valuations);
 
@@ -1204,7 +1284,7 @@ export function scoreCard(
   // --- Assign + earn via the SHARED core. scoreCard(card) is exactly a 1-card
   // portfolio, so it delegates to earnAcrossCards([card]) — the same computation
   // the optimizer runs. This is what makes scoreCard and best-1-card agree. ---
-  const cd = precomputeCardData(card, valuations);
+  const cd = precomputeCardData(card, valuations, scoringOptions);
   const result = earnAcrossCards(spending, [cd]);
 
   // Structural flags first, read from the GATED card so a min-spend gate surfaces.
@@ -1254,7 +1334,13 @@ export function scoreCard(
       uncertain = true;
       flags.push({
         level: "low",
-        message: `${o.option.cardCategory}: assumes ${o.spendCategories.join("/")} spend occurs at ${o.merchantAssumption}`,
+        // The wording tracks what was actually done: when the merchant is unknown the
+        // bonus is BOUNDED (rate became a range), not assumed. Saying "assumes" there
+        // would describe the old, over-optimistic behaviour.
+        message:
+          rate.value === null && rate.range
+            ? `${o.option.cardCategory}: pays only at ${o.merchantAssumption} — the share of your ${o.spendCategories.join("/")} spend going there is unknown, so this is scored as a 0-to-full range`
+            : `${o.option.cardCategory}: confirmed at ${o.merchantAssumption} for this ${o.spendCategories.join("/")} spend`,
       });
     }
   }

@@ -55,6 +55,7 @@ export { scoreCard, AED_PER_USD, SPEND_CATEGORIES } from "./score-card";
 export type {
   CardScore,
   CategoryEarning,
+  ScoringOptions,
   FeeBreakdown,
   ScoreFlag,
   SpendCategory,

@@ -586,3 +586,125 @@ will not invent caps or point values to make the headline number land.**
    while still showing them in `which-card` (which *does* know the merchant). This is
    a product/modelling call for the engine owner, not a data fix.
 4. Re-run `GAP_STUDY=1` after each — the harness is seeded, so the deltas are clean.
+
+---
+
+# Section E — merchant-lock optimism (2026-08, same branch)
+
+Follow-up to Section D, actioning **D4 residual #1**. Same branch
+`fix/rate-ceiling-bias`.
+
+## E1. The defect
+
+`MATCH_TABLE` in `score-card.ts` maps a merchant-locked bonus onto its nearest
+canonical spend category — `emaar_malls` → `other`, `lulu_supermarket` →
+`groceries`, `first_10_talabat_orders` → `dining`, and ~30 others. The scorer then
+credited that bonus against **all** of the category's spend, marking it with a
+`merchantAssumption` flag but still paying it in full.
+
+- **Read one card at a time this is defensible.** A LuLu shopper really does earn
+  8 points/AED at LuLu.
+- **Under selection it is not.** It is the *same maximum-of-maxima defect* as the
+  "Up to X%" ceiling fork in D1, in the merchant dimension. `optimizePortfolio`
+  scores ~53 cards and keeps the best 1-3, so it always picked whichever card
+  carried the most optimistic merchant assumption — **and could stack three at
+  once**, simultaneously assuming the user does all their general retail at Emaar
+  malls, all their groceries at LuLu, *and* all their dining through Talabat.
+- **A flag does not fix selection.** The old design lowered confidence rather than
+  dropping the bonus, specifically so the card "isn't unfairly zeroed". That intent
+  was right; the mechanism was insufficient, because nothing sorts on a flag.
+
+## E2. The fix  ✅ APPLIED
+
+`score-card.ts` gains `boundMerchantLockedRates`, applied in `precomputeCardData`.
+A merchant-locked option's rate becomes a **bounded range `0..full`** — value
+`null`, `confidence: "unknown"` — exactly as an unqualified `"Up to X%"` ceiling
+does. Consequences, all via machinery that already existed:
+
+| | behaviour |
+| --- | --- |
+| routing (min-cost flow) | uses the range **midpoint** — a neutral prior over the unknown share, so the bonus is neither assumed nor ignored |
+| reported value | a **band**, so the uncertainty reaches the ranking instead of hiding behind a flag |
+| the card | **bounded, not zeroed** — its full rate is still the top of the range |
+| numbers invented | **none.** `0..full` is a true bound: the user spends between 0% and 100% of the category at that merchant, and we cannot narrow it without asking |
+
+**The escape hatch is the point.** `which-card.ts` *does* resolve a merchant, and
+already drops bonuses locked to a different one via `applyMerchantLocks`. It now
+passes the new `ScoringOptions.merchantLocksResolved`, so any surviving lock is
+scored at its **exact full rate** with no range. Resolving the merchant is precisely
+what collapses the band.
+
+**User-visible contract change** (locked in `which-card.test.ts`): asking the generic
+category `"groceries"` with a 5%-at-LuLu card now returns **AED 900/yr** (midpoint of
+`0..1800`) instead of `1800`. Asking `"Lulu"` still returns the full `1800`; asking
+`"Carrefour"` still correctly drops to the `360` base rate. The card is also now
+marked `uncertain`.
+
+**Regression lock:** `optimize-portfolio.test.ts` case 9 asserts the bound
+(`[0, 1200]`, midpoint `600`), that the bonus still **beats a flat 2% card** on
+expected value (not zeroed), and that `merchantLocksResolved: true` restores the
+exact `1200`.
+
+## E3. Measured effect — `GAP_STUDY=1`, same seed, same population
+
+| metric | baseline (pre-D) | after D (ceiling) | after E (merchant) |
+| --- | --- | --- | --- |
+| pooled median optimal% | 9.61% | 8.86% | **6.52%** |
+| population-weighted optimal% | 10.05% | 8.94% | **6.68%** |
+| population-weighted gap | AED 12,245 | AED 11,249 | **AED 8,711** |
+| multi-card optimum | 100.0% | 100.0% | 100.0% |
+
+Per segment, median `optimal%`:
+
+| segment | pre-D | after D | after E |
+| --- | --- | --- | --- |
+| early-career expat | 12.37 | 10.18 | **7.21** |
+| young single | 9.61 | 8.86 | **6.09** |
+| dual-income | 8.03 | 7.67 | **6.40** |
+| family with school fees | 7.21 | 7.12 | **6.34** |
+| frequent traveller | 8.49 | 8.12 | **7.28** |
+
+E removes **~2.34pp** — roughly 3x what the ceiling fix (D1) removed, and in line
+with the 2.65pp the D4 diagnostic predicted for *fully removing* merchant bonuses
+(bounding at the midpoint should, and does, recover slightly less).
+
+**Suite: 281 passing, 2 skipped.** `tsc --noEmit` clean in `packages/engine` and
+`apps/web`. Test *execution* time is unchanged (~1.6s); the long wall-clock on this
+machine is module transform/import, not the solver.
+
+## E4. ⚠️ Still short of the 3.45% target — and why
+
+| metric | now | expected | reached? |
+| --- | --- | --- | --- |
+| pooled median optimal% | **6.52%** | ~3.45% | ❌ no |
+| population-weighted gap | **AED 8,711** | ~AED 3,383 | ❌ no |
+| multi-card optimum | **100.0%** | ~99.5% | ❌ no |
+
+Both selection biases are now fixed and together account for ~3.1pp of the original
+9.61%. The remaining ~6.5% is **D4 residual #2, unchanged and still un-fixable
+without sourced data**: bonus categories the real products cap but `cards.json` does
+not model, multiplied by placeholder point valuations. The clearest case is unchanged:
+
+> `mashreq_platinum_plus` returns **4.86%** on a median early-career profile from
+> `"10 Vantage points per AED 1"` on supermarkets/fuel/dining with **no cap
+> modelled**, on a `Mashreq Vantage` valuation that is itself an explicit
+> low-confidence placeholder (`0.0075`, "NOT researched"). `adib_cashback_visa`
+> (4% across four uncapped categories) and `dib_consumer_reward` are the same shape.
+
+This is a **data** gap, not a modelling one, and per Data rule D it is not being
+closed by guessing caps or point values. It needs issuer KFS documents. The
+priority list in D4 is unchanged and now carries the whole remaining difference:
+
+1. Per-category reward caps + min-spend gates for `mashreq_platinum_plus`,
+   `adib_cashback_visa`, `adcb_365_cashback`, `dib_consumer_reward`.
+2. Resolve the `Mashreq Vantage` valuation (and the other placeholders).
+
+## E5. Known residual in the fix itself (flagged, not silent)
+
+Bounding each merchant lock independently does **not** stop the optimizer from
+stacking *several* unverified merchant assumptions across different cards — it only
+halves each one's expected contribution. Modelling them as mutually constrained (the
+same AED cannot be spent at Emaar and at LuLu, and a user is unlikely to be a heavy
+user of three loyalty ecosystems at once) would need either a joint prior or a real
+product input ("how much do you spend at LuLu?"). **The product answer is to ask**;
+that is a scope decision for the engine owner, not something to infer here.

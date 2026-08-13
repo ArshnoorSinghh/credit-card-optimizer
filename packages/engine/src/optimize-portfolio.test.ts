@@ -387,4 +387,45 @@ describe("optimizePortfolio — full 51-card smoke test", () => {
       }
     }
   });
+
+  /**
+   * Case 9 — regression lock for MERCHANT-LOCK optimism.
+   *
+   * Structurally identical to case 8, in the merchant dimension. MATCH_TABLE maps a
+   * merchant-locked bonus onto its nearest canonical category (emaar_malls -> other,
+   * lulu_supermarket -> groceries, first_10_talabat_orders -> dining), and the scorer
+   * used to credit it against ALL of that category's spend. Under selection that made
+   * the optimizer pick whichever card carried the most optimistic merchant assumption
+   * — and stack several at once, simultaneously assuming all your general retail is at
+   * Emaar, all your groceries at LuLu and all your dining through Talabat.
+   *
+   * The fix bounds each such bonus 0..full for a generic profile. It must NOT zero the
+   * card, and it must NOT touch the path where the merchant is actually known.
+   */
+  it("bounds merchant-locked bonuses rather than assuming or zeroing them", () => {
+    const merchantCard = mkCard("merchant-locked", {
+      // 10% but only at LuLu; mapped to groceries, which the profile spends on.
+      categories: [{ category: "lulu_supermarket", rate: "10%" }],
+      base_rate: "0% on all spend",
+    });
+    const flatCard = mkCard("flat", { base_rate: "2% on all spend" });
+    const spend: SpendingProfile = { groceries: 1000 };
+
+    const locked = scoreCard(spend, merchantCard);
+    // Bounded, not assumed: 0..10% on 12,000/yr -> range [0, 1200], midpoint 600.
+    expect(locked.netAnnualValueRange.min).toBeCloseTo(0, 6);
+    expect(locked.netAnnualValueRange.max).toBeCloseTo(1200, 6);
+    expect(locked.netAnnualValue).toBeCloseTo(600, 6);
+    expect(locked.uncertain).toBe(true);
+
+    // Bounded, not zeroed: it still beats a flat 2% (240/yr) on expected value, so a
+    // genuinely strong merchant card is not driven out of the recommendation.
+    expect(locked.netAnnualValue).toBeGreaterThan(scoreCard(spend, flatCard).netAnnualValue);
+
+    // The escape hatch still works: a caller that KNOWS the merchant gets the exact
+    // full rate back, with no range. This is the which-card path.
+    const confirmed = scoreCard(spend, merchantCard, undefined, { merchantLocksResolved: true });
+    expect(confirmed.netAnnualValue).toBeCloseTo(1200, 6);
+    expect(confirmed.netAnnualValueRange.min).toBeCloseTo(1200, 6);
+  });
 });
