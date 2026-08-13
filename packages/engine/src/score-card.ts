@@ -441,7 +441,14 @@ export function buildEarnOptions(card: Card): { options: EarnOption[]; flags: Sc
     }
     return {
       cardCategory: cat.category,
-      rate: normalizeRate(cat.rate, { monthlyCap: cat.monthly_cap, annualCap: cat.annual_cap }),
+      // rewardCurrency lets the normalizer tell "6.25% back in UPoints" (which only
+      // restates rewards.currency) from a real scope, so it isn't flagged for saying
+      // what currency it pays in.
+      rate: normalizeRate(cat.rate, {
+        monthlyCap: cat.monthly_cap,
+        annualCap: cat.annual_cap,
+        rewardCurrency: card.rewards.currency,
+      }),
       monthlyCap: cat.monthly_cap,
       annualCap: cat.annual_cap,
       capsInAed,
@@ -457,7 +464,7 @@ export function buildEarnOptions(card: Card): { options: EarnOption[]; flags: Sc
   if (!hasCatchall) {
     options.push({
       cardCategory: "base_rate",
-      rate: normalizeRate(card.rewards.base_rate),
+      rate: normalizeRate(card.rewards.base_rate, { rewardCurrency: card.rewards.currency }),
       monthlyCap: null,
       annualCap: null,
       capsInAed,

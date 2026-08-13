@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import cardsData from "../data/cards.json";
 import type { Card, RewardType } from "./card";
-import type { SpendingProfile } from "./score-card";
+import { scoreCard, type SpendingProfile } from "./score-card";
+import { normalizeRate } from "./normalize-rate";
 import { optimizePortfolio, type UserProfile } from "./optimize-portfolio";
 
 const realCards = cardsData as Card[];
@@ -328,5 +329,62 @@ describe("optimizePortfolio — full 51-card smoke test", () => {
 
     // The overall recommendation is one of the three per-size winners.
     expect([result.best1, result.best2, result.best3]).toContain(result.overallBest);
+  });
+
+  /**
+   * Case 8 — regression lock for the rate-ceiling SELECTION bias.
+   *
+   * Individually, reading "Up to 10%" as a flat 10% because the card carries a cap
+   * field is a defensible reading of ONE card. But optimizePortfolio scores every
+   * eligible card on those numbers and keeps the best, so resolving each ceiling to
+   * its headline made the winner a maximum-of-maxima — an estimator biased upward by
+   * the spread of the ceilings, and biased more the more cards are considered.
+   *
+   * rakbank_world is the clearest case: four "Up to 10%"/"Up to 3%" categories, an
+   * AED 1,100 overall cap and (until this pass) no minimum-spend gate. On the
+   * grocery/dining/travel profile below it used to rank as the single BEST card in
+   * the dataset, claiming a fully certain AED 10,410/yr — 8.67% of annual spend,
+   * reported with a zero-width range as if it were a known fact.
+   *
+   * This test pins the two things the fix must guarantee. It deliberately does NOT
+   * assert a global plausibility bound on `overallBest`: that number is still
+   * inflated on some profiles by the SEPARATE, pre-existing merchant-lock optimism
+   * (emaar_* / talabat bonuses assumed to apply to all generic spend), which is
+   * flagged-by-design and out of scope here. See CARD_DATA_CHANGELOG.md.
+   */
+  it("never resolves an 'up to' ceiling into a certain rate when ranking", () => {
+    const ceilingProfile: SpendingProfile = {
+      groceries: 3000, dining: 3000, travel: 3000, other: 1000,
+    };
+    const richEnough: UserProfile = { monthlySalaryAed: 30000, uaeResident: true };
+
+    const rakWorld = realCards.find((c) => c.id === "rakbank_world")!;
+    const score = scoreCard(ceilingProfile, rakWorld);
+
+    // 1. The ceiling must reach the ranking as a genuine BAND, not a point estimate.
+    //    Pre-fix this range was [10410, 10410]; it is now [-750, 10410] — the fee is
+    //    certain, the "up to" reward is not.
+    expect(score.netAnnualValueRange.max).toBeGreaterThan(score.netAnnualValueRange.min);
+    expect(score.uncertain).toBe(true);
+
+    // 2. A card built entirely on unverified ceilings must no longer outrank every
+    //    card with a known flat rate purely on the strength of its marketing.
+    const best1 = optimizePortfolio(ceilingProfile, richEnough, realCards).best1!;
+    expect(best1.cardIds).not.toContain("rakbank_world");
+
+    // 3. Structural: no "Up to X%" rate anywhere in the dataset carries a numeric
+    //    value. This is what makes (1) hold for every such card, not just this one.
+    for (const card of realCards) {
+      for (const cat of card.rewards.categories) {
+        if (!/^up\s+to\s+[\d.]+\s*%/i.test(cat.rate)) continue;
+        const r = normalizeRate(cat.rate, {
+          monthlyCap: cat.monthly_cap,
+          annualCap: cat.annual_cap,
+          rewardCurrency: card.rewards.currency,
+        });
+        expect(r.value, `${card.id}/${cat.category} resolved "${cat.rate}" to a certain value`).toBeNull();
+        expect(r.range?.max).toBeGreaterThan(0);
+      }
+    }
   });
 });

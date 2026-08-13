@@ -351,3 +351,238 @@ Adding a card with a **new reward currency** additionally breaks
 entry) — that needs an engine valuation entry (Arshnoor). Cards reusing an
 **existing** currency (as both above do) avoid that; the only engine touch they
 require is the count bump noted above.
+
+---
+
+# Section D — the rate-ceiling selection bias (2026-08)
+
+Branch: `fix/rate-ceiling-bias`. Started 2026-08-13.
+
+Trigger: a prior analysis reported the engine overstates rewards by roughly 3x.
+This section reproduces that claim with a measurement harness, fixes the mechanism
+that causes it, and reports — honestly — how much of the overstatement the fix
+actually removes. Same rules as every section above: **nothing is edited unless a
+source or an explicitly-flagged modelling decision supports it, and no number is
+invented.**
+
+## D0. The measurement harness (new): `packages/engine/src/gap-study.test.ts`
+
+- **What it is:** a seeded sweep over **200 synthetic UAE spending profiles** drawn
+  from 5 weighted segment archetypes — early-career expat **0.40**, young single
+  **0.20**, dual-income **0.20**, family with school fees **0.13**, frequent
+  traveller **0.07**. For each profile it compares three strategies on the same
+  card universe and eligibility filter:
+  - `naive` — **median** eligible single card (a user who picks without optimizing),
+  - `best1` — best eligible single card (`optimizePortfolio.best1`),
+  - `optimal` — best 1-3 card portfolio (`overallBest`).
+- **Reporting:** per-segment and population-weighted rows printing
+  `naive% / best1% / optimal% / gap%` as a share of annual spend, so
+  `naive% + gap% ~= optimal%` is checkable on every row, plus the gap in AED/yr and
+  the share of profiles whose optimum is multi-card.
+- **Reproducibility:** seeded (`mulberry32`, seed `20260813`), so any movement in
+  the output is an engine change, never sampling noise. Gated behind
+  `describe.skipIf(!process.env.GAP_STUDY)` — it runs ~200 exhaustive portfolio
+  optimizations and is far too slow for the normal suite.
+  Run it with `GAP_STUDY=1 pnpm --filter @fils/engine test gap-study`.
+- **Weights are an assumption, not a measurement.** They are the study's stated
+  input, printed with the results so a reader can re-weight. Flagged as such.
+
+**Reproduced the reported finding:** on the unmodified engine the harness returned a
+**pooled median optimal return of 9.61% of annual spend** (population-weighted
+10.05%; weighted gap AED 12,245/yr; multi-card optimum on 100% of profiles). No real
+UAE card portfolio pays anything close to that once caps, fees and minimum-spend
+gates bite. The ~3x overstatement claim is **confirmed**.
+
+> Note: the brief anticipated ~9.4%; this harness measures **9.61%**. The archetype
+> spend bands and jitter here are my own construction, so the two populations are not
+> byte-identical. The finding reproduces; the third decimal does not, and is not
+> claimed to.
+
+## D1. The mechanism — `normalize-rate.ts`, the `capModeled` fork  ✅ FIXED
+
+- **What was there:** `normalizeRate("Up to X%", ctx)` returned
+  `{ value: X, confidence: "high" }` whenever the card carried a `monthly_cap` or
+  `annual_cap`, on the reasoning that the cap — not a discounted rate — expresses
+  the constraint. The code comment claimed *"No card in today's data hits this
+  branch"*. **That comment was stale: 8 rate strings hit it** —
+  `rakbank_titanium` (supermarkets, dining, cinemas, video_streaming) and
+  `rakbank_world` (supermarkets, dining, travel_and_hotels, other_retail).
+- **Finding:** read one card at a time the old reasoning is **sound**. It fails under
+  **selection**. `optimizePortfolio` scores all ~53 cards on these numbers and keeps
+  the best 1-3, so taking every ceiling at face value makes the winner a
+  **maximum-of-maxima** — an estimator biased upward by the spread of the ceilings,
+  and biased *more* the more cards are considered. **The bias is in the selection,
+  not in the per-card arithmetic**, which is why the fix belongs at the point where
+  an unqualified ceiling becomes a certainty rather than in the optimizer.
+- **Action:** both branches of the fork now emit a bounded range
+  `{ value: null, range: { min: 0, max: X }, confidence: "unknown" }`. The cap
+  context is still consulted, but only to explain *why* the rate is uncertain, so
+  the review list can still tell the two cases apart. Per CLAUDE.md, the uncertainty
+  now propagates as a range instead of a silent point estimate.
+- **Evidence it bit (`rakbank_world`, grocery/dining/travel profile, salary 30k):**
+
+  | | before | after |
+  | --- | --- | --- |
+  | rank among single cards | **#1 of all eligible** | #3 |
+  | net annual value | AED 10,410 (8.67% of spend) | AED 4,830 (4.03%) |
+  | reported range | `[10410, 10410]` — a **false certainty** | `[-750, 10410]` — honest band |
+
+- **Regression lock:** `optimize-portfolio.test.ts` case 8 asserts the range is
+  genuinely wide, that `rakbank_world` no longer wins `best1` on that profile, and
+  structurally that **no** `"Up to X%"` rate anywhere in the dataset carries a
+  numeric value.
+
+## D2. Data fixes
+
+### D2a. `rakbank_world` — minimum monthly spend  ⚠️ APPLIED, FIGURE UNSOURCED
+- **In data:** `min_monthly_spend_required_aed: 0`, alongside four "Up to 10%" /
+  "Up to 3%" categories and an AED 1,100 overall cap.
+- **Finding:** with no gate the engine paid the top advertised tier at **every**
+  spend level. Combined with D1 this made the card the single largest contributor to
+  the inflated optimum.
+- **Action:** set to **10,000**.
+- 🚩 **UNSOURCED — flagged, not sourced.** The 10,000 figure is a reviewed modelling
+  assumption supplied by the engine owner, **not** a published RAKBANK threshold; the
+  product page still does not expose the tier table (the card's pre-existing
+  `data_caveat` already said so). Recorded verbatim in the card's `data_caveat` with
+  the word `UNSOURCED`, and locked by a test asserting the caveat retains it.
+  **Confirm against the card's T&C before treating it as fact.**
+
+### D2b. Compound "local; international" base rates on 6 cards  ✅ FIXED
+- **What was there:** base rates of the form
+  `"X per AED 1 on eligible local spend; Y per AED 1 on eligible international spend"`.
+- **Finding:** a **trap**. The normalizer parses only the leading number, so the
+  international rate `Y` was **silently dropped** — while the string still claimed
+  the card paid it. The compound also forced the rate to tier 2 for a condition that
+  isn't really unmodelled.
+- **Action — split into a real `international_spend` category (4 cards):**
+
+  | Card | base_rate now | new `international_spend` |
+  | --- | --- | --- |
+  | `adcb_touchpoints_gold_titanium` | 0.5 TouchPoints per AED 1 on eligible local spend | 0.75 TouchPoints per AED 1 |
+  | `dib_shams_platinum` | 1 Wala'a Reward per AED 1 on eligible local spend | 2 Wala'a Rewards per AED 1 |
+  | `dib_shams_infinite` | 2 Wala'a Rewards per AED 1 on eligible local spend | 4 Wala'a Rewards per AED 1 |
+  | `sc_smart_saadiq` | 1 360 Rewards Point per AED 1 on eligible local spend | 2 points per AED 1 |
+
+  No caps were invented — the source strings state none, so both are `null`.
+  `international_spend` is already mapped to the `international` bucket in
+  `score-card.ts`'s `MATCH_TABLE`, so no engine mapping change was needed.
+
+- **Action — clause DROPPED, not split (2 cards):** `adcb_lulu_platinum` (1.75
+  LuLu Points) and `adcb_touchpoints_platinum` (1.5 TouchPoints).
+  **Why the exception:** both already carry an explicit `uk_and_eea_spend` carve-out
+  at the **reduced** rate of 0.4 points/AED, which maps to the *same* `international`
+  bucket. Adding a blanket international rate would let the allocator route all
+  international spend to the higher rate and **shadow the carve-out**, overstating
+  exactly what ADCB reduced. Both figures are unverified against ADCB's current
+  schedule, so they are recorded in each card's `data_caveat` rather than modelled.
+- **Regression lock:** `card.test.ts` now fails if any `base_rate` again hides a
+  semicolon-joined international rate.
+
+### D2c. Two normalizer false positives  ✅ FIXED
+Both made honest rates look conditional, pushing clean parses down to tier 2:
+
+| # | Pattern | Example | Why it was wrong |
+| --- | --- | --- | --- |
+| 1 | Currency-definition parenthetical | `"1.5% back in Plus Points on general eligible spend (1 Plus Point = AED 1)"` | The `(` tripped the scope test. The parenthetical **defines the unit's value**; it is not a condition on earning. |
+| 2 | `back in / back as <Currency>` | `"6.25% back in UPoints"` | Read as a trailing scope, but it only restates `rewards.currency` — a fact the data already carries. |
+
+- **Action:** `RateContext` gained an optional `rewardCurrency`; `score-card.ts`
+  passes `card.rewards.currency` for both category rates and the base rate.
+  Both exemptions are **deliberately narrow**:
+  - the parenthetical must match `(<N> <currency> = AED <M>)`, so FAB's
+    `"(utilities, government, education, ...)"` enumeration, Mashreq's
+    `"(up to 2% during promotional periods)"` and RAKBANK's
+    `"(1.5 points per AED 5)"` **still flag low**;
+  - the phrase must actually **name that card's own currency** (whole-word, tolerant
+    of the `DIB Wala'a Rewards` vs `Wala'a Rewards` prefix mismatch and the mixed
+    straight/typographic apostrophes). `"5% back in Skywards Miles"` on a Plus Points
+    card still flags low, and with no currency context the old conservative behaviour
+    holds.
+  - Strings with a genuine extra condition are untouched: `enbd_dnata_world`
+    (`", capped at 3,000 dnata Points per statement cycle"`) and
+    `enbd_lulu_247_platinum` (`"when the AED 2,500 monthly threshold is not met"`)
+    both correctly remain tier 2.
+
+## D3. Tier arithmetic — closes exactly at every step
+
+Verified after each change independently, not just at the end:
+
+| Step | tier 1 | tier 2 | tier 3 | total | delta |
+| --- | --- | --- | --- | --- | --- |
+| baseline | 126 | 46 | 21 | 193 | — |
+| D1 `capModeled` fork | **118** | 46 | **29** | 193 | -8 t1 / +8 t3 (the 8 capped "Up to X%" rates) |
+| D2c false positives | **129** | **35** | 29 | 193 | +11 t1 / -11 t2 |
+| D2b compound split | **139** | **29** | 29 | **197** | +10 t1 / -6 t2; +4 strings (the 4 new categories) |
+
+Tier 3 is untouched by the last two steps, as expected — neither touches an
+unresolvable rate. The locked counts in `normalize-rate.test.ts` were updated to
+`139 / 29 / 29` over `197` strings, with the derivation recorded inline.
+
+**Suite: 280 passing, 2 skipped** (the 2 skipped are the gated gap study).
+Baseline was 273 passing. `tsc --noEmit` clean in **both** `packages/engine` and
+`apps/web`.
+
+## D4. ⚠️ Outcome vs. expectation — the fix works, but does NOT reach the target
+
+The brief expected, after these changes: median optimal **~3.45%**,
+population-weighted gap **~AED 3,383/yr**, multi-card optimum **~99.5%**.
+**Measured, on the same harness, same seed:**
+
+| metric | before | after (measured) | expected | reached? |
+| --- | --- | --- | --- | --- |
+| pooled median optimal% | 9.61% | **8.86%** | ~3.45% | ❌ no |
+| population-weighted gap | AED 12,245 | **AED 11,249** | ~AED 3,383 | ❌ no |
+| multi-card optimum | 100.0% | **100.0%** | ~99.5% | ❌ no |
+
+The D1 fix removes roughly **0.75pp** of the overstatement. It is doing exactly what
+it should — `rakbank_world`'s false certainty is gone and its ceiling now reaches the
+ranking as a band — but the ceiling bias was **not** the dominant term in the
+population median. **I did not tune the study or the data to reach 3.45%**; the
+numbers above are what the specified changes actually produce.
+
+### Where the remaining overstatement comes from (measured, not guessed)
+
+A diagnostic run — cloning the dataset and dropping merchant-locked reward
+categories, **no engine change** — isolates the next term:
+
+| dataset variant | median optimal% | weighted gap |
+| --- | --- | --- |
+| current (after this pass) | 8.86% | AED 11,249 |
+| with merchant-locked bonuses removed | **6.21%** | AED 8,582 |
+
+1. **Merchant-lock optimism (~2.65pp).** `emaar_malls` / `emaar_hospitality` at
+   6.25% are applied to *all* generic `other` / `travel` spend, and
+   `first_10_talabat_orders` at 35% to dining. This is the **same
+   maximum-of-maxima structure as D1** — the optimizer will always select the card
+   with the most optimistic merchant assumption. It is currently
+   **flagged-by-design** (Section B6 above) rather than discounted. Out of scope
+   here: changing it is a modelling decision on human-owned engine code.
+2. **Missing per-category caps (the remainder).** Several top-ranked cards score
+   uncapped bonus categories that the real products cap. Example:
+   `mashreq_platinum_plus` returns **4.86%** on a median early-career profile from
+   `"10 Vantage points per AED 1"` on supermarkets/fuel/dining with **no cap
+   modelled**, on a currency (`Mashreq Vantage`) whose valuation is itself an
+   explicitly **low-confidence placeholder** (`0.0075`, "NOT researched"). An
+   unverified earn rate times an unverified valuation yields a ~7.5% effective
+   category rate. `adib_cashback_visa` (4% across four uncapped categories) is the
+   same shape.
+
+Both are **already on the record** in this document — the Section A "📌 Pattern
+emerging" note calls per-category caps and min-spend thresholds "the highest-value
+thing for the team to confirm", and the `valuations.ts` blocker section holds the
+point values. **Neither can be fixed without issuer KFS data, and per Data rule D I
+will not invent caps or point values to make the headline number land.**
+
+### Recommended next pass (in expected-impact order)
+1. **Model per-category reward caps + min-spend gates** from issuer KFS for the
+   cards that now top the ranking — `mashreq_platinum_plus`, `adib_cashback_visa`,
+   `adcb_365_cashback`, `dib_consumer_reward`. Highest impact by a wide margin.
+2. **Resolve `Mashreq Vantage`** (and the other placeholder valuations in the
+   `valuations.ts` table above). A low-confidence valuation on an uncapped
+   double-digit earn rate is the single most leveraged unknown in the dataset.
+3. **Decide the merchant-lock policy.** Options: discount merchant-locked bonuses by
+   an assumed realization share, or exclude them from `optimizePortfolio` selection
+   while still showing them in `which-card` (which *does* know the merchant). This is
+   a product/modelling call for the engine owner, not a data fix.
+4. Re-run `GAP_STUDY=1` after each — the harness is seeded, so the deltas are clean.
