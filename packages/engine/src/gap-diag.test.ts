@@ -2,6 +2,7 @@
 import { describe, it } from "vitest";
 import { CARDS } from "./index";
 import { scoreCard, type SpendingProfile } from "./score-card";
+import { isRateDefect } from "./study-filters";
 
 // See gap-study.test.ts — engine tsconfig has no DOM/Node libs.
 declare const console: { log(...args: unknown[]): void };
@@ -12,10 +13,9 @@ const profile: SpendingProfile = {
   travel: 1500, transport: 400, entertainment: 900, international: 900, other: 1400,
 };
 
-const isRateDefect = (m: string) =>
-  m.includes("assumes spend occurs") ||
-  m.startsWith("Low-confidence rate") ||
-  m.startsWith("Unknown rate");
+// The SOUND filter now comes from study-filters.ts, which gap-study.test.ts imports
+// too — they cannot drift apart, and study-filters.test.ts asserts each clause still
+// matches something. Both substrings here were once wrong and matched NOTHING.
 
 // Gated like gap-study: a data-quality auditor, not a regression test.
 //   GAP_STUDY=1 npx vitest run src/gap-diag.test.ts --disable-console-intercept

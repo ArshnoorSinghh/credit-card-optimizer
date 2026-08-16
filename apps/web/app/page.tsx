@@ -12,7 +12,6 @@ import {
   TrendingUp,
   Wallet,
 } from "lucide-react";
-import { Show } from "@clerk/nextjs";
 import { Aurora } from "@/components/aurora";
 import { BurjSunrise } from "@/components/burj-sunrise";
 import { HeroCards } from "@/components/hero-cards";
@@ -20,6 +19,7 @@ import { BankMarquee } from "@/components/bank-marquee";
 import { CountUp } from "@/components/count-up";
 import { StickySteps } from "@/components/sticky-steps";
 import { Button } from "@/components/ui/button";
+import { WaitlistForm } from "@/components/waitlist-form";
 import { Badge } from "@/components/ui/badge";
 import { Reveal, Stagger, StaggerItem } from "@/components/ui/reveal";
 import { Footer } from "@/components/footer";
@@ -167,40 +167,30 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.75, ease: EASE, delay: 0.32 }}
-              // why min-h-14 (one lg button tall): <Show> renders nothing until
-              // Clerk resolves the session, so without a reserved row the CTAs
-              // pop in and shove the hero down on first paint.
-              className="mt-8 flex min-h-14 flex-wrap items-center gap-3"
+              // min-h-14 (one lg button tall) reserves the row so the CTAs never
+              // shove the hero down on first paint. It used to matter because
+              // Clerk's <Show> rendered nothing until the session resolved; the
+              // invite-only CTAs are session-independent, so the reserved row is
+              // now just layout stability rather than a fix for a pop-in.
+              className="mt-8 flex min-h-14 flex-col gap-3"
             >
-              {/* Signed out: the pitch is "try it, then keep it". Signed in,
-                  both of those are already answered — the useful next moves are
-                  browsing the catalogue or reopening the wallet they built. */}
-              <Show when="signed-out">
-                <Link href="/hub">
-                  <Button size="lg">
-                    Try the demo
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-                <Link href="/sign-up">
-                  <Button variant="outline-strong" size="lg">
-                    Sign up free
-                  </Button>
-                </Link>
-              </Show>
-              <Show when="signed-in">
+              {/* INVITE-ONLY. The CTAs used to be "try the demo" / "sign up free"
+                  and both now lead to a gated route (lib/access-gate.ts), so the
+                  primary action is joining the waitlist instead. Browsing the
+                  card catalogue is still open and is the one thing a visitor can
+                  do right now, so it stays as the secondary. This block is
+                  session-independent on purpose: while the gate is armed nobody
+                  has access, so there is nothing different to say to a signed-in
+                  visitor. See lib/access-gate.ts to reopen. */}
+              <WaitlistForm source="landing-hero" className="max-w-xl" />
+              <div className="flex flex-wrap items-center gap-3">
                 <Link href="/cards">
-                  <Button size="lg">
-                    View cards
+                  <Button variant="outline-strong" size="lg">
+                    Browse UAE cards
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
-                <Link href="/dashboard">
-                  <Button variant="outline-strong" size="lg">
-                    My wallet
-                  </Button>
-                </Link>
-              </Show>
+              </div>
             </motion.div>
           </div>
 
@@ -311,33 +301,15 @@ export default function LandingPage() {
               <p className="mx-auto mt-4 max-w-xl text-lg text-muted">
                 No card details. No spam. Just the numbers on which UAE cards actually pay you back.
               </p>
-              <div className="mt-9 flex min-h-14 flex-wrap justify-center gap-3">
-                <Show when="signed-out">
-                  <Link href="/hub">
-                    <Button size="lg">
-                      Try the demo
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                  <Link href="/sign-up">
-                    <Button variant="outline" size="lg">
-                      Create free account
-                    </Button>
-                  </Link>
-                </Show>
-                <Show when="signed-in">
-                  <Link href="/dashboard">
-                    <Button size="lg">
-                      Open my wallet
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                  <Link href="/cards">
-                    <Button variant="outline" size="lg">
-                      Browse all cards
-                    </Button>
-                  </Link>
-                </Show>
+              {/* Closing CTA — same invite-only reasoning as the hero. */}
+              <div className="mt-9 flex min-h-14 flex-col items-center gap-4">
+                <WaitlistForm source="landing-footer" className="max-w-xl" />
+                <Link href="/cards">
+                  <Button variant="outline" size="lg">
+                    Browse all cards
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>

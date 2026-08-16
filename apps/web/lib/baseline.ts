@@ -1,5 +1,6 @@
 import {
   optimizePortfolio,
+  type MerchantShares,
   type Portfolio,
   type SpendingProfile,
   type UserProfile,
@@ -50,6 +51,7 @@ export function runBaseline(
   heldCardIds: string[],
   spending: SpendingProfile,
   _profile: UserProfile = DEFAULT_PROFILE,
+  merchantShares?: MerchantShares,
 ): Portfolio | null {
   try {
     const held = ALL_CARDS.filter((c) => heldCardIds.includes(c.id)).slice(0, MAX_HELD_CARDS);
@@ -58,7 +60,21 @@ export function runBaseline(
     // Score the held cards as their own universe. The portfolio whose size equals
     // the held-card count is the exact held set (there's only one subset of that
     // size), allocated optimally by the engine.
-    const result = optimizePortfolio(spending, PERMISSIVE_PROFILE, held);
+    //
+    // why includeUnpublishable: the engine drops do-not-publish cards from
+    // RECOMMENDATIONS, which is right for the reveal and wrong here — a held card
+    // silently dropped from the baseline would understate the user's current wallet
+    // and inflate the delta we show them. The baseline must score every card they
+    // actually hold.
+    // why shares matter here too: the baseline and the reveal must be scored under
+    // the SAME assumptions, or the delta between them is measured across two
+    // different models. If the user says they never shop at LuLu, their held LuLu
+    // card has to be scored that way in the baseline as well — otherwise we'd
+    // overstate the wallet they have and understate the gain from switching.
+    const result = optimizePortfolio(spending, PERMISSIVE_PROFILE, held, undefined, {
+      includeUnpublishable: true,
+      merchantShares,
+    });
     const bySize: Record<number, Portfolio | null> = {
       1: result.best1,
       2: result.best2,

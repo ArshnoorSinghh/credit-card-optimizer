@@ -143,7 +143,14 @@ export function PortfolioResults({
         {result.excludedForEligibility > 0
           ? ` · ${result.excludedForEligibility} excluded by salary/residency`
           : ""}
-        {result.benchedCount > 0 ? ` · ${result.benchedCount} pending verification` : ""}.
+        {result.benchedCount > 0 ? ` · ${result.benchedCount} pending verification` : ""}
+        {/* why this line exists: without it the counts don't add up. The engine holds
+            back cards whose data_caveat says their figures aren't publishable, so
+            "46 of 53" would leave 7 cards silently unexplained. */}
+        {result.excludedForDataCaveat > 0
+          ? ` · ${result.excludedForDataCaveat} held back pending data checks`
+          : ""}
+        .
       </p>
 
       {/* Size tabs */}

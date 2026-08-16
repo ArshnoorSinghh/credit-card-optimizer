@@ -73,6 +73,56 @@ describe("POST /api/optimize", () => {
     );
     expect(res.status).toBe(400);
   });
+
+  // ── merchantShares ────────────────────────────────────────────────────────────
+  // The engine's own sanitizer would DROP a bad share and fall back to "unanswered",
+  // which is safe but silent. At an HTTP boundary a caller who sends 30 where 0.3 was
+  // meant deserves to be told, not to receive a quietly different answer.
+
+  const baseBody: OptimizeRequest = {
+    spending: { groceries: 3000, dining: 2000, travel: 2500, other: 4000 },
+    profile: { monthlySalaryAed: 20000, uaeResident: true },
+  };
+
+  it("accepts valid merchant shares", async () => {
+    const res = await POST(postReq({ ...baseBody, merchantShares: { LuLu: 0.3, Emaar: 0 } }));
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.overallBest).not.toBeNull();
+  });
+
+  it("rejects a percentage sent where a fraction belongs", async () => {
+    const res = await POST(postReq({ ...baseBody, merchantShares: { LuLu: 30 } }));
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json.error).toContain("between 0 and 1");
+  });
+
+  it("rejects a non-numeric or negative share", async () => {
+    for (const shares of [{ LuLu: "lots" }, { LuLu: -0.2 }]) {
+      const res = await POST(postReq({ ...baseBody, merchantShares: shares }));
+      expect(res.status).toBe(400);
+    }
+  });
+
+  it("rejects merchantShares that isn't an object", async () => {
+    const res = await POST(postReq({ ...baseBody, merchantShares: [0.3] }));
+    expect(res.status).toBe(400);
+  });
+
+  it("treats an omitted merchantShares as unanswered, not as zero", async () => {
+    // Unanswered must keep the engine's previous behaviour exactly, so an existing
+    // caller that knows nothing about shares gets the same answer it always did.
+    const withOmitted = await (await POST(postReq(baseBody))).json();
+    const withEmpty = await (await POST(postReq({ ...baseBody, merchantShares: {} }))).json();
+    expect(withOmitted.overallBest.netAnnualValue).toBe(withEmpty.overallBest.netAnnualValue);
+    // ...and stating zero for a merchant must NOT produce that same answer, or the
+    // field is being ignored somewhere between here and the allocator.
+    const zeroed = await (
+      await POST(postReq({ ...baseBody, merchantShares: { LuLu: 0, Emaar: 0, noon: 0, Amazon: 0 } }))
+    ).json();
+    expect(zeroed.overallBest.netAnnualValue).not.toBe(withOmitted.overallBest.netAnnualValue);
+  });
 });
 
 describe("the optimizer stays PUBLIC (guest/demo mode)", () => {

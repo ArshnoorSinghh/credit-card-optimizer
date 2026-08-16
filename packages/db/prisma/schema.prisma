@@ -62,9 +62,9 @@ model User {
   /// profile — the dashboard uses null to prompt "set your spending" rather than
   /// showing a misleading AED 0. JSON because the engine never reads this column; the
   /// app passes it into the pure engine at request time.
-  savedSpending  Json? @map("saved_spending")
+  savedSpending  Json?   @map("saved_spending")
   /// Saved monthly salary (AED), used to filter eligible cards. NULL = not set.
-  savedSalaryAed Int?  @map("saved_salary_aed")
+  savedSalaryAed Int?    @map("saved_salary_aed")
   /// The primary bank the user browsed/selected during onboarding. Display only.
   savedBank      String? @map("saved_bank")
 
@@ -172,10 +172,10 @@ model Card {
   /// { currency, primary_uses: string[], redemption_url }
   redemption Json
   /// string[] — marketing bullet points.
-  benefits Json
+  benefits   Json
 
-  sourceUrl String  @map("source_url")
-  notes     String?
+  sourceUrl           String   @map("source_url")
+  notes               String?
   /// Nullable (not defaulted false) so a card that omits the field in cards.json
   /// round-trips back out omitted, rather than gaining a phantom `false`.
   excludedFromScoring Boolean? @map("excluded_from_scoring")
@@ -239,4 +239,38 @@ model ExcludedSpend {
   @@index([cardId])
   @@index([category])
   @@map("excluded_spend")
+}
+
+/// Someone who asked for access while Fils is invite-only.
+///
+/// SEPARATE FROM `User` on purpose. A `User` is an identity Clerk has authenticated
+/// and that we attach saved state to; a WaitlistEntry is an unauthenticated,
+/// unverified email typed into a public form by someone we have never met. Merging
+/// them would mean either creating half-real Users nobody can sign in as, or letting
+/// an anonymous POST write to the table that owns saved spending profiles. Keeping
+/// them apart also means clearing the waitlist never risks touching real accounts.
+///
+/// Deliberately stores NO credential material and nothing sensitive: an email, an
+/// optional display name, and where they signed up from. If this table leaked it
+/// would expose a list of email addresses and nothing that authenticates anyone.
+model WaitlistEntry {
+  id String @id @default(cuid())
+
+  /// Lowercased, trimmed email. UNIQUE so a double submit is an idempotent no-op
+  /// rather than a duplicate row — the form is public and will be resubmitted.
+  /// Normalisation happens at the API boundary, so this column can be trusted as
+  /// the natural key.
+  email String @unique
+
+  /// Optional name, only if the form asked for one. Never inferred from the email.
+  name String?
+
+  /// Which surface the request came from ("landing", "optimizer-wall", …), so the
+  /// funnel can be read later without a separate analytics join.
+  source String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@map("waitlist_entries")
 }

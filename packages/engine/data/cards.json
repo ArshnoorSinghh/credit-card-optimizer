@@ -20,8 +20,15 @@
     "rewards": {
       "type": "cashback",
       "currency": "FAB Rewards",
-      "base_rate": "1% on other eligible retail spend; 0.15% on select low-interchange categories (utilities, government, education, real estate, telecom)",
+      "base_rate": "1% on other eligible retail spend",
       "categories": [
+        {
+          
+          "category": "specified_low_interchange_categories",
+          "rate": "0.15%",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
         {
           "category": "supermarkets",
           "rate": "5%",
@@ -52,7 +59,9 @@
     },
     "redemption": {
       "currency": "FAB Rewards",
-      "primary_uses": ["Statement credit via FAB Mobile app; 100 FAB Rewards = AED 1 (10,000 FAB Rewards = AED 100)"],
+      "primary_uses": [
+        "Statement credit via FAB Mobile app; 100 FAB Rewards = AED 1 (10,000 FAB Rewards = AED 100)"
+      ],
       "redemption_url": "https://www.bankfab.com/en-ae/personal/rewards/fab-rewards/calculate"
     },
     "benefits": [
@@ -82,7 +91,7 @@
     "rewards": {
       "type": "points",
       "currency": "FAB Rewards",
-      "base_rate": "1 FAB Reward per AED 1 on all eligible spend, including international spend",
+      "base_rate": "1 FAB Reward per AED 1 on all eligible spend",
       "categories": [
         {
           "category": "online_spend",
@@ -135,7 +144,7 @@
     "rewards": {
       "type": "points",
       "currency": "UPoints",
-      "base_rate": "1.25% back in UPoints on eligible non-Emaar spend (10 UPoints = AED 1)",
+      "base_rate": "1.25% back in UPoints (10 UPoints = AED 1)",
       "categories": [
         {
           "category": "emaar_malls",
@@ -194,7 +203,7 @@
     "rewards": {
       "type": "points",
       "currency": "dnata Points",
-      "base_rate": "1.5% back in dnata Points on eligible domestic and international spend, capped at 3,000 dnata Points per statement cycle",
+      "base_rate": "1.5% back in dnata Points on eligible domestic and international spend",
       "categories": [
         {
           "category": "dnata_costa_city_sightseeing_emirates_leisure_retail",
@@ -248,7 +257,7 @@
       "Airport lounge access subject to Mastercard conditions"
     ],
     "source_url": "https://www.emiratesnbd.com/en/cards/credit-cards/dnata-world-credit-card",
-    "data_caveat": "1 dnata Point = AED 1. Standard domestic/international non-partner retail is capped at 3,000 points per statement cycle; partner brackets (dnata Travel and partner stores) are bound to an independent 20,000 points per calendar year."
+    "data_caveat": "1 dnata Point = AED 1. Standard domestic/international non-partner retail is capped at 3,000 points per statement cycle; partner brackets (dnata Travel and partner stores) are bound to an independent 20,000 points per calendar year. The 3,000/cycle BASE cap is recorded here rather than encoded: the schema caps categories, not base_rate, and `overall_cap` would wrongly bound the partner brackets too. It is immaterial at realistic spend — at the 1.5% base it only binds above AED 200,000/month — but it must be encoded if base-rate caps ever become expressible."
   },
   {
     "id": "enbd_duo",
@@ -370,7 +379,7 @@
     "rewards": {
       "type": "cashback",
       "currency": "AED",
-      "base_rate": "1% on other eligible local spend; 1% on non-EU international spend; 0.5% on EU and selected categories",
+      "base_rate": "1% on other eligible local spend",
       "categories": [
         {
           "category": "dining_including_online",
@@ -424,7 +433,7 @@
       "Lifestyle and Mastercard benefits"
     ],
     "source_url": "https://www.adcb.com/en/personal/cards/credit-cards/365-cashback-card",
-    "data_caveat": "Category rates reflect the July 2026 restructure: groceries reduced to 3%, fuel and Salik increased to 5%, AI/digital subscriptions codified at 5%. Total cashback is bound by the AED 1,000 monthly overall cap."
+    "data_caveat": "Category rates reflect the July 2026 restructure: groceries reduced to 3%, fuel and Salik increased to 5%, AI/digital subscriptions codified at 5%. Total cashback is bound by the AED 1,000 monthly overall cap. UNDERSTATEMENT, deliberate: the official base rate pays 1% on NON-EU international spend but only 0.5% on EU spend. The engine has a single canonical `international` category and cannot tell the two apart, so a blanket 1% international rate would shadow the 0.5% EU rate and OVERSTATE. All international is therefore left at the 0.5% already encoded by `selected_categories_and_eu_spend`. Non-EU international is understated by 0.5pp — the conservative direction. Resolving this needs an EU/non-EU split in the spend model, not a data fix."
   },
   {
     "id": "adcb_traveller",
@@ -447,8 +456,14 @@
     "rewards": {
       "type": "cashback",
       "currency": "AED",
-      "base_rate": "1.5% on other eligible domestic AED spend; international spend earns at standard domestic rates with 0% foreign transaction fees",
+      "base_rate": "1.5% on other eligible domestic AED spend",
       "categories": [
+        {
+          "category": "international_spend",
+          "rate": "1.5%",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
         {
           "category": "airline_spend",
           "rate": "10%",
@@ -480,7 +495,8 @@
     },
     "benefits": [
       "Travel insurance",
-      "Airport lounge access subject to Mastercard conditions"
+      "Airport lounge access subject to Mastercard conditions",
+      "0% foreign transaction fees"
     ],
     "source_url": "https://www.adcb.com/en/personal/cards/credit-cards/traveller-credit-card",
     "data_caveat": "The current official product page confirms reward rates, caps, salary and age but does not expose the annual or joining fee amount in page text. No fee was inferred."
@@ -506,8 +522,14 @@
     "rewards": {
       "type": "cashback",
       "currency": "AED",
-      "base_rate": "1% on eligible local retail spend; 1% on eligible international spend (up to 2% during promotional periods)",
+      "base_rate": "1% on eligible local retail spend",
       "categories": [
+        {
+          "category": "international_spend",
+          "rate": "1%",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
         {
           "category": "local_and_international_dining",
           "rate": "5%",
@@ -526,7 +548,9 @@
     },
     "redemption": {
       "currency": "AED cashback",
-      "primary_uses": ["Statement credit, minimum AED 100 redemption; unredeemed cashback is forfeited after 36 months of inactivity"],
+      "primary_uses": [
+        "Statement credit, minimum AED 100 redemption; unredeemed cashback is forfeited after 36 months of inactivity"
+      ],
       "redemption_url": "https://www.mashreq.com/en/uae/neo/cards/credit-cards/cashback-credit-card/"
     },
     "benefits": [
@@ -534,7 +558,7 @@
       "No minimum monthly spend to earn"
     ],
     "source_url": "https://www.mashreq.com/en/uae/neo/cards/credit-cards/cashback-credit-card/",
-    "data_caveat": "Mashreq publishes the general local rate only as up to 1% and does not expose the underlying local tier table on the current product page. The raw official wording is preserved."
+    "data_caveat": "Mashreq publishes the general local rate only as up to 1% and does not expose the underlying local tier table on the current product page. The compound base rate was split: the international clause is now the `international_spend` category at 1% (safe — `local_and_international_dining` maps to `dining` only, so nothing is shadowed). The parenthetical 'up to 2% during promotional periods' is EXCLUDED as a promo, not a steady-state rate."
   },
   {
     "id": "mashreq_platinum_plus",
@@ -609,7 +633,7 @@
     "rewards": {
       "type": "cashback",
       "currency": "AED",
-      "base_rate": "0.5% on other eligible spend and on all eligible spend when the AED 3,000 monthly threshold is not met",
+      "base_rate": "0.5% on other eligible spend",
       "categories": [
         {
           "category": "dining",
@@ -668,7 +692,7 @@
     "rewards": {
       "type": "points",
       "currency": "HSBC Rewards Points",
-      "base_rate": "1 point per AED 1; 2 points per AED 1 when monthly eligible spend exceeds AED 3,000",
+      "base_rate": "1 point per AED 1",
       "categories": [],
       "overall_cap": null,
       "min_monthly_spend_required_aed": 0
@@ -685,7 +709,8 @@
       "Servicing information retained for existing cardholders"
     ],
     "source_url": "https://www.hsbc.ae/credit-cards/products/max-rewards/",
-    "data_caveat": "The card is not available for new applications. The current servicing page does not publish application eligibility. The reward value is redemption-dependent, so no fixed value is asserted. Minimum salary (AED 12,500) and minimum age (21) are inferred from HSBC UAE Signature-tier requirements; the official page for this legacy product does not publish them."
+    "data_caveat": "CLOSED TO NEW APPLICANTS (issuer: \"This card isn't available to new customers\"), so it is scored for existing holders but never recommended. BASE SPLIT 2026-08-08 (D17): the recorded string was \"1 point per AED 1; 2 points per AED 1 when monthly eligible spend exceeds AED 3,000\", a spend-TIERED rate the engine cannot express, which held the whole card at low confidence. Per the D14 rule the LOWER tier is encoded and the card now parses cleanly; holders spending over AED 3,000/month earn double and are UNDERSTATED here. Further doubling exists and is likewise not modelled: dining above AED 3,000/mo, entertainment/fitness/sports above AED 6,000, and foreign currency / lifestyle shopping / travel above AED 9,000. VALUATION STILL UNRESOLVED: the issuer publishes only redemption CHANNELS (Points Exchange to airline miles or hotel points), not an AED rate, so HSBC Rewards Points remain a flagged 0.0075 placeholder.",
+    "closed_to_new_applicants": true
   },
   {
     "id": "ei_flex_elite",
@@ -767,17 +792,23 @@
     "rewards": {
       "type": "points",
       "currency": "Amazon Reward Points",
-      "base_rate": "Prime members: up to 2% on eligible domestic non-Amazon spend and up to 2.5% on eligible international spend; non-Prime members: 1% on each",
+      "base_rate": "1% on eligible domestic spend",
       "categories": [
         {
-          "category": "amazon_ae_prime_members",
-          "rate": "Up to 6%",
+          "category": "amazon_ae_non_prime_members",
+          "rate": "3%",
           "monthly_cap": null,
           "annual_cap": null
         },
         {
-          "category": "amazon_ae_non_prime_members",
-          "rate": "3%",
+          "category": "uk_and_eea_spend",
+          "rate": "0.25%",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "supermarkets_telecom_education_fuel_government_takaful_auto_transport_real_estate",
+          "rate": "0.25%",
           "monthly_cap": null,
           "annual_cap": null
         }
@@ -797,7 +828,7 @@
       "No published reward earning limit"
     ],
     "source_url": "https://www.emiratesislamic.ae/en/Personal-Banking/Cards/credit-cards/amazon-credit-card",
-    "data_caveat": "The official page uses up to wording because eligible-category treatment applies. The raw wording is retained instead of assuming every transaction earns the maximum."
+    "data_caveat": "PUBLISHABLE as of 2026-08-08 (D17); the DO-NOT-PUBLISH hold is lifted. The hold existed because rates depend on Amazon Prime status, which the engine has no way to know, and the card was carrying two unresolved \"Up to X%\" ceilings. Emirates Islamic has now published the full two-column grid, so the resolution recorded in the previous caveat is applied: PUBLISH THE NON-PRIME BASELINE, the lower column, and understate Prime members. Non-Prime encoded: on-Amazon 3%, domestic off-Amazon 1% (base), EEA+UK 0.25%, and the named low-earn list 0.25%. Prime column, NOT encoded and therefore understated for those members: on-Amazon 6%, international 2.5%, EEA+UK 2%, domestic up to 2%. WHAT LICENSES THE CERTAIN 1% BASE: the issuer's \"Up to 1%\" for domestic off-Amazon is explained by the 0.25% named-category row beneath it, and both are now encoded - the D14 condition, where a ceiling becomes certain only once the reduced grid underneath it is captured, not assumed away. EEA COLLAPSE (D14 rule, take the lower): international 1% and EEA+UK 0.25% both map to canonical `international`, so only the 0.25% is encoded and non-EEA international spend is understated. Amazon Ultra-Fast Grocery and Gift Cards (1% non-Prime) is not encoded separately; it is a sub-case of on-Amazon spend. NOT MODELLED: points are only earned on monthly transactions up to the assigned credit limit, a per-holder ceiling the engine cannot see. Redemption is 1 Amazon Reward Point = AED 1. BASE SCOPE TRIMMED: the string read \"1% on eligible domestic non-Amazon spend\"; on-Amazon spend is already its own category, so \"non-Amazon\" restated the structure and cost the card a tier-2 flag for nothing. Same call as the enbd_uemaar_signature \"non-Emaar\" trim in D13."
   },
   {
     "id": "dib_consumer_platinum",
@@ -1056,46 +1087,60 @@
     "rewards": {
       "type": "cashback",
       "currency": "AED (RAKBANK cashback)",
-      "base_rate": "Up to 2% standard cashback on eligible worldwide spend",
+      "base_rate": "1%",
       "categories": [
         {
           "category": "supermarkets",
-          "rate": "Up to 5%",
+          "rate": "5%",
           "monthly_cap": 100,
           "annual_cap": null
         },
         {
           "category": "dining",
-          "rate": "Up to 5%",
+          "rate": "5%",
           "monthly_cap": 100,
           "annual_cap": null
         },
         {
           "category": "cinemas",
-          "rate": "Up to 50%",
+          "rate": "50%",
           "monthly_cap": 100,
           "annual_cap": null
         },
         {
           "category": "video_streaming",
-          "rate": "Up to 50%",
+          "rate": "50%",
+          "monthly_cap": 100,
+          "annual_cap": null
+        },
+        {
+          "category": "fuel_transit_government_utilities_real_estate_education_telecom",
+          "rate": "0.25%",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "all_other_spend",
+          "rate": "1%",
           "monthly_cap": 100,
           "annual_cap": null
         }
       ],
-      "overall_cap": null,
+      "overall_cap": 600,
       "min_monthly_spend_required_aed": 2000
     },
     "redemption": {
       "currency": "AED cashback",
-      "primary_uses": ["Statement credit via the RAKBANK mobile app, minimum AED 100; unredeemed cashback expires 15 months after it is earned"],
+      "primary_uses": [
+        "Statement credit via the RAKBANK mobile app, minimum AED 100; unredeemed cashback expires 15 months after it is earned"
+      ],
       "redemption_url": "https://www.rakbank.ae/en/cards/credit-cards/titanium-credit-card"
     },
     "benefits": [
       "No annual fee"
     ],
     "source_url": "https://www.rakbank.ae/en/cards/credit-cards/titanium-credit-card",
-    "data_caveat": "RAKBANK uses up to wording and the live page does not expose the complete spend-tier table or salary threshold in accessible text. Maximum category caps are recorded; no fixed RAKrewards AED value is assumed because this product pays cashback."
+    "data_caveat": "PUBLISHABLE as of 2026-08-08 (D16). The hold was lifted because the exact evidence its own resolution condition demanded was supplied: RAKBANK's product page stating per-category cashback percentages AND their monthly caps TOGETHER, plus the separation of promotional from standing terms. Three independent checks passed. (1) CAP ARITHMETIC CLOSES: the six stated per-category caps (supermarket 100, dining 100, cinema 100, video streaming 100, e-wallet retail 100, non-e-wallet retail 100) sum to exactly the AED 600 total monthly cap already recorded from the separately-supplied schedule - two sources agreeing on a figure neither derives from the other. (2) PROMOTIONAL vs STANDING is now separable: the AED 500 welcome bonus is explicitly dated 15 Jul - 15 Sep 2026, while the cashback percentages carry no date, which retires the leading 'the headline rates are promotional' hypothesis. (3) The AED 2,000 minimum monthly spend is restated against every category. FIXED IN THE SAME PASS: the non-e-wallet retail rate is capped at AED 100/mo and the engine was modelling it as an UNCAPPED base rate; it is now encoded as `all_other_spend` with that cap, which also stops the virtual uncapped base being synthesised. RESIDUAL, deliberately conservative: the 0.25% low-earn bucket is NOT mentioned on the product page and rests solely on the 1 Sep 2024 schedule - kept, because dropping it would raise the card's score and absence from a marketing page is not evidence of absence. The 2% e-wallet retail tier is still NOT encoded (it and standard retail both map to canonical `other`, so encoding it would shadow the 1% and overstate; D14 rule: encode the lower), so e-wallet spend remains understated. PRIOR HOLD, retained for the record: it read a 4.31% net annual return on a mid-range profile with NO annual fee, driven by 50% cashback on cinemas and video streaming; its AED 600 total monthly cap implies up to AED 7,200/year free-for-life. That exceeds the study's own bar (\"a UAE credit card returning >8% of total spend does not exist\"), and admitting both cards moved the PUBLISHABLE median optimal return from 3.98% to 6.49% of spend with p90 at 7.80% - a 63% jump in the headline caused by two cards. The encoding was re-checked line by line against the supplied schedule and matches it, so the doubt is about the SOURCE, not the transcription. MOST LIKELY EXPLANATIONS, in order: the 10%/50% headline rates are promotional or introductory rather than standing; the per-category caps are lower than recorded; or the rates apply only above a spend tier not captured here. NEEDED TO RESOLVE: the RAKBANK Key Fact Statement or Cashback Information leaflet showing per-category cashback percentages AND their monthly caps together, plus whether the schedule is promotional. Until then this card is scored (its strings are sound) but must not carry a published claim. RESOLVED 2026-08-05 (D15) from the RAKBANK cashback schedule effective 1 Sep 2024, supplied directly; the live page publishes only 'up to' values and defers to a leaflet/Key Fact Statement. All five ceilings are now certain rates. BASE CORRECTED 2% -> 1%: the advertised 'up to 2%' is the E-WALLET rate; standard Other Retail earns 1%. The 2% e-wallet tier is NOT encoded because both it and standard retail map to canonical `other`, so encoding 2% would shadow the 1% and overstate; per the D14 rule the lower rate is used. E-wallet spend is therefore understated. NEW: the 0.25% low-earn bucket (charities, government, bill payments, schools, education, transit, transport, telecom, real estate, petrol) was absent entirely - previously that spend earned the base rate, a 4x overstatement. overall_cap set to the stated AED 600 total monthly cap (AED 400 premium + AED 200 retail), which was null before, so the card was uncapped in aggregate. Redemption needs a minimum AED 100 balance; cashback expires 15 months from earning."
   },
   {
     "id": "rakbank_red",
@@ -1125,7 +1170,9 @@
     },
     "redemption": {
       "currency": "AED cashback",
-      "primary_uses": ["Statement credit; unredeemed cashback expires 15 months after it is earned"],
+      "primary_uses": [
+        "Statement credit; unredeemed cashback expires 15 months after it is earned"
+      ],
       "redemption_url": "https://www.rakbank.ae/en/cards/credit-cards/red-credit-card"
     },
     "benefits": [
@@ -1236,7 +1283,7 @@
       "No annual fee"
     ],
     "source_url": "https://www.cbd.ae/personal/cards/credit-cards/visa-platinum",
-    "data_caveat": "The current official page does not expose the category schedule behind up to 1.5 points per AED 1. The raw official statement is preserved and should be treated as unresolved for deterministic scoring."
+    "data_caveat": "DO NOT PUBLISH. 2026-08-05 (D15): the official spend-tier table was obtained (cbd.ae returns HTTP 403 to automated fetches; supplied directly). It is a SPEND-TIERED card - monthly spend AED 0-5,000 earns 0.55%, 5,001-10,000 earns 2%, 10,001-15,000 earns 3%, 15,001+ earns 5% - which is the blocked class described in D10: the earned rate depends on how much spend the optimizer routes to this card, but rates are precomputed into fixed edge costs BEFORE the min-cost max-flow solve, and the allocation IS the flow solution. Circular. This card is therefore blocked on an ENGINE DESIGN DECISION, no longer on research. UNRESOLVED CONTRADICTION, do not paper over: the recorded earn rate is 'up to 1.5 CBD Reward Points per AED 1' which at the newly-sourced 0.004 AED/point is ~0.6% - consistent with the 0.55% BOTTOM tier but irreconcilable with the 5% top tier, which would require ~12.5 points/AED. Either the 1.5 figure describes only the base tier, or the two sources describe different products. Needs the issuer's points-per-AED table by tier. Valuation sourced: 1 Reward Point = AED 0.004, minimum redemption 10,000 points."
   },
   {
     "id": "sc_journey",
@@ -1259,17 +1306,17 @@
     "rewards": {
       "type": "points",
       "currency": "360 Rewards Points",
-      "base_rate": "2 360 Rewards Points per AED 1 on eligible local spend",
+      "base_rate": "2 360 Rewards Points per USD 1 on eligible local spend",
       "categories": [
         {
           "category": "international_spend",
-          "rate": "4 360 Rewards Points per AED 1",
+          "rate": "4 360 Rewards Points per USD 1",
           "monthly_cap": null,
           "annual_cap": null
         },
         {
           "category": "utilities_school_fees_fuel",
-          "rate": "0.5 360 Rewards Points per AED 1",
+          "rate": "0.5 360 Rewards Points per USD 1",
           "monthly_cap": null,
           "annual_cap": null
         }
@@ -1291,7 +1338,7 @@
       "Airport transfers and golf subject to spend conditions"
     ],
     "source_url": "https://www.sc.com/ae/credit-cards/journey/",
-    "data_caveat": "Points accrue on AED spend, not USD. The card is a standalone open-market product and does not require a Standard Chartered current or savings account."
+    "data_caveat": "UNIT CORRECTED 2026-08-08 (D17), per AED -> per USD. Standard Chartered's own page states 'Earn 4 360 Rewards Points for every USD 1 spent internationally' and '2 360 Rewards Points for every USD 1 spent locally'. Every rate on this card was recorded per-AED, so the card was OVERSTATED BY THE FX RATE (~3.6725x). This entry previously asserted the exact opposite - 'Points accrue on AED spend, not USD' - which the issuer's page contradicts; that claim carried no source and is withdrawn. Same defect class as the Citi unit error in D15a, at a different bank, which is why it should be suspected programme-wide rather than treated as a one-card typo. OPEN: sc_smart_saadiq still records 360 Rewards per AED 1 and no source for ITS earn rate has been supplied - if Standard Chartered quotes this programme per-USD generally then that card is overstated 3.67x too. It is left unchanged because changing it would be inventing a rate, but it is suspect until its earn table is seen. The card is a standalone open-market product and does not require a Standard Chartered current or savings account."
   },
   {
     "id": "sc_x",
@@ -1429,11 +1476,11 @@
     "rewards": {
       "type": "points",
       "currency": "Citi ThankYou Points",
-      "base_rate": "1 Citi ThankYou Point per AED 1 on eligible local spend",
+      "base_rate": "1 Citi ThankYou Point per USD 1",
       "categories": [
         {
-          "category": "grocery_and_non_aed_spend",
-          "rate": "1.5 Citi ThankYou Points per AED 1",
+          "category": "international_spend",
+          "rate": "1.5 Citi ThankYou Points per USD 1",
           "monthly_cap": null,
           "annual_cap": null
         }
@@ -1454,7 +1501,8 @@
       "Airport lounge access subject to Mastercard conditions",
       "Movie and delivery offers subject to conditions"
     ],
-    "source_url": "https://www.citibank.ae/credit-cards/rewards/citi-rewards-credit-card"
+    "source_url": "https://www.citibank.ae/credit-cards/rewards/citi-rewards-credit-card",
+    "data_caveat": "UNIT CORRECTED 2026-08-05 (D15): ThankYou Points are earned PER USD, not per AED. The record said 'per AED 1', overstating every Citi card by the FX rate (~3.67x). Issuer conversion: 1 AED = 0.271 USD, matching the engine's AED_PER_USD = 3.6725. THIS RESOLVES THE D2 CONTRADICTION: at 2 pts/AED x 0.0333 AED/pt the card implied a 6.7% return on all domestic spend, which no UAE card pays; at the correct 2 pts/USD it is ~1.8%. Neither the earn rate nor the rebate rate was wrong - the UNIT was, exactly as this changelog suspected but never applied. The publication block recorded in D2/D14c is therefore RELEASED for these cards. (Worded deliberately without the blocking phrase: the study's filter does a substring match on that phrase, so a caveat SAYING it was lifted would silently keep the card excluded. Found and fixed during D15.) Reduced-rate categories (insurance, education, real estate, transport, utilities, telecom, government) are stated to earn less but the rate is not published; they are NOT encoded, so those categories are overstated at the base rate. Source: issuer earn tables supplied 2026-08-05. The old record folded groceries and non-AED into one `grocery_and_non_aed_spend` bucket at 1.5; the issuer table shows 1.5 applies to NON-AED only, with groceries at the 1 pt/USD base. The bucket is split accordingly, REMOVING an overstatement on groceries."
   },
   {
     "id": "fab_etihad_guest_infinite",
@@ -1490,12 +1538,6 @@
           "rate": "7 miles per AED 10",
           "monthly_cap": null,
           "annual_cap": null
-        },
-        {
-          "category": "optional_miles_accelerator",
-          "rate": "7.5 miles per AED 10 on eligible spend after enrolling in the paid AED 250 monthly accelerator",
-          "monthly_cap": null,
-          "annual_cap": null
         }
       ],
       "overall_cap": null,
@@ -1512,9 +1554,11 @@
       "55,000-mile activation bonus",
       "75% Miles Discount Voucher subject to conditions",
       "Fast track to Etihad Guest Gold",
-      "65,000 Etihad Guest Miles welcome bonus on meeting the spend threshold within 60 days"
+      "65,000 Etihad Guest Miles welcome bonus on meeting the spend threshold within 60 days",
+      "Optional paid Miles Accelerator: 7.5 miles per AED 10 for AED 250/month (AED 3,000/year)"
     ],
-    "source_url": "https://www.bankfab.com/en-ae/personal/credit-cards/etihad-guest-infinite"
+    "source_url": "https://www.bankfab.com/en-ae/personal/credit-cards/etihad-guest-infinite",
+    "data_caveat": "The optional Miles Accelerator was previously a scored category, which credited 7.5 miles/AED 10 on ALL spend while its AED 250/month (AED 3,000/year) cost was invisible to the fee model — an unambiguous overstatement. It now lives in `benefits`, displayed but never scored. Encoding it properly needs an opt-in add-on with its own cost, which the schema has no slot for; until then the card scores on its unaccelerated 3.5 miles/AED 10 base, which is the conservative direction."
   },
   {
     "id": "fab_etihad_guest_signature",
@@ -1537,8 +1581,21 @@
     "rewards": {
       "type": "miles",
       "currency": "Etihad Guest Miles",
-      "base_rate": "Up to 6.5 Etihad Guest Miles per AED 10",
-      "categories": [],
+      "base_rate": "2.75 miles per AED 10",
+      "categories": [
+        {
+          "category": "non_aed_spend",
+          "rate": "4.5 miles per AED 10",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "etihad_and_selected_partners",
+          "rate": "5.5 miles per AED 10",
+          "monthly_cap": null,
+          "annual_cap": null
+        }
+      ],
       "overall_cap": null,
       "min_monthly_spend_required_aed": 0
     },
@@ -1551,10 +1608,11 @@
     },
     "benefits": [
       "35,000-mile activation bonus",
-      "50% Miles Discount Voucher after AED 150,000 annual spend"
+      "50% Miles Discount Voucher after AED 150,000 annual spend",
+      "Optional paid Miles Accelerator: 6.5 miles per AED 10 for AED 250/month (AED 3,000/year)"
     ],
     "source_url": "https://www.bankfab.com/en-ae/personal/credit-cards/etihad-guest-signature",
-    "data_caveat": "The official page confirms salary, annual fee and maximum earn rate but not the category-level earn table in accessible page text. The maximum is not treated as a flat base rate."
+    "data_caveat": "2026-08-05: the prior note said the page does not expose 'the category-level earn table'. IT DOES — refetched successfully. The card previously had base 'Up to 6.5 miles per AED 10' and NO categories, so its entire score rested on one ceiling. The 6.5 turns out to be the OPTIONAL PAID Miles Accelerator rate (AED 250/month, AED 3,000/year) used as the headline — the identical defect removed from fab_etihad_guest_infinite. Real published rates now encoded: 2.75 per AED 10 domestic (base), 4.5 non-AED international, 5.5 Etihad and partners. The accelerator moved to `benefits`, displayed but never scored, because the schema has no slot for a paid opt-in with its own cost. Page states no reduced categories, caps or annual maximums. Source: bankfab.com/en-ae/personal/credit-cards/etihad-guest-signature."
   },
   {
     "id": "adcb_lulu_platinum",
@@ -1576,7 +1634,7 @@
     },
     "rewards": {
       "type": "points",
-      "currency": "LuLu Points",
+      "currency": "LuLu Points (ADCB)",
       "base_rate": "1.25 LuLu Points per AED 1 on eligible local spend",
       "categories": [
         {
@@ -1608,7 +1666,7 @@
       "min_monthly_spend_required_aed": 0
     },
     "redemption": {
-      "currency": "LuLu Points",
+      "currency": "LuLu Points (ADCB)",
       "primary_uses": [
         "Redeem at LuLu stores; 5,000 points = AED 50, equal to AED 0.01 per point"
       ],
@@ -1754,14 +1812,7 @@
       "type": "cashback",
       "currency": "talabat credit",
       "base_rate": "1.25% back as talabat credit on other eligible retail purchases",
-      "categories": [
-        {
-          "category": "first_10_talabat_orders",
-          "rate": "35% back; maximum AED 35 per order",
-          "monthly_cap": 350,
-          "annual_cap": null
-        }
-      ],
+      "categories": [],
       "overall_cap": 350,
       "min_monthly_spend_required_aed": 2500
     },
@@ -1773,10 +1824,11 @@
       "redemption_url": "https://www.adcb.com/en/personal/cards/credit-cards/talabat-credit-card"
     },
     "benefits": [
-      "Unlimited talabat pro delivery subject to minimum order values"
+      "Unlimited talabat pro delivery subject to minimum order values",
+      "Acquisition promo: 35% back (max AED 35 per order) on the FIRST 10 talabat orders only"
     ],
     "source_url": "https://www.adcb.com/en/personal/cards/credit-cards/talabat-credit-card",
-    "data_caveat": "The current official page does not expose the annual or joining fee in accessible text. If AED 2,500 monthly spend is not reached, talabat orders earn the 1.25% base rate."
+    "data_caveat": "The current official page does not expose the annual or joining fee in accessible text. If AED 2,500 monthly spend is not reached, talabat orders earn the 1.25% base rate. The 35%-back offer is a ONE-TIME acquisition promo on the first 10 orders; it was previously encoded as a scored category, which applied it to all dining forever and inflated this card. It now lives in `benefits` (displayed, never scored) — steady-state talabat spend correctly earns the 1.25% base."
   },
   {
     "id": "mashreq_noon",
@@ -1799,7 +1851,7 @@
     "rewards": {
       "type": "cashback",
       "currency": "AED",
-      "base_rate": "0.5% on other eligible domestic retail spend at non-partner merchants",
+      "base_rate": "0.5% on other eligible domestic retail spend",
       "categories": [
         {
           "category": "noon_noon_food_noon_minutes_noon_supermall_nownow_namshi",
@@ -1950,7 +2002,6 @@
     },
     "benefits": [
       "Skywards Silver status",
-
       "Miles do not expire while both linked accounts remain open",
       "Unlimited lounge access subject to conditions"
     ],
@@ -1977,8 +2028,14 @@
     "rewards": {
       "type": "cashback",
       "currency": "Cashback Points",
-      "base_rate": "1% on other eligible spend; 0.5% on telecom, utilities, real estate and government spend",
+      "base_rate": "1% on other eligible spend",
       "categories": [
+        {
+          "category": "government_utilities_charity",
+          "rate": "0.5%",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
         {
           "category": "lifestyle_supermarkets",
           "rate": "4%",
@@ -2059,17 +2116,35 @@
     "rewards": {
       "type": "miles",
       "currency": "Emirates Skywards Miles",
-      "base_rate": "Up to 1 mile per USD equivalent on eligible domestic AED spend",
+      "base_rate": "1 mile per USD 1",
       "categories": [
         {
           "category": "emirates_and_flydubai_aed_spend",
-          "rate": "Up to 2 miles per USD equivalent",
+          "rate": "2 miles per USD 1",
           "monthly_cap": null,
           "annual_cap": null
         },
         {
           "category": "non_aed_spend",
-          "rate": "Up to 1.5 miles per USD equivalent",
+          "rate": "1.5 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "groceries",
+          "rate": "0.5 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "fuel_and_automotive",
+          "rate": "0.25 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "government_utilities_education_charity_rental_telecom",
+          "rate": "0.15 miles per USD 1",
           "monthly_cap": null,
           "annual_cap": null
         }
@@ -2089,7 +2164,7 @@
       "Lounge access, golf and meet-and-greet benefits"
     ],
     "source_url": "https://www.emiratesislamic.ae/en/cards/credit-cards/skywards-infinite-credit-card",
-    "data_caveat": "The official page uses up to wording and does not expose salary, fee or the reduced-category table in accessible text. The maximum rates are not treated as guaranteed flat rates."
+    "data_caveat": "2026-08-05: the prior note said the page 'does not expose the reduced-category table in accessible text'. IT DOES — refetched successfully and it publishes the full grid, which is why the three 'Up to' ceilings are now certain rates. The 'up to' existed BECAUSE of the reduced buckets, and those are now encoded: grocery 0.5, fuel/telecom/real-estate 0.25, government/automobiles/takaful/education 0.15 miles per USD 1, against a general domestic 1, Emirates/flydubai 2, non-AED 1.5. This is NOT the discredited 'score a ceiling at its ceiling' move — the variance is enumerated and encoded, not assumed away. TWO conservative compromises: (1) telecom officially earns 0.25 but the canonical model has no telecom separate from utilities, so all utilities take the LOWER 0.15; (2) automobiles/takaful have no canonical category and fall to `other` at the base rate. RESIDUAL RISK: if reduced buckets exist that the page does not list, the base is overstated. Salary and fee are still not exposed. Source: emiratesislamic.ae/en/cards/credit-cards/skywards-infinite-credit-card."
   },
   {
     "id": "ei_cashback",
@@ -2174,13 +2249,13 @@
         },
         {
           "category": "dining",
-          "rate": "10 Wala’a Rewards per AED 1, advertised as 5% back",
+          "rate": "10 Wala’a Rewards per AED 1",
           "monthly_cap": 5000,
           "annual_cap": null
         },
         {
           "category": "travel_flights_hotels",
-          "rate": "10 Wala’a Rewards per AED 1, advertised as 5% back",
+          "rate": "10 Wala’a Rewards per AED 1",
           "monthly_cap": 10000,
           "annual_cap": null
         }
@@ -2293,12 +2368,6 @@
           "rate": "0.2 Wala’a Rewards per AED 1",
           "monthly_cap": null,
           "annual_cap": null
-        },
-        {
-          "category": "eu_spend",
-          "rate": "0 Wala’a Rewards",
-          "monthly_cap": null,
-          "annual_cap": null
         }
       ],
       "overall_cap": null,
@@ -2315,7 +2384,7 @@
       "Visa Infinite travel and lifestyle benefits"
     ],
     "source_url": "https://www.dib.ae/personal/cards/prime-infinite-card",
-    "data_caveat": "All transactions executed within the European Economic Area earn zero Wala'a Rewards; DIB strips point generation on EEA spend to offset interchange margins.",
+    "data_caveat": "All transactions executed within the European Economic Area earn zero Wala'a Rewards; DIB strips point generation on EEA spend to offset interchange margins. 2026-08-05 (D15): this fact was encoded TWICE - once correctly in `excluded_spend` and once as an `eu_spend` category with the unparseable rate string '0 Wala'a Rewards', which was the card's only tier-3 string. The duplicate category has been REMOVED. Scoring is unchanged: `excluded_spend` already zeroes ALL canonical `international` spend, which is strictly broader than EEA and is the conservative bound. See the excluded_spend reason for why that understates non-EEA foreign spend and what would be needed to model it exactly.",
     "excluded_spend": [
       {
         "category": "international",
@@ -2344,17 +2413,23 @@
     "rewards": {
       "type": "miles",
       "currency": "Emirates Skywards Miles",
-      "base_rate": "Up to 1 mile per USD equivalent on eligible local spend",
+      "base_rate": "1 mile per USD 1",
       "categories": [
         {
           "category": "emirates_spend",
-          "rate": "2 miles per USD equivalent",
+          "rate": "2 miles per USD 1",
           "monthly_cap": null,
           "annual_cap": null
         },
         {
           "category": "foreign_currency_spend",
-          "rate": "Up to 1.5 miles per USD equivalent",
+          "rate": "0.75 miles per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "government_transit_utilities_telecom_education_real_estate_fuel_grocery_insurance_auto",
+          "rate": "0.3 miles per USD 1",
           "monthly_cap": null,
           "annual_cap": null
         }
@@ -2374,7 +2449,7 @@
       "Airport transfer benefits subject to conditions"
     ],
     "source_url": "https://www.dib.ae/personal/cards/emirates-skywards-dib-infinite-covered-card",
-    "data_caveat": "The official page publishes the annual fee and headline earning schedule but not application salary or the lower-rate category grid in accessible text."
+    "data_caveat": "2026-08-05: the prior note said the page does not expose 'the lower-rate category grid'. IT DOES — refetched successfully. The reduced bucket (government bills, supermarkets, utilities, insurance, automobiles, education, fuel, real estate, telecom, transport) is a flat 0.3 miles per USD 1 and maps EXACTLY onto the existing `government_transit_utilities_telecom_education_real_estate_fuel_grocery_insurance_auto` key. Encoding it is what makes the 'Up to 1 mile' local ceiling a certain 1 — the variance is enumerated, not assumed away. FOREIGN SPEND, deliberate understatement: the page gives 1.5 miles general foreign but 0.75 for the European Economic Area, and both collapse into the single canonical `international` category, so the LOWER 0.75 is encoded per the conservative rule. This understates non-EEA foreign spend by half. It coincidentally preserves the previous ranking exactly, since the old 'Up to 1.5' scored as a 0..1.5 range whose midpoint was also 0.75. Fixing it properly needs an EEA/non-EEA split in the spend model — the same structural gap adcb_365_cashback documents. Application salary is still not exposed. Source: dib.ae/personal/cards/emirates-skywards-dib-infinite-covered-card."
   },
   {
     "id": "rakbank_world",
@@ -2397,46 +2472,54 @@
     "rewards": {
       "type": "cashback",
       "currency": "AED (RAKBANK cashback)",
-      "base_rate": "Up to 3% on eligible retail spend",
+      "base_rate": "1%",
       "categories": [
         {
           "category": "supermarkets",
-          "rate": "Up to 10%",
+          "rate": "10%",
           "monthly_cap": 300,
           "annual_cap": null
         },
         {
           "category": "dining",
-          "rate": "Up to 10%",
+          "rate": "10%",
           "monthly_cap": 300,
           "annual_cap": null
         },
         {
           "category": "travel_and_hotels",
-          "rate": "Up to 10%",
+          "rate": "10%",
           "monthly_cap": 400,
           "annual_cap": null
         },
         {
-          "category": "other_retail",
-          "rate": "Up to 3%",
+          "category": "fuel_transit_government_utilities_real_estate_education_telecom",
+          "rate": "0.25%",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "all_other_spend",
+          "rate": "1%",
           "monthly_cap": 100,
           "annual_cap": null
         }
       ],
-      "overall_cap": 1100,
+      "overall_cap": 1250,
       "min_monthly_spend_required_aed": 10000
     },
     "redemption": {
       "currency": "AED cashback",
-      "primary_uses": ["Statement credit; unredeemed cashback expires 15 months after it is earned"],
+      "primary_uses": [
+        "Statement credit; unredeemed cashback expires 15 months after it is earned"
+      ],
       "redemption_url": "https://www.rakbank.ae/en/cards/credit-cards/world-credit-card"
     },
     "benefits": [
       "Mastercard lounge and travel benefits subject to conditions"
     ],
     "source_url": "https://www.rakbank.ae/en/cards/credit-cards/world-credit-card",
-    "data_caveat": "The live product page confirms the headline categories but does not expose the tier thresholds, application salary or annual fee in accessible text. Maximum rates and caps are preserved and should not be treated as unconditional. min_monthly_spend_required_aed set to 10000 from aggregator sources describing a AED 10,000/month minimum to qualify for cashback; the official T&C has not been read. Sourced caps (supermarket AED 400/mo, travel AED 600/mo) are HIGHER than the 300/300/400 recorded here — the lower values are retained deliberately as the conservative choice pending the official table."
+    "data_caveat": "PUBLISHABLE as of 2026-08-08 (D16). The hold was lifted because the exact evidence its own resolution condition demanded was supplied: RAKBANK's product page stating per-category cashback percentages AND their monthly caps TOGETHER, plus the separation of promotional from standing terms. Three independent checks passed. (1) CAP ARITHMETIC CLOSES: the five stated per-category caps (travel & hotels 400, supermarket 300, dining 300, e-wallet retail 150, non-e-wallet retail 100) sum to exactly the AED 1,250 total monthly cap already recorded from the separately-supplied schedule - two sources agreeing on a figure neither derives from the other. (2) PROMOTIONAL vs STANDING is now separable: the AED 750 welcome bonus is explicitly dated 15 Jul - 15 Sep 2026, while the cashback percentages carry no date, which retires the leading 'the headline rates are promotional' hypothesis. (3) The AED 10,000 minimum monthly spend is restated against every category. FIXED IN THE SAME PASS: the non-e-wallet retail rate is capped at AED 100/mo and the engine was modelling it as an UNCAPPED base rate applying to every non-bonus category; `other_retail` (which reached canonical `other` only) is replaced by `all_other_spend` at 1% capped 100, which is the faithful catch-all and stops the virtual uncapped base being synthesised. RESIDUAL, deliberately conservative: the 0.25% low-earn bucket is NOT mentioned on the product page and rests solely on the 1 Sep 2024 schedule - kept, because dropping it would raise the card's score and absence from a marketing page is not evidence of absence. The 3% e-wallet retail tier is still NOT encoded (D14 rule: encode the lower), so e-wallet spend remains understated. NOT MODELLED, both are PERKS rather than earn rates and must never become categories: 12 months of Careem Plus (10% back on up to 10 rides, free delivery) and 50% off up to 4 VOX cinema tickets per month. PRIOR HOLD, retained for the record: it read a 5.12% net annual return on a mid-range profile, and its schedule implies up to AED 15,000/year (the AED 1,250 total monthly cap) against the AED 120,000 annual spend it requires to unlock - 12.5%. That exceeds the study's own bar (\"a UAE credit card returning >8% of total spend does not exist\"), and admitting both cards moved the PUBLISHABLE median optimal return from 3.98% to 6.49% of spend with p90 at 7.80% - a 63% jump in the headline caused by two cards. The encoding was re-checked line by line against the supplied schedule and matches it, so the doubt is about the SOURCE, not the transcription. MOST LIKELY EXPLANATIONS, in order: the 10%/50% headline rates are promotional or introductory rather than standing; the per-category caps are lower than recorded; or the rates apply only above a spend tier not captured here. NEEDED TO RESOLVE: the RAKBANK Key Fact Statement or Cashback Information leaflet showing per-category cashback percentages AND their monthly caps together, plus whether the schedule is promotional. Until then this card is scored (its strings are sound) but must not carry a published claim. RESOLVED 2026-08-05 (D15) from the RAKBANK cashback schedule effective 1 Sep 2024, supplied directly; the live page publishes only 'up to' values. All ceilings are now certain rates. BASE CORRECTED 3% -> 1%: the advertised 'up to 3%' is the E-WALLET rate; standard Other Retail earns 1%. The 3% e-wallet tier is NOT encoded - it and standard retail both map to canonical `other`, so it would shadow the 1% and overstate (D14 rule: encode the lower). E-wallet spend is understated. NEW: the 0.25% low-earn bucket (charities, government, bill payments, schools, education, transit, transport, telecom, real estate, petrol) was absent entirely, so that spend previously earned the base rate - a 4x overstatement. overall_cap corrected 1100 -> 1250 (the stated total monthly cap). Requires AED 10,000 monthly spend to unlock; redemption needs a minimum AED 300 balance."
   },
   {
     "id": "rakbank_air_arabia_platinum",
@@ -2459,7 +2542,7 @@
     "rewards": {
       "type": "points",
       "currency": "AirRewards",
-      "base_rate": "0.3 AirRewards Points per AED 1 on eligible local spend (1.5 points per AED 5)",
+      "base_rate": "0.3 AirRewards Points per AED 1 on eligible local spend",
       "categories": [
         {
           "category": "international_spend",
@@ -2489,7 +2572,7 @@
       "Complimentary annual return flight and airport transfers subject to conditions"
     ],
     "source_url": "https://www.rakbank.ae/en/cards/credit-cards/air-arabia-platinum",
-    "data_caveat": "The live official page does not expose earn rates, caps, salary or fee figures in accessible text. The card is included for coverage but must remain unscored until the official schedule is available."
+    "data_caveat": "DO NOT PUBLISH — the live official page does not expose earn rates, caps, salary or fee figures in accessible text, so the rates here are unverified provenance. The AirRewards valuation is also an unresearched 0.0075 placeholder and the rates are per-AED, so unit counts bite directly. The rate STRINGS parse cleanly (0.3 = 1.5 per AED 5), which is why the card is sound; soundness is not provenance. Restore to publishable only once the official earn schedule is sourced."
   },
   {
     "id": "cbd_one",
@@ -2618,11 +2701,11 @@
     "rewards": {
       "type": "cashback",
       "currency": "AED",
-      "base_rate": "1% on eligible domestic retail spend; domestic airline transactions earn standard category rates",
+      "base_rate": "1% on eligible domestic retail spend",
       "categories": [
         {
           "category": "international_and_direct_airline_spend",
-          "rate": "Up to 2% on non-AED foreign currency spend",
+          "rate": "2%",
           "monthly_cap": null,
           "annual_cap": null
         },
@@ -2647,7 +2730,7 @@
       "Airport lounge access and cinema offers subject to conditions"
     ],
     "source_url": "https://www.sc.com/ae/credit-cards/simply-cash/",
-    "data_caveat": "This card is not available for new clients. The current page is an official servicing page for existing cardholders."
+    "data_caveat": "NOT AVAILABLE TO NEW CLIENTS — the current page is an official servicing page for existing cardholders, so this card must never be surfaced as an acquisition recommendation. See the open question in CARD_DATA_CHANGELOG D14 about whether closed-to-new-business cards belong in the scored universe at all. RATES (2026-08-05, refetched successfully): the page states a FLAT '2% cashback on all spends made overseas or in foreign currencies' and '2% on international and airline spends' — not the 'Up to 2%' ceiling previously recorded, so that is now a certain rate. Airline spend qualifies only when transacted DIRECTLY with the airline; aggregators and travel agencies are excluded, which the canonical `travel` category cannot express, so travel booked through an OTA is overstated at 2%. No caps or tiered reductions are published. Source: sc.com/ae/credit-cards/simply-cash/"
   },
   {
     "id": "sc_smart_saadiq",
@@ -2663,8 +2746,8 @@
       "employer_restrictions": null
     },
     "fees": {
-      "annual_fee_aed": 315,
-      "waiver_conditions": "Annual fee waived when annual spend conditions are met",
+      "annual_fee_aed": 0,
+      "waiver_conditions": "No annual fee",
       "joining_fee_aed": 0
     },
     "rewards": {
@@ -2700,7 +2783,8 @@
       "Cinema benefit requires AED 3,000 billing-cycle spend"
     ],
     "source_url": "https://www.sc.com/ae/credit-cards/smart-saadiq/",
-    "data_caveat": "The live official page confirms eligibility, fee framework and redemption types but not the 360 Rewards earn schedule. The card must remain unscored until the official rate table is available."
+    "data_caveat": "CLOSED TO NEW APPLICANTS (issuer: \"This card is not available for new clients\"), so it is scored for existing holders but never recommended. FEE CORRECTED 2026-08-08 (D17): 315 -> 0. The issuer states \"No Fee On Annual Fee, Late payment and Overlimit\"; the previous 315 with a vague spend-conditional waiver had no source. SUSPECT EARN RATE: this card records 360 Rewards Points per AED 1, but sc_journey's issuer page states the same programme earns per USD 1 (see that card's D17 caveat, a 3.6725x correction). No earn table has been supplied for THIS card, so the rate is left unchanged rather than invented - but if Standard Chartered quotes 360 Rewards per-USD programme-wide, this card is overstated by the FX rate. Treat as unverified until its earn table is seen. Purchase with Rewards redeems at 100 Rewards Points = AED 1.",
+    "closed_to_new_applicants": true
   },
   {
     "id": "citi_premier",
@@ -2723,11 +2807,17 @@
     "rewards": {
       "type": "points",
       "currency": "Citi ThankYou Points",
-      "base_rate": "1 Citi ThankYou Point per AED 1 on standard local retail purchases",
+      "base_rate": "1 Citi ThankYou Point per USD 1",
       "categories": [
         {
           "category": "international_spend",
-          "rate": "1.5 Citi ThankYou Points per AED 1",
+          "rate": "2 Citi ThankYou Points per USD 1",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "supermarkets_fuel_dining",
+          "rate": "3 Citi ThankYou Points per USD 1",
           "monthly_cap": null,
           "annual_cap": null
         }
@@ -2749,7 +2839,7 @@
       "Four Careem airport transfers per year subject to conditions"
     ],
     "source_url": "https://www.citibank.ae/credit-cards/compare",
-    "data_caveat": "The current official comparison and redemption pages confirm the product and redemption value but not earn rates, salary or annual fee. No legacy figures were carried forward."
+    "data_caveat": "UNIT CORRECTED 2026-08-05 (D15): ThankYou Points are earned PER USD, not per AED. The record said 'per AED 1', overstating every Citi card by the FX rate (~3.67x). Issuer conversion: 1 AED = 0.271 USD, matching the engine's AED_PER_USD = 3.6725. THIS RESOLVES THE D2 CONTRADICTION: at 2 pts/AED x 0.0333 AED/pt the card implied a 6.7% return on all domestic spend, which no UAE card pays; at the correct 2 pts/USD it is ~1.8%. Neither the earn rate nor the rebate rate was wrong - the UNIT was, exactly as this changelog suspected but never applied. The publication block recorded in D2/D14c is therefore RELEASED for these cards. (Worded deliberately without the blocking phrase: the study's filter does a substring match on that phrase, so a caveat SAYING it was lifted would silently keep the card excluded. Found and fixed during D15.) Reduced-rate categories (insurance, education, real estate, transport, utilities, telecom, government) are stated to earn less but the rate is not published; they are NOT encoded, so those categories are overstated at the base rate. Source: issuer earn tables supplied 2026-08-05. Premier's 3 pts/USD dining+fuel+groceries accelerator was ABSENT from this record entirely and is now encoded as `supermarkets_fuel_dining`."
   },
   {
     "id": "citi_prestige",
@@ -2772,11 +2862,11 @@
     "rewards": {
       "type": "points",
       "currency": "Citi ThankYou Points",
-      "base_rate": "2 Citi ThankYou Points per AED 1 on domestic AED transactions",
+      "base_rate": "2 Citi ThankYou Points per USD 1",
       "categories": [
         {
           "category": "international_spend",
-          "rate": "3 Citi ThankYou Points per AED 1",
+          "rate": "3 Citi ThankYou Points per USD 1",
           "monthly_cap": null,
           "annual_cap": null
         }
@@ -2799,7 +2889,7 @@
       "Four Careem airport transfers per year"
     ],
     "source_url": "https://www.citibank.ae/credit-cards/compare",
-    "data_caveat": "The current official comparison and redemption pages confirm the product and redemption value but not earn rates, salary or annual fee. No legacy figures were carried forward. UNRESOLVED ARITHMETIC CONTRADICTION (same class as enbd_visa_flexi): the recorded earn of 2 ThankYou Points/AED, combined with Citibank UAE's own published travel rebate of 15,000 points = AED 500 (0.0333 AED/point), implies a 6.7% return on all domestic spend. No UAE card pays that. Exactly one of the two is wrong — most likely the earn rate is not 2/AED on all domestic spend, or the rebate is tiered — and they cannot be told apart without the official earn table. No numeric change made; do not publish a figure derived from this card. The same caveat applies to citi_premier and citi_rewards, which share the currency and valuation."
+    "data_caveat": "UNIT CORRECTED 2026-08-05 (D15): ThankYou Points are earned PER USD, not per AED. The record said 'per AED 1', overstating every Citi card by the FX rate (~3.67x). Issuer conversion: 1 AED = 0.271 USD, matching the engine's AED_PER_USD = 3.6725. THIS RESOLVES THE D2 CONTRADICTION: at 2 pts/AED x 0.0333 AED/pt the card implied a 6.7% return on all domestic spend, which no UAE card pays; at the correct 2 pts/USD it is ~1.8%. Neither the earn rate nor the rebate rate was wrong - the UNIT was, exactly as this changelog suspected but never applied. The publication block recorded in D2/D14c is therefore RELEASED for these cards. (Worded deliberately without the blocking phrase: the study's filter does a substring match on that phrase, so a caveat SAYING it was lifted would silently keep the card excluded. Found and fixed during D15.) Reduced-rate categories (insurance, education, real estate, transport, utilities, telecom, government) are stated to earn less but the rate is not published; they are NOT encoded, so those categories are overstated at the base rate. Source: issuer earn tables supplied 2026-08-05."
   },
   {
     "id": "enbd_lulu_247_platinum",
@@ -2821,33 +2911,51 @@
     },
     "rewards": {
       "type": "points",
-      "currency": "LuLu Points",
-      "base_rate": "0.7% back as LuLu Points on other eligible spend, and on all spend when the AED 2,500 monthly threshold is not met",
+      "currency": "LuLu Points (Emirates NBD)",
+      "base_rate": "0.7% back as LuLu Points on other eligible spend",
       "categories": [
         {
           "category": "lulu_in_store_and_online",
           "rate": "7%",
-          "monthly_cap": 200,
+          "monthly_cap": null,
           "annual_cap": null
         },
         {
           "category": "fuel",
           "rate": "4%",
-          "monthly_cap": 200,
+          "monthly_cap": null,
           "annual_cap": null
         },
         {
           "category": "utility_bills",
           "rate": "2%",
-          "monthly_cap": 200,
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "grocery_supermarkets_fast_food_insurance_car_dealers",
+          "rate": "0.175%",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "education",
+          "rate": "0.07%",
+          "monthly_cap": null,
+          "annual_cap": null
+        },
+        {
+          "category": "eu_and_uk_spend",
+          "rate": "0.175%",
+          "monthly_cap": null,
           "annual_cap": null
         }
       ],
-      "overall_cap": null,
+      "overall_cap": 1667,
       "min_monthly_spend_required_aed": 2500
     },
     "redemption": {
-      "currency": "LuLu Points",
+      "currency": "LuLu Points (Emirates NBD)",
       "primary_uses": [
         "Redeem at more than 70 LuLu stores"
       ],
@@ -2857,7 +2965,8 @@
       "LuLu shopping privileges",
       "Cinema benefit subject to conditions"
     ],
-    "source_url": "https://www.emiratesnbd.com/en/cards/credit-cards/lulu-247-platinum-credit-card"
+    "source_url": "https://www.emiratesnbd.com/en/cards/credit-cards/lulu-247-platinum-credit-card",
+    "data_caveat": "SCHEDULE COMPLETED 2026-08-08 (D17) from the Emirates NBD LuLu 24/7 page. CURRENCY SPLIT: this card earns LuLu Points on the 1 POINT = AED 1 scale (issuer-stated, redeemed at face value in LuLu stores), which is 100x the ADCB LuLu Points scale (5,000 = AED 50). Both were previously priced from one shared 'LuLu Points' key at 0.0075, so one of the two cards was wrong by two orders of magnitude whatever value was chosen. They are now separate currencies. CAP CORRECTED 200 -> 1,667 points per statement, applied as an OVERALL cap rather than the three per-category caps of 200 that were recorded: the issuer publishes a single statement cap and no per-category caps. Under the old shared valuation that 200 read as an AED 1.50/month ceiling, which is what made the figure obviously wrong. REDUCED GRID ADDED, all stated as a fraction of the 0.7% base: car dealerships / grocery / supermarkets (outside LuLu) / insurance / fast food earn 25% of base = 0.175%; education, government services and real estate earn 10% of base = 0.07%; EU-originating retail earns 25% of base = 0.175%. KNOWN COLLAPSE, a narrow overstatement: government services should earn 0.07% but canonical `utilities` also carries Utility Bills, which the issuer states explicitly at 2%. The 2% is kept because utility bills are the bulk of that canonical bucket for a UAE household; government-services spend is therefore credited 2% instead of 0.07%. NOT ENCODED: the welcome bonus of up to 500 LuLu Points is an acquisition promo. LuLu Points never expire."
   },
   {
     "id": "enbd_marriott_bonvoy_world",

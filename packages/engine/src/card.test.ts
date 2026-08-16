@@ -48,14 +48,18 @@ describe("cards.json conforms to the Card type", () => {
     }
   });
 
-  it("gives every card 0-7 reward categories", () => {
+  it("gives every card 0-8 reward categories", () => {
     // Lower bound 0: a flat-rate card (enbd_visa_flexi) legitimately has NO bonus
-    // categories and earns via base_rate only. Upper bound raised 3 -> 7 by the
-    // 2026-07 data: several cards (e.g. dib_consumer_platinum, ei_switch_cashback)
-    // now enumerate up to 7 compound reward categories.
+    // categories and earns via base_rate only. adcb_talabat joined it when its
+    // first-10-orders promo was moved out of `categories` (D12).
+    // Upper bound raised 3 -> 7 by the 2026-07 data, then 7 -> 8 by the D13 base-rate
+    // splits: ei_switch_cashback gained `government_utilities_charity` when its
+    // compound base ("1% on other; 0.5% on telecom/utilities/real estate/government")
+    // was split, taking it to 8. This bound DESCRIBES the data — it is not a
+    // constraint the engine relies on — so it moves when a legitimate split adds one.
     for (const card of cards) {
       expect(card.rewards.categories.length).toBeGreaterThanOrEqual(0);
-      expect(card.rewards.categories.length).toBeLessThanOrEqual(7);
+      expect(card.rewards.categories.length).toBeLessThanOrEqual(8);
     }
   });
 

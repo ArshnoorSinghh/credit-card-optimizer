@@ -150,4 +150,44 @@ export interface Card {
   // why optional: only a handful of cards strip earning from a whole segment of
   // spend. Absent = the card earns on everything its rates cover.
   excluded_spend?: ExcludedSpend[];
+  // why: a few products are closed to new applications but still held by existing
+  // customers (HSBC Max Rewards, SC Smart Saadiq — both issuers say so outright).
+  // The card is real and must still be SCORED for someone who holds it; it simply
+  // cannot be acquired, so recommending it is useless advice. Absent/false = open.
+  closed_to_new_applicants?: boolean;
+}
+
+/**
+ * True when a card's `data_caveat` forbids showing its figures to a customer.
+ *
+ * The reviewer's strongest verdict is spelled "DO NOT PUBLISH" in that free-text
+ * field, and it means the numbers are not merely soft but not yet trustworthy — the
+ * caveat usually records an implied return no UAE card pays. Such a card must never
+ * be RECOMMENDED (portfolio ranking, or a suggestion to acquire a card), though it
+ * is still scored on request, because a user who already holds it deserves an
+ * answer. A softer caveat does not block recommendation; it only flags.
+ *
+ * why a predicate on the raw field rather than a boolean column in the data: the
+ * caveat is written by a human as prose and carries the reasoning with it, which is
+ * what makes it reviewable. This reads the one verdict the engine must act on.
+ */
+export function isUnpublishable(card: Card): boolean {
+  return (card.data_caveat ?? "").toLowerCase().includes("do not publish");
+}
+
+/**
+ * Whether a card may be RECOMMENDED — put in front of someone as a card to get.
+ *
+ * Two independent reasons a real, scoreable card must not be recommended:
+ *  - `isUnpublishable`: we do not stand behind its figures yet.
+ *  - `closed_to_new_applicants`: nobody can apply for it, so the advice is useless
+ *    however good the numbers are.
+ *
+ * Deliberately NOT a filter on SCORING. Someone who already holds one of these
+ * deserves an honest answer about what it earns, and the app's held-cards baseline
+ * must include it — dropping a card the user actually has would understate their
+ * wallet and inflate the gain we advertise from switching.
+ */
+export function isRecommendable(card: Card): boolean {
+  return !isUnpublishable(card) && !card.closed_to_new_applicants;
 }

@@ -32,6 +32,17 @@ export interface StoredProfile {
    * baseline on the entry flow.
    */
   cardIds: string[];
+  /**
+   * Which co-brand retailers the user says they shop at, as bucket ids keyed by
+   * merchant ("LuLu" -> "often"). An absent merchant means UNANSWERED, which the
+   * engine treats as the old full-category assumption — so this map must never be
+   * filled with defaults. See lib/merchant-shares.ts.
+   *
+   * LOCAL ONLY for now: /api/profile has no column for it, so it lives in
+   * sessionStorage and is merged back over server-hydrated state below. Persisting
+   * it properly needs a Prisma migration.
+   */
+  merchantShares: Record<string, string>;
   /** True once the user has set a real spending profile (not just the defaults). */
   onboarded: boolean;
 }
@@ -41,6 +52,7 @@ const DEFAULTS: StoredProfile = {
   profile: { ...DEFAULT_PROFILE },
   bank: null,
   cardIds: [],
+  merchantShares: {},
   onboarded: false,
 };
 
@@ -60,6 +72,10 @@ export function loadProfile(): StoredProfile {
       profile: { ...DEFAULTS.profile, ...(parsed.profile ?? {}) },
       bank: parsed.bank ?? null,
       cardIds: Array.isArray(parsed.cardIds) ? parsed.cardIds : [],
+      merchantShares:
+        typeof parsed.merchantShares === "object" && parsed.merchantShares !== null
+          ? (parsed.merchantShares as Record<string, string>)
+          : {},
       onboarded: parsed.onboarded ?? false,
     };
   } catch {
@@ -121,7 +137,13 @@ export function adoptionPatch(p: StoredProfile): Record<string, unknown> {
   return body;
 }
 
-function serverToStored(s: ServerState): StoredProfile {
+/**
+ * `local` carries the fields the server does not store yet. Right now that is only
+ * `merchantShares` — without this merge, a signed-in user's answers would be wiped
+ * by every hydration, silently returning their co-brand cards to the held-back
+ * state they had just answered their way out of.
+ */
+function serverToStored(s: ServerState, local: StoredProfile): StoredProfile {
   return {
     spending: { ...DEFAULTS.spending, ...(s.spending ?? {}) },
     profile: {
@@ -130,6 +152,7 @@ function serverToStored(s: ServerState): StoredProfile {
     },
     bank: s.bank,
     cardIds: s.cardIds,
+    merchantShares: local.merchantShares,
     onboarded: s.spending !== null,
   };
 }
@@ -190,7 +213,7 @@ export function useProfileStore(): ProfileStore {
             return;
           }
 
-          const merged = serverToStored(s);
+          const merged = serverToStored(s, local);
           setState(merged);
           saveProfile(merged);
         })
@@ -217,6 +240,9 @@ export function useProfileStore(): ProfileStore {
           ...patch,
           spending: patch.spending ? { ...prev.spending, ...patch.spending } : prev.spending,
           profile: patch.profile ? { ...prev.profile, ...patch.profile } : prev.profile,
+          // REPLACED, not merged: clearing an answer removes its key, and a merge
+          // would resurrect it. The picker always sends the complete answer set.
+          merchantShares: patch.merchantShares ?? prev.merchantShares,
         };
         saveProfile(next);
 

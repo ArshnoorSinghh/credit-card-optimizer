@@ -17,6 +17,13 @@
 
 import type { Card, RewardCategory } from "./card";
 import { normalizeRate, type NormalizedRate } from "./normalize-rate";
+import { normalizeMerchantName } from "./merchant-map";
+import {
+  sanitizeMerchantShares,
+  shareFor,
+  type MerchantShares,
+  type ResolvedMerchantShares,
+} from "./merchant-share";
 import {
   DEFAULT_VALUATIONS,
   resolveValuation,
@@ -87,7 +94,7 @@ void _allCategoriesCovered;
  */
 type MatchRule =
   | { kind: "categories"; categories: SpendCategory[]; merchant?: string }
-  | { kind: "catchall" }
+  | { kind: "catchall"; excludes?: SpendCategory[] }
   | { kind: "unmatched"; reason: string };
 
 // why an explicit table (not fuzzy string parsing): the 30 category names are a
@@ -251,6 +258,25 @@ const MATCH_TABLE: Record<string, MatchRule> = {
   optional_miles_accelerator: { kind: "unmatched", reason: "Opt-in paid accelerator — depends on an unmodeled enrollment choice" },
   weekend_spend: { kind: "unmatched", reason: "Time-of-week bonus — a category profile can't say which spend fell on a weekend" },
 };
+
+/**
+ * Narrow a catch-all so it can no longer claim `categories`, preserving its
+ * `kind: "catchall"`.
+ *
+ * why not rewrite it into a `categories` rule (which is what this used to do):
+ * downstream code keys off `kind === "catchall"` — most importantly the min-spend
+ * gate, which keeps ONLY catch-all options when a card degrades. Converting the
+ * rule silently deleted the card's base rate in that path, so a degraded card with
+ * any exclusion earned nothing instead of its base rate. Carrying an `excludes`
+ * list keeps the option's identity intact and makes the narrowing composable —
+ * both `excluded_spend` and the suppressed-category lock append to it.
+ */
+function narrowCatchall(rule: MatchRule, categories: Iterable<SpendCategory>): MatchRule {
+  if (rule.kind !== "catchall") return rule;
+  const merged = new Set<SpendCategory>(rule.excludes ?? []);
+  for (const c of categories) merged.add(c);
+  return { kind: "catchall", excludes: SPEND_CATEGORIES.filter((c) => merged.has(c)) };
+}
 
 /**
  * The merchant a card reward category's bonus is LOCKED to, if any
@@ -471,7 +497,9 @@ export function buildEarnOptions(card: Card): { options: EarnOption[]; flags: Sc
 export function candidatesFor(cat: SpendCategory, options: EarnOption[]): EarnOption[] {
   return options.filter((o) => {
     if (o.rule.kind === "categories") return o.rule.categories.includes(cat);
-    if (o.rule.kind === "catchall") return true;
+    // A catch-all claims everything EXCEPT what has been narrowed away from it
+    // (spend the card excludes outright, or spend it suppresses below its base rate).
+    if (o.rule.kind === "catchall") return !(o.rule.excludes ?? []).includes(cat);
     return false; // unmatched never claims spend
   });
 }
@@ -663,28 +691,28 @@ function applyExcludedSpend(
   if (!excluded || excluded.length === 0) return { options, flags: [] };
 
   const flags: ScoreFlag[] = [];
-  const known = new Set<string>();
+  const known = new Set<SpendCategory>();
   for (const e of excluded) {
     // why flag instead of ignore: a typo'd category would silently disable the
     // exclusion and quietly overstate the card — the exact failure this models away.
-    if (!(SPEND_CATEGORIES as readonly string[]).includes(e.category)) {
+    // Matching against the canonical list (rather than testing then casting) is what
+    // narrows the raw string to a SpendCategory without an assertion.
+    const canonical = SPEND_CATEGORIES.find((c) => c === e.category);
+    if (!canonical) {
       flags.push({
         level: "unknown",
         message: `Unknown excluded spend category "${label(e.category)}" on ${card.name} — exclusion NOT applied`,
       });
       continue;
     }
-    known.add(e.category);
-    flags.push({ level: "low", message: `${label(e.category)} earns nothing on this card: ${e.reason}` });
+    known.add(canonical);
+    flags.push({ level: "low", message: `${label(canonical)} earns nothing on this card: ${e.reason}` });
   }
   if (known.size === 0) return { options, flags };
 
   const narrowed = options.map((o): EarnOption => {
     if (o.rule.kind === "catchall") {
-      return {
-        ...o,
-        rule: { kind: "categories", categories: SPEND_CATEGORIES.filter((c) => !known.has(c)) },
-      };
+      return { ...o, rule: narrowCatchall(o.rule, known) };
     }
     if (o.rule.kind === "categories") {
       const kept = o.rule.categories.filter((c) => !known.has(c));
@@ -710,12 +738,82 @@ export function label(category: string): string {
   return category.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+/**
+ * Lock spend into a card's SUPPRESSED categories — the fix for the "penalty bucket"
+ * defect.
+ *
+ * The min-cost flow treats every eligible option as a genuine choice, which is right
+ * ACROSS cards (you decide which card to swipe) and wrong WITHIN one card: the
+ * issuer's merchant category code decides which bucket a purchase falls into. You
+ * cannot elect to have petrol scored as general retail.
+ *
+ * So where a card names a category at a rate BELOW its own catch-all — a suppressed
+ * or "penalty" bucket, which UAE issuers use heavily for fuel, government, utilities
+ * and school fees — the flow would route that spend into the (uncapped) base rate
+ * and pay it the higher figure. On the real dataset that was 16 rates across 12
+ * cards; rakbank_world's 0.25% bucket received exactly AED 0 of the spend it governs.
+ *
+ * A category is suppressed when EVERY option naming it yields less than the
+ * catch-all. If any named option beats the catch-all, the good bucket genuinely
+ * exists and the flow may use it — and over-cap spend must still be free to fall
+ * back to the base rate, which is the deliberate reroute rule this must not break.
+ *
+ * why compare YIELDS rather than rate strings: a card can quote a percent in one
+ * category and points-per-AED in another, so only the AED-per-AED yield is comparable.
+ */
+function applySuppressedCategoryLock(
+  card: Card,
+  options: EarnOption[],
+  yields: number[],
+): { options: EarnOption[]; flags: ScoreFlag[] } {
+  // The best a catch-all pays, and the best any NAMED category pays, per category.
+  let catchallYield = 0;
+  options.forEach((o, i) => {
+    if (o.rule.kind === "catchall") catchallYield = Math.max(catchallYield, yields[i]!);
+  });
+  if (catchallYield <= 0) return { options, flags: [] }; // nothing to escape to
+
+  const bestNamed = new Map<SpendCategory, number>();
+  options.forEach((o, i) => {
+    if (o.rule.kind !== "categories") return;
+    for (const c of o.rule.categories) {
+      bestNamed.set(c, Math.max(bestNamed.get(c) ?? 0, yields[i]!));
+    }
+  });
+
+  const suppressed = SPEND_CATEGORIES.filter((c) => {
+    const best = bestNamed.get(c);
+    return best !== undefined && best < catchallYield - EPS;
+  });
+  if (suppressed.length === 0) return { options, flags: [] };
+
+  return {
+    options: options.map((o): EarnOption =>
+      o.rule.kind === "catchall" ? { ...o, rule: narrowCatchall(o.rule, suppressed) } : o,
+    ),
+    // Stated, not silent: this is a real and often surprising product term, and it
+    // is the difference between a headline rate and what a UAE household actually
+    // earns on school fees and petrol. Level "low" (a caveat, not an uncertainty) —
+    // the number is exact, it is simply lower than the card's advertised base.
+    flags: [
+      {
+        level: "low",
+        message: `${suppressed.map(label).join(", ")} earn ${card.name}'s reduced rate, not its base rate — that spend cannot fall back to the base`,
+      },
+    ],
+  };
+}
+
 export function precomputeCardData(card: Card, valuations: ValuationTable = DEFAULT_VALUATIONS): CardData {
   const built = buildEarnOptions(card);
   const excludedResult = applyExcludedSpend(card, built.options);
-  const options = excludedResult.options;
-  const flags = [...built.flags, ...excludedResult.flags];
   const valuation = resolveValuation(card.rewards.currency, valuations);
+  // Yields depend only on rates and the valuation, so they survive every rule
+  // narrowing below and are computed once, up front, for the lock to compare on.
+  const yields = excludedResult.options.map((o) => expectedYieldPerAed(o.rate, valuation.aedPerUnit));
+  const suppressedResult = applySuppressedCategoryLock(card, excludedResult.options, yields);
+  const options = suppressedResult.options;
+  const flags = [...built.flags, ...excludedResult.flags, ...suppressedResult.flags];
   return {
     card,
     options,
@@ -723,7 +821,7 @@ export function precomputeCardData(card: Card, valuations: ValuationTable = DEFA
     valuation,
     fees: computeFees(card),
     buildFlags: flags,
-    yields: options.map((o) => expectedYieldPerAed(o.rate, valuation.aedPerUnit)),
+    yields,
     capacities: options.map((o) => optionCapacityAnnualAed(o, valuation.aedPerUnit)),
   };
 }
@@ -744,11 +842,23 @@ function bindingCapDirection(option: EarnOption): "monthly" | "annual" | undefin
 // Min-cost max-flow. We model routing spend as a transportation problem:
 //
 //     source ──[spend]──> category ──[eligible]──> option ──[cap]──> sink
+//                              └──[share]──> merchant gate ──┘
 //
 //   • source -> category c : capacity = c's ANNUAL spend, cost 0
 //   • category c -> option o: exists iff o can earn on c; capacity ∞;
 //                             cost = MAXY - yield(o)   (>= 0 after the shift)
 //   • option o -> sink      : capacity = o's annual AED-spend cap (∞ if uncapped)
+//
+// MERCHANT GATES. An option whose bonus is locked to a merchant the user has given
+// a SHARE for does not hang off the category directly. It hangs off a per-(category,
+// merchant) gate node whose inbound capacity is share x that category's annual
+// spend. Everything else about the solve is unchanged — the cost still sits on the
+// gate -> option edge, so path costs, and therefore optimality, are identical.
+//
+// why a node and not a per-edge capacity: the gate is what makes the share a POOL.
+// Two cards bonusing LuLu draw from one 30%-of-groceries pool instead of 30% each,
+// which is the real constraint — your LuLu spend does not double because you carry
+// a second LuLu card. A per-edge cap would silently allow exactly that.
 //
 // Minimising total cost maximises total yield: every valid assignment routes the
 // same total flow (all the spend), so sum((MAXY - y)*flow) is minimised exactly
@@ -866,10 +976,16 @@ interface FlowSolution {
   unearnedAnnualAed: number;
 }
 
+/** The merchant a flattened option's bonus is locked to, if any. */
+function lockedMerchant(po: FlatOption): string | undefined {
+  return po.option.rule.kind === "categories" ? po.option.rule.merchant : undefined;
+}
+
 function solveAssignment(
   spending: SpendingProfile,
   cards: CardData[],
   flat: FlatOption[],
+  shares: ResolvedMerchantShares | undefined,
 ): FlowSolution {
   const categories = (Object.keys(spending) as SpendCategory[]).filter(
     (c) => (spending[c] ?? 0) > 0,
@@ -877,18 +993,61 @@ function solveAssignment(
 
   const maxYield = flat.reduce((m, o) => Math.max(m, o.yield), 0);
 
-  // Node layout: [source] [categories...] [options...] [unearned] [sink].
+  /*
+    Merchant gates, one per (category, merchant) pair for which the user stated a
+    share AND some eligible option is locked to that merchant. Built first because
+    the gates are nodes and the node count has to be known before the graph is.
+
+    A merchant with NO stated share gets no gate, so its options keep their direct
+    category edge and the old full-category assumption — that is what makes shares
+    an additive change rather than a silent re-scoring for callers that don't ask.
+  */
+  interface Gate {
+    categoryIndex: number;
+    /** Annual AED of this category that may reach this merchant: share x spend. */
+    capAnnualAed: number;
+  }
+  const gates: Gate[] = [];
+  const gateOf = new Map<string, number>(); // `${categoryIndex}|${merchantKey}` -> gate index
+  // Same normalization `shareFor` uses, so two spellings of one merchant across two
+  // cards collapse into ONE gate — i.e. one shared pool, which is the whole point.
+  const gateKey = (ci: number, merchant: string) => `${ci}|${normalizeMerchantName(merchant)}`;
+
+  if (shares && shares.size > 0) {
+    categories.forEach((c, ci) => {
+      flat.forEach((po) => {
+        const merchant = lockedMerchant(po);
+        if (!merchant) return;
+        const share = shareFor(shares, merchant);
+        if (share === undefined) return;
+        if (!candidatesFor(c, cards[po.cardIndex]!.options).includes(po.option)) return;
+        const key = gateKey(ci, merchant);
+        if (gateOf.has(key)) return; // one gate per (category, merchant), shared by all cards
+        gateOf.set(key, gates.length);
+        gates.push({ categoryIndex: ci, capAnnualAed: share * (spending[c] ?? 0) * 12 });
+      });
+    });
+  }
+
+  // Node layout: [source] [categories...] [options...] [gates...] [unearned] [sink].
   const C = categories.length;
   const O = flat.length;
   const SOURCE = 0;
   const CAT0 = 1;
   const OPT0 = CAT0 + C;
-  const UNEARNED = OPT0 + O;
+  const GATE0 = OPT0 + O;
+  const UNEARNED = GATE0 + gates.length;
   const SINK = UNEARNED + 1;
   const flow = new MinCostFlow(SINK + 1);
 
   categories.forEach((c, ci) => {
     flow.addEdge(SOURCE, CAT0 + ci, (spending[c] ?? 0) * 12, 0);
+  });
+
+  // category -> gate: the share constraint. Cost 0 — the yield cost stays on the
+  // gate -> option edge below, so a gated path costs exactly what it did before.
+  gates.forEach((g, gi) => {
+    flow.addEdge(CAT0 + g.categoryIndex, GATE0 + gi, g.capAnnualAed, 0);
   });
 
   const edgeIds: { category: SpendCategory; optionIndex: number; edgeId: number }[] = [];
@@ -897,7 +1056,12 @@ function solveAssignment(
       // Eligibility uses the same candidatesFor as scoreCard — one source of truth.
       const eligible = candidatesFor(c, cards[po.cardIndex]!.options).includes(po.option);
       if (!eligible) return;
-      const id = flow.addEdge(CAT0 + ci, OPT0 + oi, Infinity, maxYield - po.yield);
+      // A gated option is fed by its merchant's pool, not by the raw category. The
+      // gate is per-category, so flow on this edge is still attributable to `c`.
+      const merchant = lockedMerchant(po);
+      const gi = merchant !== undefined ? gateOf.get(gateKey(ci, merchant)) : undefined;
+      const from = gi !== undefined ? GATE0 + gi : CAT0 + ci;
+      const id = flow.addEdge(from, OPT0 + oi, Infinity, maxYield - po.yield);
       edgeIds.push({ category: c, optionIndex: oi, edgeId: id });
     });
     // category -> unearned (worst cost): feasibility if every real cap fills.
@@ -986,90 +1150,185 @@ function overallCapAnnualAed(card: Card, aedPerUnit: number): number | null {
 }
 
 /**
- * Minimum-spend gating (rewards.min_monthly_spend_required_aed).
+ * Switch a card into its BELOW-THRESHOLD state (rewards.min_monthly_spend_required_aed).
  *
- * A number of cards (e.g. fab_cashback @ 3,000, cbd_one @ 5,000) pay their BONUS
- * category rates only once monthly spend clears a threshold; below it, everything
- * earns the base rate. We model that by dropping the card's bonus options (leaving
- * only its catchall/base) when the spend that could land on it is below threshold,
- * and flagging that the card was gated. The base_rate strings for these cards
- * describe exactly the below-threshold behaviour ("... on all eligible spend when
- * the AED 3,000 threshold is not met"), so the catchall is the right fallback.
- *
- * why the gate uses TOTAL profile spend: the threshold is the card's own monthly
- * spend. For a single card (scoreCard, which-card, comparison — the paths that call
- * this with one card, and the ones the tests exercise) the card sees the whole
- * profile, so total profile spend IS the card's spend — exact. In a multi-card
- * portfolio the allocator may route only part of the spend to a gated card;
- * modelling that inside the min-cost flow would make the gate non-linear. We
- * therefore evaluate the gate against total profile spend (an upper bound) and flag
- * it — a documented simplification, not a silent one. // review: model per-card
- * allocated spend here if portfolios with gated cards become a first-class case.
+ *  - "forfeit": the whole cycle's rewards are lost. Drop EVERY option rather than
+ *    zeroing the rates — a 0-rate option is still an edge the flow can route spend
+ *    down, which would strand spend on a card earning nothing while another card in
+ *    the portfolio could have earned on it. With no options the card cannot claim
+ *    the spend at all, and for a lone forfeiting card the spend goes unearned,
+ *    which is exactly the real outcome.
+ *  - "degrade" (the default): bonus options go, catch-all options stay. The
+ *    base_rate strings for these cards describe precisely the below-threshold
+ *    behaviour ("... on all eligible spend when the AED 3,000 threshold is not met"),
+ *    so the catch-all is the right fallback.
  */
-function applySpendGate(cards: CardData[], spending: SpendingProfile): CardData[] {
-  const totalMonthly = Object.values(spending).reduce((s, v) => s + (v ?? 0), 0);
-  return cards.map((cd) => {
-    const threshold = cd.card.rewards.min_monthly_spend_required_aed ?? 0;
-    if (threshold <= 0 || totalMonthly >= threshold - EPS) return cd; // no gate, or met
+function gateCardOff(cd: CardData): CardData {
+  if ((cd.card.rewards.gate_mode ?? "degrade") === "forfeit") {
+    return { ...cd, options: [], yields: [], capacities: [] };
+  }
+  const keep = cd.options
+    .map((o, i) => (o.rule.kind === "catchall" ? i : -1))
+    .filter((i) => i >= 0);
+  return {
+    ...cd,
+    options: keep.map((i) => cd.options[i]!),
+    yields: keep.map((i) => cd.yields[i]!),
+    capacities: keep.map((i) => cd.capacities[i]!),
+  };
+}
 
-    // --- Forfeiture: the whole cycle's rewards are lost, not reduced to base. ---
-    // why drop EVERY option rather than zero the rates: an option with a 0 rate is
-    // still an edge the flow can route spend down, which would silently strand
-    // spend on a card earning nothing while another card in the portfolio could
-    // have earned on it. Removing the options makes the card unable to claim the
-    // spend at all, so the allocator correctly routes elsewhere — and for a lone
-    // forfeiting card the spend goes unearned, which is exactly the real outcome.
-    //
-    // NOTE the same total-spend simplification as below applies, and it bites
-    // harder here: this is all-or-nothing, so in a multi-card portfolio where only
-    // part of the spend lands on this card, the real cycle spend could be below
-    // threshold even when the profile total clears it. Flagged, not silent.
-    if ((cd.card.rewards.gate_mode ?? "degrade") === "forfeit") {
-      return {
-        ...cd,
-        options: [],
-        yields: [],
-        capacities: [],
-        buildFlags: [
-          ...cd.buildFlags,
-          {
-            level: "low",
-            message: `Below the AED ${threshold}/mo minimum spend (spending ${totalMonthly.toFixed(0)}/mo) — this card FORFEITS all rewards for the cycle, earning nothing`,
-          },
-        ],
-      };
-    }
+/** Monthly AED the allocation routed to each card (parallel to `cards`). */
+function allocatedMonthlyByCard(result: EarnResult, cardCount: number): number[] {
+  const out = new Array<number>(cardCount).fill(0);
+  for (const s of result.slices) out[s.cardIndex]! += s.monthlySpendAed;
+  return out;
+}
 
-    // Below threshold: keep only catchall (base-rate) options; drop bonus options.
-    const keep = cd.options
-      .map((o, i) => (o.rule.kind === "catchall" ? i : -1))
-      .filter((i) => i >= 0);
-    return {
-      ...cd,
-      options: keep.map((i) => cd.options[i]!),
-      yields: keep.map((i) => cd.yields[i]!),
-      capacities: keep.map((i) => cd.capacities[i]!),
-      buildFlags: [
-        ...cd.buildFlags,
-        {
-          level: "low",
-          message: `Below the AED ${threshold}/mo minimum spend (spending ${totalMonthly.toFixed(0)}/mo) — bonus rates disabled, earns base rate only`,
-        },
-      ],
-    };
-  });
+/** A card carrying a minimum-spend threshold, and what falling short costs it. */
+interface GatedCard {
+  index: number;
+  threshold: number;
 }
 
 /**
  * Assign `spending` across `cards` optimally and report what each option/slice
  * earns. THE single source of truth for portfolio-aware earning — scoreCard and
  * optimizePortfolio both call it, so a lone card and a 1-card portfolio agree.
+ *
+ * ── Minimum-spend thresholds ────────────────────────────────────────────────────
+ * `min_monthly_spend_required_aed` is a threshold on ONE card's own monthly spend.
+ * This used to be evaluated against TOTAL profile spend, on the reasoning that for a
+ * single card the two are identical (true) and that modelling it properly inside the
+ * flow would make the gate non-linear (also true).
+ *
+ * It is non-linear, so it does NOT go inside the flow. But the shortcut was not a
+ * small one: the optimizer's own recommended split routes only part of the spend to
+ * each card, so it would score a card's bonus rates as active and then recommend an
+ * allocation that switched them off. On all four spending archetypes the recommended
+ * 3-card portfolio consisted entirely of cards below their thresholds, and the
+ * engine's own best single card beat it in reality — on a mid-range profile the
+ * claimed AED 9,859/yr was worth AED 127/yr.
+ *
+ * The gate is a DISJUNCTIVE constraint (each card is either above its threshold and
+ * earning bonuses, or below it and degraded), which is what makes it non-linear. So
+ * we enumerate the states instead of relaxing them: a portfolio holds at most 3
+ * cards, hence at most 2^3 = 8 combinations, and typically 1–2 because most cards
+ * carry no threshold at all. For each combination we solve the flow and then CHECK
+ * the assumption against the resulting allocation, keeping only self-consistent
+ * solutions — a card assumed to be earning bonuses must really receive its
+ * threshold, and a card assumed degraded must really fall short. Among those we take
+ * the best. That is exact at this scale, and it is the same "correctness is free
+ * when the search space is small" argument the subset enumeration already rests on.
  */
-export function earnAcrossCards(spending: SpendingProfile, inputCards: CardData[]): EarnResult {
-  // Apply minimum-spend gating first, so downstream sees each card's ACTIVE options.
-  const cards = applySpendGate(inputCards, spending);
+export function earnAcrossCards(
+  spending: SpendingProfile,
+  inputCards: CardData[],
+  shares?: ResolvedMerchantShares,
+): EarnResult {
+  const gated: GatedCard[] = inputCards
+    .map((cd, index) => ({ index, threshold: cd.card.rewards.min_monthly_spend_required_aed ?? 0 }))
+    .filter((g) => g.threshold > 0);
+
+  if (gated.length === 0) return runAssignment(spending, inputCards, shares);
+
+  // A card whose threshold exceeds the ENTIRE profile can never clear it, however
+  // the spend is split, so it is forced off and needs no branch of its own.
+  const totalMonthly = Object.values(spending).reduce((s, v) => s + (v ?? 0), 0);
+  const switchable = gated.filter((g) => totalMonthly >= g.threshold - EPS);
+
+  let best: EarnResult | null = null;
+  let bestValue = -Infinity;
+  let allOff: EarnResult | null = null;
+
+  for (let mask = 0; mask < 1 << switchable.length; mask++) {
+    // `on` = the cards this branch ASSUMES are above their threshold.
+    const on = new Set<number>();
+    switchable.forEach((g, bit) => {
+      if (mask & (1 << bit)) on.add(g.index);
+    });
+
+    const cards = inputCards.map((cd, i) =>
+      gated.some((g) => g.index === i) && !on.has(i) ? gateCardOff(cd) : cd,
+    );
+    const result = runAssignment(spending, cards, shares);
+    const allocated = allocatedMonthlyByCard(result, cards.length);
+    const annotated = annotateGateFlags(result, gated, allocated, on);
+
+    // mask 0 switches every gated card off. That is always a SAFE answer — a card
+    // we degrade but which really would have cleared its threshold is understated,
+    // never overstated — so it is the fallback if nothing is self-consistent.
+    if (mask === 0) allOff = annotated;
+
+    // Self-consistency: a card we ASSUMED was earning bonuses must really receive
+    // its threshold, and one we assumed degraded must really fall short. Both
+    // directions matter — a card scored as degraded that actually clears its
+    // threshold is not a real scenario either, since the issuer does not ask.
+    const consistent = gated.every(
+      (g) => on.has(g.index) === (allocated[g.index]! >= g.threshold - EPS),
+    );
+    if (!consistent) continue;
+
+    // Rank branches on the demonstrable floor, then the midpoint — the same basis
+    // the portfolio optimizer ranks on, so the two cannot disagree.
+    const value = result.grossAnnualValue.min * 2 + result.grossAnnualValue.max;
+    if (value > bestValue + EPS) {
+      bestValue = value;
+      best = annotated;
+    }
+  }
+
+  // `allOff` is non-null: mask 0 always runs. The `?? runAssignment(...)` is only a
+  // type-level fallback and is unreachable.
+  return best ?? allOff ?? runAssignment(spending, inputCards, shares);
+}
+
+/**
+ * Record, on the cards themselves, that a gate switched a card off — quoting the
+ * spend it ACTUALLY receives in this portfolio, which is the number the user needs
+ * in order to act ("consolidate onto this card and the bonus turns on").
+ */
+function annotateGateFlags(
+  result: EarnResult,
+  gated: GatedCard[],
+  allocated: number[],
+  on: Set<number>,
+): EarnResult {
+  if (gated.every((g) => on.has(g.index))) return result; // nothing was gated off
+  return {
+    ...result,
+    cards: result.cards.map((cd, i) => {
+      const g = gated.find((x) => x.index === i);
+      if (!g || on.has(i)) return cd;
+      const forfeits = (cd.card.rewards.gate_mode ?? "degrade") === "forfeit";
+      return {
+        ...cd,
+        buildFlags: [
+          ...cd.buildFlags,
+          {
+            level: "low",
+            message:
+              `This card receives AED ${allocated[i]!.toFixed(0)}/mo of your spend, below its ` +
+              `AED ${g.threshold}/mo minimum spend — ${
+                forfeits
+                  ? "it FORFEITS all rewards for the cycle, earning nothing"
+                  : "bonus rates disabled, earns the base rate only"
+              }`,
+          },
+        ],
+      };
+    }),
+  };
+}
+
+/** Solve the assignment for one fixed set of cards (gate states already applied). */
+function runAssignment(
+  spending: SpendingProfile,
+  cards: CardData[],
+  shares: ResolvedMerchantShares | undefined,
+): EarnResult {
   const flat = flattenOptions(cards);
-  const sol = solveAssignment(spending, cards, flat);
+  const sol = solveAssignment(spending, cards, flat, shares);
 
   // Per-option aggregate earnings. Caps apply to the AGGREGATE on an option (several
   // categories can feed one option), so value is computed at the option level.
@@ -1173,8 +1432,13 @@ export function scoreCard(
   spending: SpendingProfile,
   card: Card,
   valuations: ValuationTable = DEFAULT_VALUATIONS,
+  merchantShares?: MerchantShares,
 ): CardScore {
   const valuation = resolveValuation(card.rewards.currency, valuations);
+  // Validate once, here at the public boundary — the allocator's inner loops then
+  // work on an already-checked map. An invalid entry is DROPPED, not clamped, so it
+  // falls back to "unstated" and keeps its loud flag (see sanitizeMerchantShares).
+  const { shares } = sanitizeMerchantShares(merchantShares);
 
   // --- Benched cards: excluded from scoring pending data verification. We return
   // a zeroed, clearly-flagged score rather than guessing a reward structure or
@@ -1205,7 +1469,7 @@ export function scoreCard(
   // portfolio, so it delegates to earnAcrossCards([card]) — the same computation
   // the optimizer runs. This is what makes scoreCard and best-1-card agree. ---
   const cd = precomputeCardData(card, valuations);
-  const result = earnAcrossCards(spending, [cd]);
+  const result = earnAcrossCards(spending, [cd], shares);
 
   // Structural flags first, read from the GATED card so a min-spend gate surfaces.
   const flags: ScoreFlag[] = [...result.cards[0]!.buildFlags];
@@ -1252,12 +1516,54 @@ export function scoreCard(
         message: `${o.capBound} cap reached on ${on} — over-cap spend earns the base rate`,
       });
     }
-    if (o.merchantAssumption) {
-      uncertain = true;
-      flags.push({
-        level: "low",
-        message: `${on}: assumes ${o.spendCategories.map(label).join("/")} spend occurs at ${o.merchantAssumption}`,
-      });
+    /*
+      why the `monthlySpendAed > 0` guard: this flag asserts that we CREDITED spend
+      at a merchant-specific rate as though all of that category's spend happened at
+      the merchant. When the flow routed nothing to this option, no such assumption
+      entered the score, and flagging it anyway condemns a card for an accelerator
+      the user never touched — e.g. an Emirates/flydubai option on a profile with no
+      such spend.
+
+      MEASURED: on the current 53-card dataset this guard changes NOTHING — merchant
+      rejections are 1,826 of 7,851 (card,profile) pairs with or without it, because
+      every merchant option that flags also happens to carry spend. It is kept as
+      correctness insurance for data where that stops holding, not as a live fix, and
+      it must not be cited as one. The same guard on the rate-confidence flags above
+      is likewise a no-op (those are nearly all base_rate strings, which always carry
+      spend), so it is not applied there.
+    */
+    if (o.merchantAssumption && o.monthlySpendAed > 0) {
+      const stated = shareFor(shares, o.merchantAssumption);
+      const cats = o.spendCategories.map(label).join("/");
+      if (stated === undefined) {
+        // No share given: the old, optimistic full-category assumption. It stays
+        // `uncertain` and keeps the exact phrase "spend occurs at", which is what
+        // the gap study's SOUND filter rejects on.
+        uncertain = true;
+        flags.push({
+          level: "low",
+          message: `${on}: assumes ${cats} spend occurs at ${o.merchantAssumption}`,
+        });
+      } else {
+        /*
+          A share the USER stated is an input, not an assumption of ours — the same
+          standing as the spend figures themselves, which we also don't mark
+          uncertain. So this does NOT set `uncertain` and deliberately avoids the
+          "spend occurs at" phrase: that is the mechanism by which answering the
+          question moves a co-brand card into the publishable universe.
+
+          It is still flagged, at "low", because it is the one number in the receipt
+          the user can revise and immediately change the answer — and a share of 0
+          is worth saying out loud, since it explains why a card they may have heard
+          good things about scores as if the bonus didn't exist.
+        */
+        flags.push({
+          level: "low",
+          message:
+            `${on}: counts the ${(stated * 100).toFixed(0)}% of your ${cats} spend ` +
+            `you told us happens at ${o.merchantAssumption}`,
+        });
+      }
     }
   }
 

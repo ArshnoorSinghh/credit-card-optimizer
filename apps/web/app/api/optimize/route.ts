@@ -1,6 +1,7 @@
 import {
   optimizePortfolio,
   SPEND_CATEGORIES,
+  type MerchantShares,
   type SpendCategory,
   type SpendingProfile,
   type UserProfile,
@@ -15,7 +16,11 @@ import type { OptimizeError, OptimizeResponse } from "@/lib/optimize-contract";
 
 const CATEGORY_SET = new Set<string>(SPEND_CATEGORIES);
 
-type Validated = { spending: SpendingProfile; profile: UserProfile };
+type Validated = {
+  spending: SpendingProfile;
+  profile: UserProfile;
+  merchantShares: MerchantShares | undefined;
+};
 type ValidationResult = { ok: true; value: Validated } | { ok: false; message: string };
 
 /**
@@ -28,7 +33,7 @@ function validateBody(body: unknown): ValidationResult {
   if (typeof body !== "object" || body === null) {
     return { ok: false, message: "Request body must be a JSON object." };
   }
-  const { spending, profile } = body as Record<string, unknown>;
+  const { spending, profile, merchantShares } = body as Record<string, unknown>;
 
   // --- spending: { category: aedPerMonth } ---
   if (typeof spending !== "object" || spending === null || Array.isArray(spending)) {
@@ -66,7 +71,39 @@ function validateBody(body: unknown): ValidationResult {
     return { ok: false, message: "`profile.uaeResident` must be a boolean (true/false)." };
   }
 
-  return { ok: true, value: { spending: spendingOut, profile: { monthlySalaryAed, uaeResident } } };
+  // --- merchantShares: optional { merchantName: fraction 0..1 } ---
+  // The engine's sanitizer would drop a bad entry and fall back to "unanswered",
+  // which is safe but silent. At an HTTP boundary a caller sending 30 where 0.3 was
+  // meant deserves a 400 telling them so, not a quietly different answer.
+  let sharesOut: MerchantShares | undefined;
+  if (merchantShares !== undefined && merchantShares !== null) {
+    if (typeof merchantShares !== "object" || Array.isArray(merchantShares)) {
+      return { ok: false, message: "`merchantShares` must be an object mapping merchant → share (0–1)." };
+    }
+    const out: Record<string, number> = {};
+    for (const [merchant, raw] of Object.entries(merchantShares as Record<string, unknown>)) {
+      if (typeof raw !== "number" || !Number.isFinite(raw)) {
+        return { ok: false, message: `Merchant share for "${merchant}" must be a finite number.` };
+      }
+      if (raw < 0 || raw > 1) {
+        return {
+          ok: false,
+          message: `Merchant share for "${merchant}" must be between 0 and 1 (a fraction, not a percentage).`,
+        };
+      }
+      out[merchant] = raw;
+    }
+    sharesOut = out;
+  }
+
+  return {
+    ok: true,
+    value: {
+      spending: spendingOut,
+      profile: { monthlySalaryAed, uaeResident },
+      merchantShares: sharesOut,
+    },
+  };
 }
 
 function badRequest(message: string): Response {
@@ -92,6 +129,8 @@ export async function POST(request: Request): Promise<Response> {
     validated.value.spending,
     validated.value.profile,
     cards,
+    undefined,
+    { merchantShares: validated.value.merchantShares },
   );
   return Response.json(result);
 }

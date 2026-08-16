@@ -24,6 +24,7 @@ import { AiEntry } from "@/components/ai-entry";
 import { CardPicker } from "@/components/card-picker";
 import { useProfileStore } from "@/lib/profile-store";
 import { runOptimize, runOptimizeOver, CATEGORIES, CATEGORY_META } from "@/lib/optimizer";
+import { toMerchantShares, type ShareAnswers } from "@/lib/merchant-shares";
 import { ALL_CARDS, cardById } from "@/lib/cards";
 import { groupAllocationsByCategory } from "@/lib/allocation-groups";
 import { aed, aedRange } from "@/lib/format";
@@ -48,11 +49,21 @@ export default function DashboardPage() {
     [state.cardIds],
   );
 
-  const current = useMemo(
-    () => runOptimizeOver(state.spending, state.profile, owned),
-    [owned, state.spending, state.profile],
+  // Same co-brand answers the onboarding reveal used — the "current vs best" gap on
+  // this page is only meaningful if both sides are scored under one set of assumptions.
+  const merchantShares = useMemo(
+    () => toMerchantShares(state.merchantShares as ShareAnswers),
+    [state.merchantShares],
   );
-  const best = useMemo(() => runOptimize(state.spending, state.profile), [state.spending, state.profile]);
+
+  const current = useMemo(
+    () => runOptimizeOver(state.spending, state.profile, owned, merchantShares),
+    [owned, state.spending, state.profile, merchantShares],
+  );
+  const best = useMemo(
+    () => runOptimize(state.spending, state.profile, merchantShares),
+    [state.spending, state.profile, merchantShares],
+  );
 
   const currentNet = current?.overallBest?.netAnnualValue ?? 0;
   const bestNet = best?.overallBest?.netAnnualValue ?? 0;

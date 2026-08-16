@@ -310,21 +310,56 @@ describe("scoreCard — unresolved rate scores as a range", () => {
 });
 
 /**
- * enbd_visa_flexi, after the 2026-07 data: a flat-rate points card quoting PERCENTS
- * (base "1.5% back in Plus Points", plus two smaller 0.4%/0.2% category rates that
- * never beat the base, so all spend routes to the base). Free for life; no caveat.
+ * enbd_visa_flexi, after the 2026-07 data: a points card quoting PERCENTS — base
+ * "1.5% back in Plus Points", plus two SUPPRESSED category rates (0.4% and 0.2%)
+ * that pay LESS than the base. Free for life; no caveat.
+ *
+ * The suppressed rates are the whole point of this case. This test used to assert
+ * that all 16,500/mo routed to the 1.5% base, on the reasoning that "the bonus rates
+ * never beat it". That was the allocator escaping a penalty bucket: ENBD decides
+ * which merchant category a purchase falls into, so a supermarket swipe earns 0.4%
+ * whether or not 1.5% would be nicer. See penalty-bucket.test.ts.
+ *
+ * Hand math (PROFILE, AED/mo; percent rates so the AED value is invariant to the
+ * Plus Points valuation):
+ *   supermarkets_grocery_insurance_car_dealers -> groceries 5,000 + other 3,000
+ *                                              = 8,000 x 0.4% =  32.0/mo ->   384/yr
+ *   fuel_utilities_real_estate_education       -> fuel  1,000 x 0.2% =   2.0/mo ->    24/yr
+ *   base_rate 1.5%  -> dining 2,000 + travel 4,000 + international 1,500
+ *                                              = 7,500 x 1.5% = 112.5/mo -> 1,350/yr
+ *   gross = AED 1,758/yr; free for life, so net = 1,758.
  */
-describe("scoreCard — flat-rate points card (enbd_visa_flexi)", () => {
+describe("scoreCard — percent-quoted points card with suppressed categories (enbd_visa_flexi)", () => {
   const score = scoreCard(PROFILE, byId("enbd_visa_flexi"));
 
-  it("earns the 1.5% base rate on all spend (bonus rates never beat it)", () => {
-    // 16500 AED/mo at 1.5% back = 2970 AED value/yr (in Plus Points at 0.01 = 297000 pts).
+  it("pays the base rate only on spend the card does not suppress", () => {
     const base = score.breakdown.find((b) => b.cardCategory === "base_rate");
-    expect(base?.monthlySpendAed).toBe(16500);
-    expect(base?.annualValueAed.min).toBeCloseTo(2970, 6);
-    expect(score.breakdown).toHaveLength(1); // only the base rate wins
-    expect(score.grossAnnualValue.min).toBeCloseTo(2970, 6);
-    expect(score.netAnnualValue).toBeCloseTo(2970, 6); // free for life
+    expect(base?.monthlySpendAed).toBe(7500); // dining + travel + international
+    expect(base?.annualValueAed.min).toBeCloseTo(1350, 6);
+    expect(base?.spendCategories).not.toContain("groceries");
+  });
+
+  it("holds groceries, other and fuel at their suppressed rates", () => {
+    const supermarkets = score.breakdown.find(
+      (b) => b.cardCategory === "supermarkets_grocery_insurance_car_dealers",
+    );
+    const fuel = score.breakdown.find((b) => b.cardCategory === "fuel_utilities_real_estate_education");
+    expect(supermarkets?.monthlySpendAed).toBe(8000);
+    expect(supermarkets?.annualValueAed.min).toBeCloseTo(384, 6);
+    expect(fuel?.monthlySpendAed).toBe(1000);
+    expect(fuel?.annualValueAed.min).toBeCloseTo(24, 6);
+  });
+
+  it("matches the hand-computed gross/net", () => {
+    expect(score.breakdown).toHaveLength(3);
+    expect(score.grossAnnualValue.min).toBeCloseTo(1758, 6);
+    expect(score.netAnnualValue).toBeCloseTo(1758, 6); // free for life
+  });
+
+  it("says plainly which spend is held at the reduced rate", () => {
+    expect(
+      score.flags.some((f) => /reduced rate, not its base rate/i.test(f.message)),
+    ).toBe(true);
   });
 
   it("no longer references a user-chosen category", () => {

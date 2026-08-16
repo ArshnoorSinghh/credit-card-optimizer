@@ -15,15 +15,19 @@
  *              site and picked well, but holds one card.
  *   optimal  — engine's overallBest (1–3 cards, exact min-cost max-flow).
  *
- * TWO UNIVERSES — this is the point of the study
+ * THE UNIVERSES — this is the point of the study
  *   ALL    — every scoreable card. Produces implausible returns (13%+ of spend)
  *            because cards.json carries ACQUISITION PROMOS and PERKS as if they
  *            were steady-state earn rates. Known offenders: adcb_talabat's "first
  *            10 orders 35% back" applied to all dining forever; rakbank_titanium's
  *            cinema perk earning AED 1,500/yr on AED 3,000 of spend.
- *   CLEAN  — only cards whose score for THIS profile carries no low/unknown flags:
- *            no unresearched valuation, no merchant assumption, no range rate.
- *            This is the only universe a public claim can be made from.
+ *   SOUND  — no rate defects (see study-filters.ts for the exact clauses).
+ *   PUBLISHABLE — SOUND minus cards whose data_caveat forbids publication.
+ *   PUBLISHABLE + MERCHANT SHARES — the same, scored with the co-brand shares the
+ *            product now asks the user for. This is the universe that matches what
+ *            a real session computes, and the one a claim should rest on.
+ *   CLEAN  — only cards whose score for THIS profile carries no low/unknown flags
+ *            at all. Degenerate (≈1 card/profile); kept as an upper bound on strictness.
  *
  * The difference between them is a data-quality measurement, not a product metric.
  *
@@ -41,6 +45,9 @@ import { describe, it, expect } from "vitest";
 import { CARDS } from "./index";
 import { optimizePortfolio } from "./optimize-portfolio";
 import { scoreCard, type SpendingProfile } from "./score-card";
+import type { MerchantShares } from "./merchant-share";
+import { merchantShareQuestions } from "./merchant-share-questions";
+import { hasDoNotPublishCaveat, isSoundScore } from "./study-filters";
 import type { Card } from "./card";
 
 // The engine tsconfig has no DOM/Node libs (types: []). Declare just the surface
@@ -60,6 +67,21 @@ function mulberry32(seed: number) {
 }
 const rand = mulberry32(20260804);
 const jitter = () => 0.6 + rand() * 1.0;
+
+/*
+  Merchant shares draw from their OWN generator, with their own seed.
+
+  why not the shared one: `rand` is consumed in draw order, so adding any new call
+  to it shifts every later draw and silently changes which 200 profiles the study
+  measures. The first run of the share work did exactly that — the no-share
+  universe moved (median 5.94% -> 5.86%, gap-vs-best-single AED 909 -> 721) purely
+  because it was a different sample, which looks exactly like a real regression.
+  A separate stream keeps the profile sequence byte-identical to every previous
+  run, so the no-share columns stay comparable to the historical figures and the
+  with/without comparison is a true controlled experiment.
+*/
+const shareRand = mulberry32(20260809);
+const shareJitter = () => 0.6 + shareRand() * 1.0;
 
 interface Segment {
   name: string;
@@ -125,6 +147,67 @@ const SEGMENTS: Segment[] = [
   },
 ];
 
+/*
+  ── MERCHANT SHARES: the study's newest, and second-largest, assumption ─────────
+
+  Fifteen of this study's 21 card rejections were co-brand cards whose bonus is
+  locked to one retailer. The card DATA is right; what was missing was any notion of
+  how much of a category's spend actually lands there, so the engine had to either
+  credit the whole category (a large overstatement) or exclude the card.
+
+  The product now ASKS the user. A synthetic profile has nobody to ask, so the study
+  models the answer — and these numbers are a judgement about UAE consumer
+  behaviour, NOT survey data. They rank alongside the segment spend levels and the
+  population weights as the study's assumption layer, and they are deliberately
+  conservative: understating a share understates the card, which is the safe
+  direction and the project's standing rule.
+
+  Read every figure below as "share of the affected categories' spend, for a typical
+  cardholder, that happens at this merchant". Jittered per profile like spend is.
+
+  IMPORTANT for reading the output: shares do not simply ADD value. They can only
+  ever REMOVE spend from a merchant bonus relative to the old full-category
+  assumption. What they add is CARDS — a card whose share is stated is no longer
+  carrying an unverified assumption, so it enters the SOUND/PUBLISHABLE universes.
+  The universes below are reported with and without shares for exactly this reason.
+*/
+const MERCHANT_SHARES: MerchantShares = {
+  // Grocery: LuLu is a major UAE hypermarket chain, but a household splits its
+  // groceries across Carrefour/Union Coop/Spinneys too.
+  LuLu: 0.20,
+  elGrocer: 0.03,
+  // Retail / marketplace, all landing in canonical `other`.
+  Emaar: 0.12, // Dubai Mall and the other Emaar malls
+  noon: 0.10,
+  Amazon: 0.12,
+  "Dubai Duty Free": 0.03,
+  "Smiles partners": 0.05,
+  // Travel. Emirates is the dominant carrier for a Dubai-resident population; the
+  // rest are a minority of trips. These are independent shares, so they may sum
+  // above 1 for a category — the allocator can never route more than the category's
+  // actual spend, so an over-declared set degrades safely toward the old behaviour.
+  Emirates: 0.30,
+  Etihad: 0.12,
+  "Air Arabia": 0.08,
+  "Booking.com": 0.15,
+  dnata: 0.10,
+  Marriott: 0.08,
+  "Emirates Leisure": 0.03,
+  // Transport: nol / metro / RTA taxis are most of a resident's transport spend.
+  RTA: 0.35,
+  // Food delivery.
+  Talabat: 0.20,
+};
+
+/** Per-profile shares: the table above, jittered, clamped to a valid fraction. */
+function drawShares(): MerchantShares {
+  const out: Record<string, number> = {};
+  for (const [merchant, base] of Object.entries(MERCHANT_SHARES)) {
+    out[merchant] = Math.min(1, Math.max(0, base * shareJitter()));
+  }
+  return out;
+}
+
 const TOTAL_PROFILES = 200;
 /** Profiles drawn per segment, proportional to its population weight (min 10). */
 const nFor = (seg: Segment) => Math.max(10, Math.round(TOTAL_PROFILES * seg.weight));
@@ -174,16 +257,19 @@ describe.skipIf(!process.env.GAP_STUDY)("gap study", () => {
     const clean: Row[] = [];
     const sound: Row[] = [];
     const pub: Row[] = [];
+    const pubShared: Row[] = [];
     const floorRows: Row[] = [];
     let profilesSeen = 0;
     let cleanUniverseTotal = 0;
     let soundUniverseTotal = 0;
     let pubUniverseTotal = 0;
+    let pubSharedUniverseTotal = 0;
     let eligibleUniverseTotal = 0;
 
     for (const seg of SEGMENTS) {
       for (let i = 0; i < nFor(seg); i++) {
         const { spending, salary } = drawProfile(seg);
+        const shares = drawShares();
         const annualSpend = Object.values(spending).reduce((a: number, b: number) => a + b, 0) * 12;
         const eligible = CARDS.filter((c) => isEligible(c, salary));
         if (eligible.length === 0) continue;
@@ -211,18 +297,23 @@ describe.skipIf(!process.env.GAP_STUDY)("gap study", () => {
                     cap notices. These move the number a few percent either way;
                     they do not manufacture a 35% return.
         */
-        const soundCards = eligible.filter((c) => {
-          const s = scoreCard(spending, c);
-          return !s.flags.some(
-            (f) =>
-              f.message.includes("assumes spend occurs") ||
-              f.message.startsWith("Low-confidence rate") ||
-              // The engine's tier-3 wording. An earlier revision of this filter
-              // guessed "Unknown rate" and therefore matched nothing.
-              f.message.startsWith("Unresolved rate on"),
-          );
-        });
+        // The clauses live in study-filters.ts, shared with gap-diag.test.ts and
+        // regression-tested for liveness — twice in this project's history a clause
+        // here matched NOTHING and silently widened the universe. See that file.
+        const soundCards = eligible.filter((c) => isSoundScore(scoreCard(spending, c).flags));
         soundUniverseTotal += soundCards.length;
+
+        /*
+          The same filter, re-run with the profile's MERCHANT SHARES supplied. A
+          co-brand card scored against a stated share is no longer carrying an
+          unverified assumption, so it stops matching the merchant clause and enters
+          the universe. This is the measurable consequence of asking the user the
+          question — the difference between `pub` and `pubShared` below is the whole
+          merchant-share decision, priced.
+        */
+        const soundSharedCards = eligible.filter((c) =>
+          isSoundScore(scoreCard(spending, c, undefined, shares).flags),
+        );
 
         /*
           `lower` selects the PESSIMISTIC end of every uncertainty range instead of
@@ -239,12 +330,40 @@ describe.skipIf(!process.env.GAP_STUDY)("gap study", () => {
           would hold — but it is a floor on the RECOMMENDATION, not the tightest
           possible floor.
         */
-        const build = (universe: Card[], into: Row[], lower = false) => {
+        const build = (
+          universe: Card[],
+          into: Row[],
+          opts: { lower?: boolean; shares?: MerchantShares } = {},
+        ) => {
+          const lower = opts.lower ?? false;
           if (universe.length === 0) return;
           const val = (n: { netAnnualValue: number; netAnnualValueRange: { min: number } }) =>
             lower ? n.netAnnualValueRange.min : n.netAnnualValue;
-          const singles = universe.map((c) => val(scoreCard(spending, c))).sort((a, b) => a - b);
-          const r = optimizePortfolio(spending, { monthlySalaryAed: salary, uaeResident: true }, universe);
+          // naive/diligent must be scored under the SAME assumptions as optimal, or
+          // the gap is measured between two different models rather than between two
+          // wallets. Same class of harness mismatch as the includeUnpublishable note.
+          const singles = universe
+            .map((c) => val(scoreCard(spending, c, undefined, opts.shares)))
+            .sort((a, b) => a - b);
+          /*
+            includeUnpublishable: THIS FILE defines the universes, so the engine must
+            not silently re-filter them. optimizePortfolio drops do-not-publish cards
+            by default (right for a recommendation), but here that made `optimal`
+            measure a different card set than `naive`/`diligent`, which are computed
+            from `universe` above — and the SOUND rows then reported a best SINGLE
+            card (6.01% of spend) beating the "optimal" portfolio (3.24%), which is
+            arithmetically impossible and was pure harness mismatch. The PUBLISHABLE
+            universe below already applies the do-not-publish filter explicitly, which
+            is where that judgement belongs in a study whose whole point is comparing
+            universes.
+          */
+          const r = optimizePortfolio(
+            spending,
+            { monthlySalaryAed: salary, uaeResident: true },
+            universe,
+            undefined,
+            { includeUnpublishable: true, merchantShares: opts.shares },
+          );
           const best = r.overallBest;
           if (!best) return;
           into.push({
@@ -265,15 +384,16 @@ describe.skipIf(!process.env.GAP_STUDY)("gap study", () => {
           decision recorded in the data, so the study honours it rather than
           re-deriving it.
         */
-        const pubCards = soundCards.filter(
-          (c) => !(c.data_caveat ?? "").toLowerCase().includes("do not publish"),
-        );
+        const pubCards = soundCards.filter((c) => !hasDoNotPublishCaveat(c));
         pubUniverseTotal += pubCards.length;
+        const pubSharedCards = soundSharedCards.filter((c) => !hasDoNotPublishCaveat(c));
+        pubSharedUniverseTotal += pubSharedCards.length;
 
         build(eligible, all);
-        build(eligible, floorRows, true);
+        build(eligible, floorRows, { lower: true });
         build(soundCards, sound);
         build(pubCards, pub);
+        build(pubSharedCards, pubShared, { shares });
         build(cleanCards, clean);
       }
     }
@@ -354,7 +474,11 @@ describe.skipIf(!process.env.GAP_STUDY)("gap study", () => {
     report("UNIVERSE: ALL cards, midpoint  (optimistic — every range read at its centre)", all);
     report("UNIVERSE: ALL cards, LOWER BOUND  (<<< THE DEFENSIBLE FLOOR)", floorRows);
     report("UNIVERSE: SOUND rates  (promo/merchant defects removed)", sound);
-    report("UNIVERSE: PUBLISHABLE  (<-- THE ONE A CLAIM CAN REST ON)", pub);
+    report("UNIVERSE: PUBLISHABLE, no merchant shares  (co-brand cards excluded)", pub);
+    report(
+      "UNIVERSE: PUBLISHABLE + MERCHANT SHARES  (<-- THE ONE A CLAIM CAN REST ON)",
+      pubShared,
+    );
     report("UNIVERSE: CLEAN cards only  (zero flags — too strict, degenerate)", clean);
 
     P("");
@@ -362,10 +486,20 @@ describe.skipIf(!process.env.GAP_STUDY)("gap study", () => {
     P(`   avg eligible cards per profile:      ${(eligibleUniverseTotal / profilesSeen).toFixed(1)}`);
     P(`   avg SOUND-rate cards per profile:    ${(soundUniverseTotal / profilesSeen).toFixed(1)}`);
     P(`   avg PUBLISHABLE cards per profile:   ${(pubUniverseTotal / profilesSeen).toFixed(1)}`);
+    P(`   avg PUBLISHABLE + SHARES per profile:${(pubSharedUniverseTotal / profilesSeen).toFixed(1)}`);
     P(`   avg CLEAN (zero-flag) cards:         ${(cleanUniverseTotal / profilesSeen).toFixed(1)}`);
     P(`   cards REJECTED for rate defects:     ${(100 - (soundUniverseTotal / eligibleUniverseTotal) * 100).toFixed(1)}%`);
+    P(`   ... with merchant shares supplied:   ${(100 - (pubSharedUniverseTotal / eligibleUniverseTotal) * 100).toFixed(1)}% (incl. do-not-publish)`);
     P(`   share of card-scores carrying a flag:${(
       100 - (cleanUniverseTotal / eligibleUniverseTotal) * 100).toFixed(1)}%`);
+    P("");
+    P("── MERCHANT SHARES ───────────────────────────────────────");
+    P(`   merchants the card universe requires a share for: ${merchantShareQuestions(CARDS).length}`);
+    P(`   cards unlocked by asking: ${(
+      (pubSharedUniverseTotal - pubUniverseTotal) / profilesSeen).toFixed(1)} more per profile`);
+    P("   The share table is a MODELLED assumption (see MERCHANT_SHARES above), not");
+    P("   survey data. In the product these come from the user, so the PUBLISHABLE +");
+    P("   SHARES universe is the one that matches what a real session computes.");
     P("");
     P("   A UAE credit card returning >8% of total spend does not exist.");
     P("   Any median above that is a DATA defect, not a product result.");

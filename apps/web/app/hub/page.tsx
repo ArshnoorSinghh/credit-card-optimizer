@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Reveal, Stagger, StaggerItem } from "@/components/ui/reveal";
 import { useProfileStore } from "@/lib/profile-store";
 import { runOptimizeOver } from "@/lib/optimizer";
+import { toMerchantShares, type ShareAnswers } from "@/lib/merchant-shares";
 import { cardById } from "@/lib/cards";
 import { aed } from "@/lib/format";
 
@@ -59,9 +60,12 @@ export default function HubPage() {
     [state.cardIds],
   );
   const currentNet = useMemo(() => {
-    const r = runOptimizeOver(state.spending, state.profile, owned);
+    // Scored with the user's co-brand answers, like every other surface — otherwise
+    // the same wallet reads differently here than on the dashboard.
+    const shares = toMerchantShares(state.merchantShares as ShareAnswers);
+    const r = runOptimizeOver(state.spending, state.profile, owned, shares);
     return r?.overallBest?.netAnnualValue ?? null;
-  }, [owned, state.spending, state.profile]);
+  }, [owned, state.spending, state.profile, state.merchantShares]);
 
   return (
     <main className="relative min-h-[calc(100vh-4rem)] overflow-hidden">

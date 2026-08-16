@@ -185,3 +185,15 @@ export {
   type AppUser,
   type SavedState,
 } from "./users";
+
+// The invite-only waitlist lives in ./waitlist — separate from users because a
+// waitlist entry is an UNauthenticated email, not an identity. Re-exported here so
+// `@fils/db` remains the single import surface for the app.
+export {
+  addToWaitlist,
+  getWaitlistCount,
+  isOnWaitlist,
+  normalizeWaitlistEmail,
+  type WaitlistSignupInput,
+  type WaitlistEntry,
+} from "./waitlist";

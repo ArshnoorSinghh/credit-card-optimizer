@@ -46,7 +46,7 @@
  * Pure functions. No I/O.
  */
 
-import type { Card } from "./card";
+import { isRecommendable, type Card } from "./card";
 import { normalizeMerchantName, resolveMerchant } from "./merchant-map";
 import {
   merchantLockFor,
@@ -229,16 +229,28 @@ function earningsFor(
 /**
  * Rank candidates and return the winner, or null if none can earn.
  *
- * Tie-break mirrors the optimizer's spirit, adapted to a single card and to
- * earnings-based ranking: more earnings → lower annual fee → card id (deterministic).
- * A deterministic final key matters: the same question must always give the same
- * answer, and `askWhichCard("Carrefour")` must agree with `askWhichCard("groceries")`.
+ * Tie-break mirrors the optimizer's, adapted to a single card and to earnings-based
+ * ranking: highest DEMONSTRABLE earnings (the bottom of the range) → highest
+ * midpoint → lower annual fee → card id (deterministic). A deterministic final key
+ * matters: the same question must always give the same answer, and
+ * `askWhichCard("Carrefour")` must agree with `askWhichCard("groceries")`.
+ *
+ * why the lower bound leads: identical reasoning to `optimizePortfolio`'s comparator
+ * — a card is never preferred on the strength of value we cannot show. Ranking the
+ * two questions ("which should I hold", "which should I swipe") on different bases
+ * would let them disagree about what an "Up to X%" ceiling is worth.
+ *
+ * why CANDIDACY still uses the midpoint: a card whose whole band starts at zero is
+ * ranked last, but it is not struck off. Otherwise a user whose only card has a
+ * ceiling rate would be told none of their cards earns anything here, which is worse
+ * than an honest "this is your best option, and it's an estimate".
  */
 function pickBest(candidates: CardRecommendation[]): CardRecommendation | null {
   const earning = candidates.filter((c) => c.annualEarningsAed > 0);
   if (earning.length === 0) return null;
   return [...earning].sort(
     (a, b) =>
+      b.annualEarningsRange.min - a.annualEarningsRange.min ||
       b.annualEarningsAed - a.annualEarningsAed ||
       a.annualFeeAed - b.annualFeeAed ||
       a.cardId.localeCompare(b.cardId),
@@ -361,7 +373,13 @@ export function askWhichCard(input: AskWhichCardInput): WhichCardResult {
   // --- Optional upsell: only ever surfaced when strictly better. ---
   if (includeUnowned) {
     const ownedIds = new Set(userCards.map((c) => c.id));
-    const allForScoring = merchant ? allCards.map((c) => applyMerchantLocks(c, merchant)) : allCards;
+    // Never suggest ACQUIRING a card we would not recommend — one whose figures we
+    // do not stand behind, or one the issuer has closed to new applications (you
+    // cannot act on that advice however good the number is). Cards the user already
+    // holds are scored above from `userCards` and are deliberately NOT filtered:
+    // they deserve an honest answer either way.
+    const suggestable = allCards.filter(isRecommendable);
+    const allForScoring = merchant ? suggestable.map((c) => applyMerchantLocks(c, merchant)) : suggestable;
     const overall = bestCardOverall(allForScoring, resolvedCategory, monthlySpend, valuations);
     // Nothing to suggest if the best card is one they already hold.
     if (overall && !ownedIds.has(overall.cardId)) {

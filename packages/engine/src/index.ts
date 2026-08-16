@@ -63,8 +63,31 @@ export type {
 } from "./score-card";
 
 // Merchant -> spend-category mapping (UAE-specific, extendable data table).
-export { MERCHANT_MAP, resolveMerchant } from "./merchant-map";
+export { MERCHANT_MAP, resolveMerchant, normalizeMerchantName } from "./merchant-map";
 export type { MerchantEntry, ResolvedMerchant } from "./merchant-map";
+
+// Merchant share: what fraction of a category's spend lands at one retailer. The
+// input that lets co-brand cards be scored instead of excluded.
+export { sanitizeMerchantShares, shareFor } from "./merchant-share";
+export type {
+  MerchantShares,
+  ResolvedMerchantShares,
+  MerchantShareIssue,
+} from "./merchant-share";
+export { merchantShareQuestions } from "./merchant-share-questions";
+export type { MerchantShareQuestion } from "./merchant-share-questions";
+
+// Study filters: the universe predicates the gap study measures with, shared so the
+// study and its diagnostic cannot drift, and regression-tested for liveness.
+export {
+  RATE_DEFECT_CLAUSES,
+  isRateDefect,
+  isSoundScore,
+  rateDefectsIn,
+  hasDoNotPublishCaveat,
+  IMPLAUSIBLE_RETURN_PCT,
+} from "./study-filters";
+export type { RateDefectClause } from "./study-filters";
 
 // "Which card should I use?" — deterministic lookup over the scorer. No AI.
 export { askWhichCard, bestCardForCategory, bestCardOverall } from "./which-card";
