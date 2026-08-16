@@ -63,6 +63,45 @@ describe("cards.json conforms to the Card type", () => {
     }
   });
 
+  /*
+    A card must never name the same reward category twice.
+
+    THIS IS A MERGE GUARD, and it exists because the failure it catches actually
+    happened (D19e). Merging `origin/main` on 2026-08-16 met a case git cannot
+    handle: both sides had REORDERED the `categories` array on the same four cards
+    (`international_spend` first on one side, last on the other). A line-based merge
+    reads a move as a deletion in one place plus an insertion in another, keeps both
+    halves, and produces a duplicate. It did — on adcb_touchpoints_gold_titanium,
+    dib_shams_platinum, dib_shams_infinite and sc_smart_saadiq.
+
+    Why nothing else caught it: the result was still valid JSON, still satisfied the
+    Card type, still had 53 cards, still passed the 0-8 bound, and the app ran. It
+    surfaced only because the tier-count checksum in normalize-rate.test.ts read 200
+    tier-1 strings where 196 was expected — a guard firing for a defect it was never
+    written for, whose first and entirely plausible explanation was a normalizer
+    change that had nothing to do with it.
+
+    A duplicate is always a defect, never a data choice: `buildEarnOptions` turns each
+    entry into its own earn option, so a duplicated category is a second option
+    claiming the same spend with its own independent caps. Two uncapped copies are
+    merely redundant; two CAPPED copies would let a card earn twice its real cap.
+
+    Asserted over ALL cards at once so a failure names every offender in one run —
+    a merge produces them in batches, and fixing them one test-run at a time is how
+    the second and third get missed.
+  */
+  it("never names the same reward category twice on one card", () => {
+    const duplicates: string[] = [];
+    for (const card of cards) {
+      const seen = new Set<string>();
+      for (const cat of card.rewards.categories) {
+        if (seen.has(cat.category)) duplicates.push(`${card.id}: "${cat.category}"`);
+        seen.add(cat.category);
+      }
+    }
+    expect(duplicates, "duplicated reward categories (see D19e — likely a bad merge)").toEqual([]);
+  });
+
   // Runtime half of the type check: verify the one field the compiler couldn't.
   it("uses only known reward types", () => {
     for (const card of cards) {
