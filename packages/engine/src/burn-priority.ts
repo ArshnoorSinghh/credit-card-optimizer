@@ -26,9 +26,13 @@
 import type { PointsInventory, PointsHolding } from "./points-inventory";
 import { PROGRAM_EXPIRY_DEFAULTS, type ProgramExpiryDefault } from "./expiry-policy";
 import {
+  DEVALUATIONS as DEVALUATION_TABLE,
+  upcomingDevaluations as upcomingDevaluationsFor,
+  type Devaluation as DevaluationEntry,
+} from "./devaluations";
+import {
   bestRoute,
   supportedClasses,
-  type RedemptionClass,
   type RedemptionValuationTable,
   REDEMPTION_VALUATIONS,
 } from "./redemption-valuations";
@@ -44,25 +48,18 @@ const SOON_DAYS = 180;
 export { PROGRAM_EXPIRY_DEFAULTS } from "./expiry-policy";
 export type { ProgramExpiryDefault } from "./expiry-policy";
 
-export interface Devaluation {
-  currency: string;
-  /** ISO date the devaluation takes effect. */
-  effectiveDate: string;
-  /** Which redemption classes lose value. */
-  affects: RedemptionClass[];
-  note: string;
-}
-
-// why one list: like conversion ratios, devaluation dates change and should live in
-// a single editable place the burn engine reads.
-export const DEVALUATIONS: Devaluation[] = [
-  {
-    currency: "Skywards Miles",
-    effectiveDate: "2026-05-20",
-    affects: ["flight_premium"],
-    note: "~15% premium-cabin devaluation — burn premium (business/first) redemptions before this date",
-  },
-];
+// The devaluation table moved to devaluations.ts for the same reason the expiry
+// table moved to expiry-policy.ts: the deadline calendar needs the dates without
+// importing the burn engine. Re-exported so this module's public surface is
+// unchanged. `upcomingDevaluations` is the shared date filter — this file used to
+// inline that comparison, and the calendar would have had to reimplement it.
+export {
+  DEVALUATIONS,
+  DEVALUATIONS_REVIEWED_ON,
+  devaluationReviewIsStale,
+  upcomingDevaluations,
+} from "./devaluations";
+export type { Devaluation } from "./devaluations";
 
 function daysBetween(fromISO: string, toISO: string): number {
   const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -152,7 +149,7 @@ export function burnPriority(
   asOf: string,
   table: RedemptionValuationTable = REDEMPTION_VALUATIONS,
   expiryDefaults: readonly ProgramExpiryDefault[] = PROGRAM_EXPIRY_DEFAULTS,
-  devaluations: readonly Devaluation[] = DEVALUATIONS,
+  devaluations: readonly DevaluationEntry[] = DEVALUATION_TABLE,
 ): BurnPlan {
   const planFlags: string[] = [];
 
@@ -182,9 +179,11 @@ export function burnPriority(
     // currency with a card-bill route escapes more ways than a voucher-only one.
     const versatility = supportedClasses(currency, table).length;
 
-    // Upcoming devaluation for this currency (effective in the future from asOf).
+    // Upcoming devaluation for this currency. The date filter is `upcomingDevaluations`
+    // rather than an inline comparison so the burn engine and the deadline calendar
+    // cannot drift on what counts as "still upcoming".
     let devaluationWarning: string | undefined;
-    const deval = devaluations.find((d) => d.currency === currency && daysBetween(asOf, d.effectiveDate) >= 0);
+    const deval = upcomingDevaluationsFor(asOf, devaluations).find((d) => d.currency === currency);
     if (deval) {
       devaluationWarning = `${deval.note} (effective ${deval.effectiveDate})`;
       flags.push(devaluationWarning);

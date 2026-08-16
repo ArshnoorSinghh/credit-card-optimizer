@@ -197,3 +197,29 @@ export type {
   ProgramExpiryDefault,
   Devaluation,
 } from "./burn-priority";
+
+// Devaluations: the dated table plus its freshness check. Exported from its own
+// module (not just via the burn engine) because "has anyone swept this lately" is a
+// question about the DATA, and the calendar surfaces the answer as a flag.
+export {
+  DEVALUATIONS_REVIEWED_ON,
+  DEVALUATION_REVIEW_MAX_AGE_MONTHS,
+  devaluationReviewAgeMonths,
+  devaluationReviewIsStale,
+  upcomingDevaluations,
+} from "./devaluations";
+
+// Deadline calendar: expiry + devaluations + fee renewals on one timeline. Composes
+// the engines above and computes no deadline of its own; `undated` carries the ones
+// that cannot be dated, so an empty calendar never reads as "nothing is coming up".
+export { deadlineCalendar } from "./deadline-calendar";
+export type {
+  DeadlineKind,
+  DeadlineCertainty,
+  DeadlineEvent,
+  UndatedDeadline,
+  DeadlineCalendar,
+  HeldCard,
+  CalendarInput,
+  CalendarOptions,
+} from "./deadline-calendar";

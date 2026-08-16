@@ -1,8 +1,8 @@
 # Deadline Calendar — specification
 
-**Status:** spec, agreed 2026-08-16. Scope for this pass: pure engine module + tests,
-plus a read-only demo screen. No new persistence, no email. See "Deliberately out of
-scope" and "What this needs before it is a real product feature".
+**Status:** engine BUILT 2026-08-16 (`deadline-calendar.ts`, `devaluations.ts`, 26 tests).
+Demo screen not started. No new persistence, no email — see "Deliberately out of scope"
+and "What this needs before it is a real product feature".
 
 **Why it exists.** Fils answers an *annual* question — which cards should you hold.
 That is a once-a-year reason to open the app. Sikka, the direct UAE competitor, answers
@@ -123,11 +123,24 @@ Filtered to `effectiveDate >= asOf` **and** to currencies the user actually hold
 > `burnPriority` filters to future dates, so it currently warns about nothing, silently.
 > The table has rotted and nothing detects it.
 >
-> A table of dated facts needs a freshness convention or it decays invisibly, which is
-> the same failure mode as the two dead filters. Proposal: add `reviewedOn` to each entry
-> and a test asserting the table has been reviewed within N months. **Not** a test that
-> requires a future entry — "no upcoming devaluations" is a legitimate state, and a test
-> that forces one would invite inventing one.
+> **FIXED 2026-08-16.** The table moved to its own `devaluations.ts` (the precedent
+> `expiry-policy.ts` set) and gained `DEVALUATIONS_REVIEWED_ON` — a table-level sweep
+> date, updated whenever anyone *checks*, even if nothing changes. That is the only
+> thing that distinguishes "no upcoming devaluations" from "nobody has looked".
+>
+> Per-entry dates would NOT have caught this: the Skywards entry was correct when
+> written and stayed correct. What went stale was the sweep, not the fact.
+>
+> Staleness surfaces as a calendar **flag**, not a failing test. A test that broke
+> purely because time passed would be silenced by bumping the date rather than by doing
+> the sweep, converting a real signal into a ritual. And there is deliberately **no**
+> test requiring a future entry — "no devaluation is currently announced" is a
+> legitimate state, and demanding one would invite inventing one to get CI green.
+>
+> The Skywards entry is retained rather than deleted: it is the reason
+> `redemption-valuations.ts` models Skywards premium as a user multiplier instead of a
+> fixed number, and deleting it would leave that decision looking arbitrary. Consumers
+> filter by date via the now-shared `upcomingDevaluations`.
 
 ### 3c. Annual-fee renewal — the strongest entry, and it needs one date we don't have
 
