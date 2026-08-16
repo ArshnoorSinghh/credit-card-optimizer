@@ -14,3 +14,9 @@ dist/
 
 # Local Claude Code project briefing (kept out of the public repo)
 CLAUDE.md
+
+# REAL credit-card statements used to validate the engine against reality.
+# These are private financial records and must never be committed. The harness
+# (packages/engine/src/statement-validation.test.ts) reads this path and skips
+# cleanly when it is absent; statements.example.json documents the shape.
+packages/engine/data/statements.local.json

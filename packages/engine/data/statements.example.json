@@ -1,0 +1,44 @@
+[
+  {
+    "_comment": "COPY THIS FILE TO statements.local.json AND FILL IT IN. That path is gitignored — real statements are private financial records and must never be committed. Run: STATEMENTS=1 npx vitest run src/statement-validation.test.ts --disable-console-intercept",
+
+    "cardId": "fab_cashback",
+    "cycle": "2026-07",
+
+    "_lines_comment": "One entry per line on the statement. `category` must be one of the engine's canonical SPEND_CATEGORIES, or null when you cannot honestly map it (a fee, a refund, a cash advance, an unrecognisable merchant). DO NOT guess a category to make the totals tie — unmapped spend is excluded from the prediction and reported, which is the point.",
+    "lines": [
+      { "description": "CARREFOUR MALL OF THE EMIRATES", "amountAed": 1240.5, "category": "groceries" },
+      { "description": "ENOC STATION 1123", "amountAed": 300, "category": "fuel" },
+      { "description": "EMIRATES AIRLINE DXB", "amountAed": 2100, "category": "travel" },
+      { "description": "TALABAT ORDER 88213", "amountAed": 145.75, "category": "dining" },
+      { "description": "DEWA BILL PAYMENT", "amountAed": 620, "category": "utilities" },
+      {
+        "description": "CASH ADVANCE FEE",
+        "amountAed": 105,
+        "category": null,
+        "note": "a fee, not spend — earns nothing and must not enter the profile"
+      },
+      {
+        "description": "POS 993812 UNKNOWN",
+        "amountAed": 89.9,
+        "category": null,
+        "note": "merchant unrecognisable from the statement line"
+      }
+    ],
+
+    "_truth_comment": "THE GROUND TRUTH. Read it off the statement; never infer it. Give actualRewardUnits (points/miles credited) when the statement shows units — that comparison isolates the EARN model from the point valuation. Give actualRewardAed when the statement only shows a cashback figure in AED; that tests the earn model and the valuation table together and is flagged as such. Give both when the statement shows both.",
+    "actualRewardUnits": 8571,
+    "actualRewardAed": 60
+  },
+
+  {
+    "_comment": "A second cycle on the same card is worth more than one cycle on two cards — it tests the model against a different spend mix with the same known reward structure.",
+    "cardId": "fab_cashback",
+    "cycle": "2026-06",
+    "lines": [
+      { "description": "SPINNEYS JUMEIRAH", "amountAed": 3100, "category": "groceries" },
+      { "description": "ADNOC", "amountAed": 410, "category": "fuel" }
+    ],
+    "actualRewardAed": 181
+  }
+]

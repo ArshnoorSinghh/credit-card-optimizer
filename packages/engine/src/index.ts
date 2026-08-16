@@ -236,3 +236,14 @@ export type {
   CalendarInput,
   CalendarOptions,
 } from "./deadline-calendar";
+
+// Statement check: the only thing here that compares a prediction to something that
+// actually happened. Everything else in this engine is modelled.
+export { checkStatement, summariseStatementChecks } from "./statement-check";
+export type {
+  Statement,
+  StatementLine,
+  StatementCheck,
+  StatementSummary,
+  UnitRange,
+} from "./statement-check";
