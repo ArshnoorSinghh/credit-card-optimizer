@@ -25,6 +25,7 @@ const LINKS = [
   { href: "/cards", label: "Cards" },
   { href: "/optimizer", label: "Card Optimizer" },
   { href: "/points", label: "Points" },
+  { href: "/calendar", label: "Calendar" },
   { href: "/dashboard", label: "Wallet" },
 ];
 

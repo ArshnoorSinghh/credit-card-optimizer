@@ -209,6 +209,19 @@ export {
   upcomingDevaluations,
 } from "./devaluations";
 
+// Cap thresholds: "after AED X of groceries this month, switch to your other card".
+// Deliberately NOT on the calendar — dating a cap crossing needs a uniform-spend
+// assumption, while the threshold form is exact for any spending pattern.
+export { capThresholds } from "./cap-thresholds";
+export type {
+  CapThreshold,
+  CapThresholdReport,
+  UnstatedThreshold,
+  SwitchTarget,
+} from "./cap-thresholds";
+export { optionSpendThresholds } from "./score-card";
+export type { SpendThreshold } from "./score-card";
+
 // Deadline calendar: expiry + devaluations + fee renewals on one timeline. Composes
 // the engines above and computes no deadline of its own; `undated` carries the ones
 // that cannot be dated, so an empty calendar never reads as "nothing is coming up".

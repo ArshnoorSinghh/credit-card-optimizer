@@ -671,6 +671,44 @@ function optionCapacityAnnualAed(option: EarnOption, aedPerUnit: number): number
   return capUnits / unitsPerAed;
 }
 
+/** How much spend an option absorbs before its cap binds, in the CAP'S OWN period. */
+export interface SpendThreshold {
+  period: "monthly" | "annual";
+  /** AED of spend in this option's categories past which the bonus stops paying. */
+  spendAed: number;
+}
+
+/**
+ * The spend thresholds at which an option's caps bind, each stated in the period
+ * the cap is actually written in.
+ *
+ * why this exists ALONGSIDE `optionCapacityAnnualAed` rather than being derived from
+ * it: that function deliberately collapses both caps into ONE annual number via
+ * `min(monthlyCap * 12, annualCap)`, which is the right input for the flow solver and
+ * carries the engine's usual even-monthly-spend assumption. For telling a USER "after
+ * AED 6,000 of groceries this month the bonus stops", that assumption is exactly what
+ * must not be there — a monthly cap is a fact about a month, and annualising it (or
+ * de-annualising an annual cap) invents a spending pattern.
+ *
+ * So each cap is reported in its own period and never converted between them. Both
+ * numbers are exact. They share `expectedUnitsPerAed` and `resolveCapUnits` with the
+ * capacity function above, so the two cannot drift on how a cap becomes AED.
+ *
+ * Returns [] for an uncapped or zero-yield option. Callers must handle a RANGE rate
+ * themselves — see `cap-thresholds.ts`, which refuses to state a threshold off a
+ * midpoint.
+ */
+export function optionSpendThresholds(option: EarnOption, aedPerUnit: number): SpendThreshold[] {
+  const unitsPerAed = expectedUnitsPerAed(option.rate, aedPerUnit);
+  if (unitsPerAed <= 0) return [];
+  const out: SpendThreshold[] = [];
+  const mCap = resolveCapUnits(option.monthlyCap, option.capsInAed, aedPerUnit);
+  const aCap = resolveCapUnits(option.annualCap, option.capsInAed, aedPerUnit);
+  if (mCap !== null) out.push({ period: "monthly", spendAed: mCap / unitsPerAed });
+  if (aCap !== null) out.push({ period: "annual", spendAed: aCap / unitsPerAed });
+  return out;
+}
+
 /** Precompute the portfolio-independent data for one card. */
 /**
  * Apply a card's `excluded_spend` list: spend in an excluded category earns

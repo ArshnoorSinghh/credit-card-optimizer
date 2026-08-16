@@ -1,8 +1,9 @@
 # Deadline Calendar — specification
 
-**Status:** engine BUILT 2026-08-16 (`deadline-calendar.ts`, `devaluations.ts`, 26 tests).
-Demo screen not started. No new persistence, no email — see "Deliberately out of scope"
-and "What this needs before it is a real product feature".
+**Status:** BUILT 2026-08-16 — engine (`deadline-calendar.ts`, `cap-thresholds.ts`,
+`devaluations.ts`) and the `/calendar` screen. Engine 407 tests, web 140. No new
+persistence, no email — see "Deliberately out of scope" and "What this needs before it
+is a real product feature", which is the honest limit on any retention claim.
 
 **Why it exists.** Fils answers an *annual* question — which cards should you hold.
 That is a once-a-year reason to open the app. Sikka, the direct UAE competitor, answers
@@ -196,6 +197,26 @@ enter `DeadlineEvent` at all — which is why `DeadlineCertainty` has no "estima
 This is also the piece that answers Sikka structurally: it is a recurring, per-purchase
 reason to open the app that falls out of the portfolio maths rather than requiring
 transaction data.
+
+**Built as `cap-thresholds.ts`.** Two things the implementation added to this design:
+
+- Each cap is reported **in its own period** and never converted between them. A
+  monthly cap is a fact about a month; annualising it (or dividing an annual cap into
+  months) would smuggle the uniform-spend assumption back in through the side door.
+  `optionSpendThresholds` in `score-card.ts` exists for exactly this and shares its cap
+  arithmetic with `optionCapacityAnnualAed`, so the two cannot drift.
+- A **range rate gets no threshold at all**. An unstated merchant bonus is bounded
+  0..full and routes on the midpoint; dividing a cap by that midpoint yields a
+  confident number roughly *double* the truth. Those go to `unstated` with the reason,
+  mirroring the calendar's `undated`.
+
+**A float bug this surfaced, worth recording.** fab_cashback pays 5% capped at AED
+150/month — exactly AED 3,000 of spend. Through the cap→units→AED chain that lands on
+`2999.9999999999995`, so a user spending precisely AED 3,000 "exceeded" it by 4.5e-13
+and the screen printed **REACHED** beside two numbers both rounded to "AED 3,000". Found
+by rendering the real page, not by a test. Ties now resolve to *not* reached, which is
+also the conservative direction — it never tells someone to stop using a card whose
+bonus is still paying.
 
 ---
 
