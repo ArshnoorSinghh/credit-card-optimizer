@@ -37,11 +37,27 @@
  * deliberate simplification, and the UI names the affected categories when it asks.
  *
  * ── Absent shares ───────────────────────────────────────────────────────────────
- * An unstated merchant keeps the old behaviour — the full category, flagged as an
- * optimistic assumption. That is what makes this change additive: nothing silently
- * moves for a caller that doesn't ask the question. The product does ask, so in the
- * app a share is always present, and a card whose share is stated is no longer
- * carrying an unverified assumption.
+ * An unstated merchant is BOUNDED, not assumed: `boundMerchantLockedRates` in
+ * score-card.ts rewrites the bonus to a 0..full range, because "we didn't ask" is
+ * not evidence that the user spends everything there — nor that they spend nothing.
+ *
+ * This is deliberately NOT the model above. A bound is what you emit when you have
+ * no information; a capacity is what you enforce when you do. The two never act on
+ * the same option: a lock with a stated share keeps its real rate and is constrained
+ * by the flow, and a lock without one is bounded and left out of the flow's share
+ * machinery entirely.
+ *
+ * why it was worth doing both: an earlier revision left unstated merchants at the
+ * FULL category, on the reasoning that this kept the change additive. Read one card
+ * at a time that is defensible. Under SELECTION it is not — optimizePortfolio keeps
+ * the best 1-3 of ~53 cards, so it would reliably pick whichever cards carried the
+ * most optimistic merchant assumptions, and could stack three at once (all retail at
+ * Emaar, all groceries at LuLu, all dining via Talabat). Measured over the weighted
+ * population that was worth ~2.34pp of the reported optimal return.
+ *
+ * The product asks, so in the app a share is normally present and the bound is the
+ * fallback for callers that cannot ask — the gap study's no-share universes, and any
+ * integration not yet wired to the question.
  *
  * Pure data + pure functions. No I/O.
  *

@@ -110,18 +110,38 @@ describe("POST /api/optimize", () => {
     expect(res.status).toBe(400);
   });
 
-  it("treats an omitted merchantShares as unanswered, not as zero", async () => {
-    // Unanswered must keep the engine's previous behaviour exactly, so an existing
-    // caller that knows nothing about shares gets the same answer it always did.
+  it("treats an omitted merchantShares as unanswered, and reaches the allocator", async () => {
+    // Omitted and {} are the same statement — "nobody answered" — and must agree.
     const withOmitted = await (await POST(postReq(baseBody))).json();
     const withEmpty = await (await POST(postReq({ ...baseBody, merchantShares: {} }))).json();
     expect(withOmitted.overallBest.netAnnualValue).toBe(withEmpty.overallBest.netAnnualValue);
-    // ...and stating zero for a merchant must NOT produce that same answer, or the
-    // field is being ignored somewhere between here and the allocator.
-    const zeroed = await (
-      await POST(postReq({ ...baseBody, merchantShares: { LuLu: 0, Emaar: 0, noon: 0, Amazon: 0 } }))
+
+    /*
+      The liveness half: the field must actually reach the allocator.
+
+      This used to compare "all shares 0" against omitted and require them to DIFFER.
+      That stopped holding once unanswered merchants became bounded 0..full and the
+      optimizer began ranking on the lower bound — at the floor, an unanswered bonus
+      contributes nothing, which is exactly what a stated 0 contributes, so the same
+      portfolio wins with the same figure. The old assertion was reading a real (and
+      intended) property as a wiring failure.
+
+      Comparing the two ENDS of the stated range tests the wiring without depending
+      on which portfolio wins: 0 and 1 are both answers, and they cannot legitimately
+      produce the same number unless the field is being dropped somewhere between
+      this request and the allocator.
+    */
+    const merchants = { LuLu: 0, Emaar: 0, noon: 0, Amazon: 0 };
+    const none = await (await POST(postReq({ ...baseBody, merchantShares: merchants }))).json();
+    const all = await (
+      await POST(
+        postReq({
+          ...baseBody,
+          merchantShares: Object.fromEntries(Object.keys(merchants).map((m) => [m, 1])),
+        }),
+      )
     ).json();
-    expect(zeroed.overallBest.netAnnualValue).not.toBe(withOmitted.overallBest.netAnnualValue);
+    expect(all.overallBest.netAnnualValue).not.toBe(none.overallBest.netAnnualValue);
   });
 });
 

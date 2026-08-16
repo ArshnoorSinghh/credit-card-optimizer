@@ -169,7 +169,7 @@ function publishableUniverse(
   shares?: Record<string, number>,
 ): Card[] {
   return eligibleFor(salary)
-    .filter((c) => isSoundScore(scoreCard(spend, c, undefined, shares).flags))
+    .filter((c) => isSoundScore(scoreCard(spend, c, undefined, { merchantShares: shares }).flags))
     .filter((c) => !hasDoNotPublishCaveat(c));
 }
 
@@ -297,7 +297,7 @@ describe("plausibility — the publishable headline must stay inside the stated 
     for (const seg of SEGMENT_CENTRES) {
       const spendYr = annual(seg.spend);
       for (const card of publishableUniverse(seg.spend, seg.salary, SHARES)) {
-        const s = scoreCard(seg.spend, card, undefined, SHARES);
+        const s = scoreCard(seg.spend, card, undefined, { merchantShares: SHARES });
         const pct = (s.netAnnualValue / spendYr) * 100;
         expect(
           pct,

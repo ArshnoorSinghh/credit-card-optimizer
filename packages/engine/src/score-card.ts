@@ -467,7 +467,14 @@ export function buildEarnOptions(card: Card): { options: EarnOption[]; flags: Sc
     }
     return {
       cardCategory: cat.category,
-      rate: normalizeRate(cat.rate, { monthlyCap: cat.monthly_cap, annualCap: cat.annual_cap }),
+      // rewardCurrency lets the normalizer tell "6.25% back in UPoints" (which only
+      // restates rewards.currency) from a real scope, so it isn't flagged for saying
+      // what currency it pays in.
+      rate: normalizeRate(cat.rate, {
+        monthlyCap: cat.monthly_cap,
+        annualCap: cat.annual_cap,
+        rewardCurrency: card.rewards.currency,
+      }),
       monthlyCap: cat.monthly_cap,
       annualCap: cat.annual_cap,
       capsInAed,
@@ -483,7 +490,7 @@ export function buildEarnOptions(card: Card): { options: EarnOption[]; flags: Sc
   if (!hasCatchall) {
     options.push({
       cardCategory: "base_rate",
-      rate: normalizeRate(card.rewards.base_rate),
+      rate: normalizeRate(card.rewards.base_rate, { rewardCurrency: card.rewards.currency }),
       monthlyCap: null,
       annualCap: null,
       capsInAed,
@@ -804,15 +811,129 @@ function applySuppressedCategoryLock(
   };
 }
 
-export function precomputeCardData(card: Card, valuations: ValuationTable = DEFAULT_VALUATIONS): CardData {
+/**
+ * Options describing what the caller KNOWS about where spend happens. Everything
+ * here narrows what the scorer is allowed to assume; none of it is card data.
+ *
+ * The two fields are the two ways a merchant lock can stop being an assumption —
+ * the user told us the share, or the caller already resolved the merchant. A lock
+ * covered by neither is bounded rather than credited; see `boundMerchantLockedRates`.
+ */
+export interface ScoringOptions {
+  /**
+   * What fraction of the relevant categories' spend actually happens at each
+   * bonused merchant ("LuLu" -> 0.3). See merchant-share.ts: enforced in the
+   * allocator as a flow CAPACITY, so the remainder flows on to the next-best
+   * option and two cards bonusing one merchant share a single pool.
+   */
+  merchantShares?: MerchantShares;
+  /**
+   * Set ONLY by a caller that knows which merchant the spend is at — today that is
+   * `which-card.ts`, which resolves a merchant name and drops every bonus locked to
+   * a different one before scoring. Any merchant-locked bonus that survives that
+   * filter genuinely applies, so it is scored at its full rate.
+   */
+  merchantLocksResolved?: boolean;
+}
+
+/**
+ * Bound a merchant-locked bonus by the thing a generic spending profile cannot
+ * know: WHERE the spend happened.
+ *
+ * why this exists: `MATCH_TABLE` maps a merchant-locked bonus to its nearest
+ * canonical category — "emaar_malls" -> other, "lulu_supermarket" -> groceries,
+ * "first_10_talabat_orders" -> dining — and the scorer then applied the bonus to ALL
+ * of that category's spend, flagging it as an optimistic assumption but still
+ * crediting it in full. Read one card at a time that is defensible: a LuLu shopper
+ * really does earn 8 points/AED at LuLu.
+ *
+ * It is not defensible under SELECTION, and it is the same maximum-of-maxima defect
+ * the "Up to X%" ceiling fork had. `optimizePortfolio` scores ~53 cards and keeps
+ * the best 1-3, so it will pick whichever card carries the most optimistic merchant
+ * assumption — and worse, it can pick THREE cards exploiting three DIFFERENT
+ * merchant assumptions at once, simultaneously assuming the user does all their
+ * general retail at Emaar malls, all their groceries at LuLu, and all their dining
+ * through Talabat. Measured over a weighted UAE population these assumptions were
+ * worth ~2.34 percentage points of the reported optimal return.
+ *
+ * The honest bound is 0..full: absent any statement, the user spends 0% to 100% of
+ * the category there and we cannot narrow it. So the rate becomes a range, exactly
+ * as an unqualified "up to" ceiling does — no realization share is invented, and
+ * the card is not zeroed either: its upside is still the max of the range.
+ *
+ * why this is a FALLBACK and not the model: a bound is what you emit when you did
+ * not ask. Asking is better, and `merchantShares` is the answer — a stated share is
+ * enforced as a flow capacity, which a rate haircut gets wrong in two ways (the
+ * remainder would be destroyed rather than reallocated, and two cards bonusing one
+ * merchant would each get the full share). So a lock is bounded ONLY when no share
+ * was stated for it and the caller has not resolved the merchant. The two mechanisms
+ * never both act on the same option.
+ */
+function boundMerchantLockedRates(
+  options: EarnOption[],
+  shares: ResolvedMerchantShares | undefined,
+  merchantLocksResolved: boolean,
+): EarnOption[] {
+  if (merchantLocksResolved) return options;
+  return options.map((o): EarnOption => {
+    if (o.rule.kind !== "categories" || o.rule.merchant === undefined) return o;
+    // A share the user STATED is an input; the allocator enforces it as a capacity,
+    // so the rate must stay exactly what the card pays at that merchant.
+    if (shareFor(shares, o.rule.merchant) !== undefined) return o;
+    const rate = o.rate;
+    // Already unresolved (e.g. a merchant-locked "Up to X%"): its range already
+    // starts at 0, so there is nothing further to bound.
+    if (rate.value === null) return o;
+    return {
+      ...o,
+      rate: {
+        ...rate,
+        value: null,
+        confidence: "unknown",
+        range: { min: 0, max: rate.value },
+        note: `Bonus pays only at ${o.rule.merchant}; nobody has said what share of this category is spent there, so it is bounded 0..${rate.raw}`,
+      },
+    };
+  });
+}
+
+export function precomputeCardData(
+  card: Card,
+  valuations: ValuationTable = DEFAULT_VALUATIONS,
+  scoringOptions: ScoringOptions = {},
+): CardData {
+  const { shares } = sanitizeMerchantShares(scoringOptions.merchantShares);
   const built = buildEarnOptions(card);
   const excludedResult = applyExcludedSpend(card, built.options);
   const valuation = resolveValuation(card.rewards.currency, valuations);
-  // Yields depend only on rates and the valuation, so they survive every rule
-  // narrowing below and are computed once, up front, for the lock to compare on.
-  const yields = excludedResult.options.map((o) => expectedYieldPerAed(o.rate, valuation.aedPerUnit));
-  const suppressedResult = applySuppressedCategoryLock(card, excludedResult.options, yields);
-  const options = suppressedResult.options;
+
+  /*
+    ORDER MATTERS, and it is the merchant bound that has to come last.
+
+    The suppressed-category lock asks a question about the CARD's own rate table —
+    "does this card name a category at less than its own catch-all" — which is a
+    structural fact about the product and must not change with what we happen to
+    know about the user's merchants. So it is computed on the UNBOUNDED yields.
+    Bounding first would push a merchant option's yield to its midpoint and could
+    flip a bucket in or out of "suppressed" for reasons that have nothing to do
+    with the issuer's category schedule.
+  */
+  const unboundedYields = excludedResult.options.map((o) =>
+    expectedYieldPerAed(o.rate, valuation.aedPerUnit),
+  );
+  const suppressedResult = applySuppressedCategoryLock(
+    card,
+    excludedResult.options,
+    unboundedYields,
+  );
+  const options = boundMerchantLockedRates(
+    suppressedResult.options,
+    shares,
+    scoringOptions.merchantLocksResolved ?? false,
+  );
+  // Recomputed because bounding rewrites rates: the flow must route on the BOUNDED
+  // yield, or the bound would be reported but not acted on.
+  const yields = options.map((o) => expectedYieldPerAed(o.rate, valuation.aedPerUnit));
   const flags = [...built.flags, ...excludedResult.flags, ...suppressedResult.flags];
   return {
     card,
@@ -825,6 +946,7 @@ export function precomputeCardData(card: Card, valuations: ValuationTable = DEFA
     capacities: options.map((o) => optionCapacityAnnualAed(o, valuation.aedPerUnit)),
   };
 }
+
 
 /**
  * Which cap direction (monthly vs annual) bounds an option — for the receipt when
@@ -1432,13 +1554,13 @@ export function scoreCard(
   spending: SpendingProfile,
   card: Card,
   valuations: ValuationTable = DEFAULT_VALUATIONS,
-  merchantShares?: MerchantShares,
+  scoringOptions: ScoringOptions = {},
 ): CardScore {
   const valuation = resolveValuation(card.rewards.currency, valuations);
   // Validate once, here at the public boundary — the allocator's inner loops then
   // work on an already-checked map. An invalid entry is DROPPED, not clamped, so it
   // falls back to "unstated" and keeps its loud flag (see sanitizeMerchantShares).
-  const { shares } = sanitizeMerchantShares(merchantShares);
+  const { shares } = sanitizeMerchantShares(scoringOptions.merchantShares);
 
   // --- Benched cards: excluded from scoring pending data verification. We return
   // a zeroed, clearly-flagged score rather than guessing a reward structure or
@@ -1468,7 +1590,10 @@ export function scoreCard(
   // --- Assign + earn via the SHARED core. scoreCard(card) is exactly a 1-card
   // portfolio, so it delegates to earnAcrossCards([card]) — the same computation
   // the optimizer runs. This is what makes scoreCard and best-1-card agree. ---
-  const cd = precomputeCardData(card, valuations);
+  // Both merchant mechanisms are wired here, and they are disjoint by construction:
+  // precomputeCardData BOUNDS the locks nobody has accounted for, and earnAcrossCards
+  // enforces the STATED shares as flow capacities. An option is never both.
+  const cd = precomputeCardData(card, valuations, scoringOptions);
   const result = earnAcrossCards(spending, [cd], shares);
 
   // Structural flags first, read from the GATED card so a min-spend gate surfaces.
@@ -1535,16 +1660,11 @@ export function scoreCard(
     if (o.merchantAssumption && o.monthlySpendAed > 0) {
       const stated = shareFor(shares, o.merchantAssumption);
       const cats = o.spendCategories.map(label).join("/");
-      if (stated === undefined) {
-        // No share given: the old, optimistic full-category assumption. It stays
-        // `uncertain` and keeps the exact phrase "spend occurs at", which is what
-        // the gap study's SOUND filter rejects on.
-        uncertain = true;
-        flags.push({
-          level: "low",
-          message: `${on}: assumes ${cats} spend occurs at ${o.merchantAssumption}`,
-        });
-      } else {
+      /*
+        THREE cases, in order of how much we actually know. The first two are
+        knowledge; only the third is a gap, and only the third is `uncertain`.
+      */
+      if (stated !== undefined) {
         /*
           A share the USER stated is an input, not an assumption of ours — the same
           standing as the spend figures themselves, which we also don't mark
@@ -1562,6 +1682,38 @@ export function scoreCard(
           message:
             `${on}: counts the ${(stated * 100).toFixed(0)}% of your ${cats} spend ` +
             `you told us happens at ${o.merchantAssumption}`,
+        });
+      } else if (scoringOptions.merchantLocksResolved) {
+        /*
+          The caller RESOLVED the merchant (which-card.ts answering "which card at
+          LuLu?"), so every lock that survived its filter genuinely applies and was
+          scored at its full rate. Not `uncertain`: nothing was assumed. Still
+          reported, because the answer is only valid at that merchant.
+        */
+        flags.push({
+          level: "low",
+          message: `${on}: confirmed at ${o.merchantAssumption} for this ${cats} spend`,
+        });
+      } else {
+        /*
+          Nobody stated a share and no merchant was resolved. The bonus is no longer
+          ASSUMED across the whole category — precomputeCardData bounded it 0..full —
+          but a bound is not a figure we can stand behind, so this stays `uncertain`
+          and the card stays out of the study's SOUND universe exactly as before.
+
+          The substring "spend occurs at" below is LOAD-BEARING: study-filters.ts's
+          `unstated-merchant-assumption` clause matches on it, and that clause has
+          already gone silently dead once (see that file's header — the category list
+          splits "assumes spend occurs"). The wording changed when bounding landed;
+          the marker was kept deliberately so the filter would not die a second time,
+          and study-filters.test.ts fails loudly if it ever does.
+        */
+        uncertain = true;
+        flags.push({
+          level: "low",
+          message:
+            `${on}: bounded 0-to-full, because nobody has said what share of your ` +
+            `${cats} spend occurs at ${o.merchantAssumption}`,
         });
       }
     }

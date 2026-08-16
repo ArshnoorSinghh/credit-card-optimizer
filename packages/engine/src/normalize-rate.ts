@@ -78,6 +78,18 @@ export interface NormalizedRate {
 export interface RateContext {
   monthlyCap?: number | null;
   annualCap?: number | null;
+  /**
+   * The card's `rewards.currency`, when known.
+   *
+   * why the normalizer needs it: many rate strings name the payout currency inline
+   * ("6.25% back in UPoints", "1.25% back as talabat credit"). That phrase reads as
+   * a trailing SCOPE to the parser, but it is not a condition — it restates a fact
+   * already carried by `rewards.currency`, so it must not cost the rate confidence.
+   * Distinguishing "names this card's currency" from "names a real restriction"
+   * cannot be done from the string alone, hence the context. Absent = fall back to
+   * treating any such phrase as a scope (the old, conservative behaviour).
+   */
+  rewardCurrency?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -162,30 +174,60 @@ const EXPLICITLY_VARIABLE = /variable|customi[sz]/i;
 const BENIGN_SCOPE =
   /^(?:on\s+)?(?:all|eligible|general|standard|other|domestic|local|worldwide|non-?aed|international|weekday|weekend)[a-z\s]*?(?:spend|purchases|transactions|retail|retail spend)?$/i;
 
-/*
-  Two pieces of trailing text that LOOK like conditions but state nothing the
-  structured data doesn't already carry. Both were driving false tier-2s.
+// A parenthetical that only DEFINES the reward currency's exchange rate:
+// "(10 UPoints = AED 1)", "(1 Plus Point = AED 1)". It states the unit's value, not
+// a condition on earning, so it must not make the rate look scoped.
+// why so tightly anchored (leading digits AND an "=" AND an AED amount): the same
+// "(" test legitimately catches real conditions elsewhere in the data — e.g. FAB's
+// "(utilities, government, education, real estate, telecom)" enumerating which
+// categories get the stub rate, Mashreq's "(up to 2% during promotional periods)",
+// and RAKBANK's "(1.5 points per AED 5)" restating a rate. None of those match this
+// pattern, so they keep flagging low exactly as before.
+const CURRENCY_DEFINITION = /\(\s*\d[\d.,]*\s+[^()=]*?=\s*AED\s*[\d.,]+\s*\)/gi;
 
-  CURRENCY_DEFINITION — "(10 UPoints = AED 1)", "(1 Plus Point = AED 1)". A
-  conversion definition, not a condition. It was tripping the "(" test below.
+// A leading "back in <currency>" / "back as <currency>" phrase, captured up to the
+// next " on ..." clause (or the end of the string).
+const REWARD_CURRENCY_NAMING = /^back\s+(?:in|as)\s+(.+?)(?=\s+on\b|$)/i;
 
-  PAID_IN — "back in UPoints", "back as Wala'a Rewards", "back as talabat
-  credit". Names the reward currency, which `rewards.currency` already holds and
-  valuations.ts already prices. "6.25% back in UPoints" is exactly as certain as
-  "6.25%", and treating it as low-confidence discarded ~10 clean rate strings.
+/** Normalize a currency label for comparison: case, apostrophe style, whitespace. */
+function normalizeCurrencyLabel(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[’']/g, "'") // data mixes U+2019 and U+0027 in "Wala'a"
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
-  Both are stripped BEFORE the benign test, so anything that survives is a real
-  scope. "back in UPoints on eligible non-Emaar spend" still reduces to "on
-  eligible non-Emaar spend" and stays tier 2 — non-Emaar is a genuine condition.
-*/
-const CURRENCY_DEFINITION = /\(\s*[\d,.]+\s+[A-Za-z'’\s]+?=\s*AED\s*[\d,.]+\s*\)/gi;
-const PAID_IN = /^back\s+(?:in|as)\s+[A-Za-z0-9'’\-]+(?:\s+[A-Za-z0-9'’\-]+)*?(?=\s+on\b|$)/i;
+/**
+ * True when `phrase` names the card's reward currency.
+ *
+ * Matched on whole words rather than by equality because the rate strings and the
+ * `rewards.currency` field are written by different hands and don't always agree on
+ * the issuer prefix — dib_shams_infinite says "5% back as Wala'a Rewards" while its
+ * currency field reads "DIB Wala'a Rewards". Requiring an exact match would leave
+ * that pair flagged for a difference in labelling, not in substance.
+ */
+function namesRewardCurrency(phrase: string, rewardCurrency: string | undefined): boolean {
+  if (!rewardCurrency) return false;
+  const p = normalizeCurrencyLabel(phrase);
+  const c = normalizeCurrencyLabel(rewardCurrency);
+  if (p === "" || c === "") return false;
+  return c === p || c.startsWith(`${p} `) || c.endsWith(` ${p}`) || c.includes(` ${p} `);
+}
 
 /** True when a percent/branded-rate's trailing scope is a benign blanket (stays high). */
-function isBenignScope(scope: string): boolean {
+function isBenignScope(scope: string, rewardCurrency?: string): boolean {
   let s = scope.trim().replace(/^and\s+/i, "");
+
+  // Strip the two things that LOOK like conditions but aren't, BEFORE the
+  // punctuation/keyword test below — otherwise the stripped text's own "(" or
+  // currency name would still reject it.
   s = s.replace(CURRENCY_DEFINITION, "").trim();
-  s = s.replace(PAID_IN, "").trim();
+  const naming = REWARD_CURRENCY_NAMING.exec(s);
+  if (naming && namesRewardCurrency(naming[1] ?? "", rewardCurrency)) {
+    s = s.slice(naming[0].length).trim();
+  }
+
   if (s === "") return true;
   // A comma, semicolon, parenthesis, or tiering keyword marks a specific/complex
   // condition the structured data doesn't capture -> not benign.
@@ -272,7 +314,7 @@ export function normalizeRate(raw: string, ctx: RateContext = {}): NormalizedRat
     // noUncheckedIndexedAccess even though `(.*)` always captures (possibly "").
     const scope = (pct[2] ?? "").trim();
     // Blanket rate (no scope, or a generic blanket scope) is clean -> high.
-    if (isBenignScope(scope)) {
+    if (isBenignScope(scope, ctx.rewardCurrency)) {
       return { raw, value, unit: "percent", confidence: "high" };
     }
     // A specific scope ("on Emaar purchases", "on dnata travel") means this rate
@@ -321,7 +363,7 @@ export function normalizeRate(raw: string, ctx: RateContext = {}): NormalizedRat
           : /\bmile/i.test(currencyPhrase)
             ? "miles_per_aed"
             : "points_per_aed";
-      if (isBenignScope(scope)) {
+      if (isBenignScope(scope, ctx.rewardCurrency)) {
         return { raw, value, unit, confidence: "high" };
       }
       return {

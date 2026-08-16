@@ -1345,3 +1345,147 @@ longer drift), and `study-filters.test.ts` asserts:
 
 That last one was previously a printed line with an arrow next to it that a human had
 to notice.
+
+---
+
+# D19. Merging `origin/main` — a second, independent attack on the same two biases (2026-08-16)
+
+A `fix/rate-ceiling-bias` branch was pushed to GitHub and merged to `main` by another
+hand, from a commit predating this line of work. It attacks the SAME two selection
+biases, arrives at substantially the same conclusions, and — because it forked early —
+carries none of D10–D18. This section records what was taken from it, what was not,
+and the one thing the merge itself broke.
+
+## D19a. What the two sides agreed on
+
+The remote's `normalize-rate.ts` reaches the identical verdict on `capModeled`: a
+ceiling is bounded 0..X whether or not a cap is modelled, because `optimizePortfolio`
+SELECTS on the rate, and taking every headline at face value makes the optimum a
+maximum-of-maxima. Its own measurement (9.61% pooled median before, 8.86% after) is
+within rounding of D5's. Two independent derivations of the same defect is the
+strongest evidence either of them is right.
+
+## D19b. TAKEN — the reward-currency check is gated on the card's actual currency
+
+Ours stripped ANY leading "back in <words>" / "back as <words>" phrase before testing
+whether a scope was benign. The remote's threads the card's `rewards.currency` into
+`RateContext` and strips the phrase only when it NAMES that currency, matching on whole
+words so "5% back as Wala'a Rewards" still matches a `DIB Wala'a Rewards` currency field.
+
+**Theirs is strictly safer and was adopted.** Ours would have laundered a genuine scope
+into tier 1 the moment the data contained a phrase like "back as statement credit at
+partner outlets" — the phrase is stripped, the remainder never reaches the punctuation
+test, and an unmodelled condition scores as certain. Nothing in today's 53 cards trips
+it, which is exactly why it was worth taking: the guard costs nothing and closes a hole
+that only opens when the data changes.
+
+**Tier counts are UNCHANGED at 196 / 11 / 6 over 213 strings.** That was verified by
+running both normalizers over the current `cards.json` string by string: 14 strings have
+their tier decided by the currency gate, and all 14 land where the ungated version put
+them. The checksum in `normalize-rate.test.ts` did not move, and the four tests that
+asserted the old ungated behaviour now pass `rewardCurrency` explicitly.
+
+## D19c. TAKEN — merchant locks are BOUNDED when nobody has stated a share
+
+The remote found the merchant-lock optimism independently (its Section E) and fixed it
+by bounding every merchant-locked bonus 0..full. D18 fixed the same defect by ASKING the
+user and enforcing the answer as a flow capacity. These are not competing answers; they
+answer different questions, and D18's own docstring named the gap:
+
+> An unstated merchant keeps the old behaviour — the full category, flagged as an
+> optimistic assumption.
+
+That was the hole. The remote's own Section E5 independently concludes *"the product
+answer is to ask"* — which is D18. So **both are now wired, and they are disjoint by
+construction**: a lock with a stated share keeps its real rate and is constrained by the
+allocator; a lock without one has its rate bounded 0..full and never enters the share
+machinery. `merchantLocksResolved` is the third case — `which-card.ts` resolved the
+merchant, so every surviving lock genuinely applies and is scored in full.
+
+Order matters and is documented in `precomputeCardData`: the suppressed-category
+("penalty bucket") lock is decided on the UNBOUNDED yields, because whether a card runs
+a penalty bucket is a fact about the issuer's schedule and must not change with what we
+happen to know about the user's merchants. Bounding happens after, and the yields the
+flow routes on are recomputed from the bounded rates.
+
+### The consequence worth stating plainly
+
+This branch also ranks portfolios on the LOWER bound of net value (not the midpoint,
+which the remote used). Combined with bounding, an unstated merchant bonus contributes
+**zero** to ranking. A co-brand card can therefore no longer win a recommendation on
+merchant value nobody has confirmed — it has to earn the place on its base rate. That is
+stricter than the remote's midpoint routing, and it is the deliberate choice: ranking on
+a midpoint asserts a return that appears nowhere in the card's terms.
+
+Two tests were rewritten because they had encoded the old meaning, not because they
+broke:
+
+- `merchant-share.test.ts` compared "with shares" against "without shares" to pin that a
+  share can only REMOVE unearned value. Unstated is no longer the optimistic ceiling, so
+  the baseline is now `{ merchantLocksResolved: true }` — the actual full-credit case. A
+  third test was ADDED so that wiring the bound out would fail something.
+- `api/optimize/route.test.ts` required "all shares 0" to differ from omitted. At the
+  floor those are the same statement, so it now compares the two ENDS of the stated
+  range (0 vs 1), which tests the wiring without depending on which portfolio wins.
+
+## D19d. NOT TAKEN — the card data, all of it
+
+Every one of the five `cards.json` conflicts resolved to this branch's version, because
+the remote forked before D10–D17. Its file still carries: "No general base cashback
+published" as three cards' base rates (unparseable — the reason D10 set an explicit
+conservative 0%), the CBD and Etihad ceilings as prose the normalizer cannot read,
+`rakbank_world.overall_cap` at 1100 rather than the sourced 1250, one `LuLu Points`
+currency where D17b split the two that are 100x apart, and none of the D-series
+`data_caveat`s. Its ADCB and RAKBANK caveats are earlier drafts of ours.
+
+One provenance conflict is worth recording because the two files contradicted each
+other: the remote states `rakbank_world`'s AED 10,000 minimum spend is **UNSOURCED**, "a
+reviewed modelling assumption supplied by the engine owner, NOT a published RAKBANK
+threshold". D16 records RAKBANK's own product page restating that minimum against every
+category, which is part of what lifted the card's publication hold. **D16 supersedes
+it** — the remote's note was written before the page was supplied. `card.test.ts`
+asserted the literal word `UNSOURCED`; it now asserts the D16 sourcing instead, because
+the point of that test was that the number must not be silently unattributed, not that
+it must stay unattributed forever.
+
+## D19e. THE MERGE ITSELF INTRODUCED A DATA DEFECT — caught, fixed, worth the warning
+
+Both sides had reordered the `categories` array on four cards (`international_spend`
+first here, last there). Git's line-based merge read the remote's move as an INSERTION
+and applied it on top of ours, **silently duplicating `international_spend`** on
+`adcb_touchpoints_gold_titanium`, `dib_shams_platinum`, `dib_shams_infinite` and
+`sc_smart_saadiq`. The merged file was valid JSON and the app ran.
+
+It surfaced only because the tier checksum read 200 tier-1 strings against an expected
+196 — a guard catching a defect it was not written for. Note the shape of the near miss:
+the first hypothesis was that the currency gate had re-tiered four strings, which is a
+plausible and completely wrong explanation that a less specific test would have let
+stand. The duplicates were removed and `cards.json` verified byte-identical to this
+branch's pre-merge version.
+
+**The warning:** a reordering of a JSON array and an edit to the same array cannot be
+merged by a line-based tool. Any future merge touching `cards.json` should be followed by
+a duplicate-category check across every card, not just a JSON-validity check.
+
+## D19f. TAKEN — one test
+
+`gap-study.test.ts` gained the remote's ordering invariant, ported onto this branch's
+row shape: `naive <= diligent <= optimal` on every row of every universe. It is
+data-independent (the median single card cannot beat the best single card; a 1-card
+portfolio is inside the optimizer's own search space), and it is exactly the assertion
+that would have caught the `includeUnpublishable` harness mismatch, which reported a
+best single card at 6.01% of spend beating an "optimal" portfolio at 3.24%.
+
+## D19g. Incidental
+
+`optimize-portfolio.ts` contained a literal NUL byte inside a template literal, used as
+an impossible separator in a map key. It made git classify the file as BINARY and refuse
+to merge it textually. It is now the escape `\0` — same separator at runtime, and the
+file is diffable again.
+
+## Result
+
+- `packages/engine`: 362 passing, 2 skipped, `tsc --noEmit` clean.
+- `apps/web`: 143 passing, `tsc --noEmit` clean.
+- Tier checksum unchanged at 196 / 11 / 6 over 213 strings.
+- `cards.json` unchanged from this branch's pre-merge state.

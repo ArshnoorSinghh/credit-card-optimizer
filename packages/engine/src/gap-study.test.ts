@@ -312,7 +312,7 @@ describe.skipIf(!process.env.GAP_STUDY)("gap study", () => {
           merchant-share decision, priced.
         */
         const soundSharedCards = eligible.filter((c) =>
-          isSoundScore(scoreCard(spending, c, undefined, shares).flags),
+          isSoundScore(scoreCard(spending, c, undefined, { merchantShares: shares }).flags),
         );
 
         /*
@@ -343,7 +343,7 @@ describe.skipIf(!process.env.GAP_STUDY)("gap study", () => {
           // the gap is measured between two different models rather than between two
           // wallets. Same class of harness mismatch as the includeUnpublishable note.
           const singles = universe
-            .map((c) => val(scoreCard(spending, c, undefined, opts.shares)))
+            .map((c) => val(scoreCard(spending, c, undefined, { merchantShares: opts.shares })))
             .sort((a, b) => a - b);
           /*
             includeUnpublishable: THIS FILE defines the universes, so the engine must
@@ -507,5 +507,27 @@ describe.skipIf(!process.env.GAP_STUDY)("gap study", () => {
 
     console.log(out.join("\n"));
     expect(profilesSeen).toBeGreaterThan(100);
+
+    /*
+      STRUCTURAL INVARIANT: naive <= diligent <= optimal, on every row of every
+      universe. This is not a calibration — it holds for any rate data at all:
+      `naive` is the MEDIAN single card and `diligent` the BEST single, so the
+      first inequality is a property of the median; and a 1-card portfolio is
+      inside optimizePortfolio's own search space, so the second says the search
+      never returns something worse than a candidate it enumerated.
+
+      why it earns its place in a study that is otherwise a measurement: the
+      `includeUnpublishable` harness mismatch documented above showed up exactly
+      as a violation of this — the SOUND rows reported a best single card at 6.01%
+      of spend beating an "optimal" portfolio at 3.24%. That is arithmetically
+      impossible, and it went unnoticed because nothing asserted the ordering.
+      Failing here points at the optimizer or the harness, never at the card data.
+    */
+    for (const [name, rows] of Object.entries({ all, clean, sound, pub, pubShared, floorRows })) {
+      for (const r of rows) {
+        expect(r.diligent, `${name}/${r.segment}: best single < median single`).toBeGreaterThanOrEqual(r.naive - 1e-6);
+        expect(r.optimal, `${name}/${r.segment}: optimal portfolio < best single`).toBeGreaterThanOrEqual(r.diligent - 1e-6);
+      }
+    }
   }, 1_800_000);
 });

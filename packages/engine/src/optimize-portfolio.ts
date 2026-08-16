@@ -75,10 +75,12 @@ export interface OptimizeOptions {
    * What fraction of the relevant categories' spend actually happens at each
    * merchant a co-brand card bonuses ("LuLu" -> 0.3). See merchant-share.ts.
    *
-   * Omitted, every merchant-locked bonus is credited the WHOLE canonical category
-   * it maps to and flagged as an optimistic assumption — the historical behaviour,
-   * and the reason those cards had to be kept out of any published figure. Supplying
-   * shares is how the product answers that question instead of avoiding it.
+   * A merchant with NO share here is not assumed away and not credited in full:
+   * its bonus is bounded 0..full by the scorer, because "we didn't ask" is not
+   * evidence either way. Supplying a share replaces that bound with the user's own
+   * number, enforced as a flow capacity — which is both tighter and the only form
+   * that gets the two hard cases right (the remainder reallocates, and two cards
+   * bonusing one merchant share a single pool). See merchant-share.ts.
    */
   merchantShares?: MerchantShares;
 }
@@ -203,7 +205,12 @@ function scorePortfolio(
   const byCategoryCard = new Map<string, CategoryAllocation & { _topValue: number }>();
   for (const s of result.slices) {
     const cardId = portfolio[s.cardIndex]!.card.id;
-    const key = `${s.spendCategory} ${cardId}`;
+    // why the \0 ESCAPE and not a literal NUL byte: a separator that cannot occur in
+    // either a category name or a card id is what makes this key unambiguous, but
+    // writing the raw byte into the source made git classify this file as BINARY —
+    // it refused to merge it textually. The escape keeps the impossible separator
+    // and keeps the file diffable.
+    const key = `${s.spendCategory}\0${cardId}`;
     const sliceValue = (s.annualValueAed.min + s.annualValueAed.max) / 2;
     const existing = byCategoryCard.get(key);
     if (!existing) {
@@ -327,12 +334,19 @@ function collectFlags(
     // Mirrors scoreCard exactly: a share the user STATED is an input, not an
     // assumption of ours, so it neither sets `uncertain` nor carries the
     // "spend occurs at" phrase the study's SOUND filter rejects on. An unstated
-    // merchant keeps the old, loud flag. See score-card.ts for the full reasoning.
+    // merchant keeps the loud flag AND has had its rate bounded 0..full by
+    // precomputeCardData. See score-card.ts for the full reasoning; the two must
+    // stay worded alike, since both feed the same study filters.
     if (o.merchantAssumption) {
       const stated = shareFor(shares, o.merchantAssumption);
       if (stated === undefined) {
         uncertain = true;
-        flags.push({ level: "low", message: `${where}: assumes spend occurs at ${o.merchantAssumption}` });
+        flags.push({
+          level: "low",
+          message:
+            `${where}: bounded 0-to-full, because nobody has said what share of ` +
+            `that spend occurs at ${o.merchantAssumption}`,
+        });
       } else {
         flags.push({
           level: "low",
@@ -486,7 +500,13 @@ export function optimizePortfolio(
       excludedForEligibility++;
       continue;
     }
-    eligible.push(precomputeCardData(card, valuations));
+    // The shares are handed to the scorer as well as to the flow. The flow uses them
+    // as capacities; the scorer uses them to decide which merchant locks are still
+    // UNACCOUNTED FOR and must be bounded 0..full. This is the load-bearing call for
+    // the maximum-of-maxima defect: the enumeration below picks the best of ~53
+    // cards, so an unbounded merchant lock here is exactly what let the optimizer
+    // stack three different unverified merchant assumptions into one portfolio.
+    eligible.push(precomputeCardData(card, valuations, { merchantShares: options.merchantShares }));
   }
 
   // --- Enumerate every subset of each size, EXHAUSTIVELY (justified up top),

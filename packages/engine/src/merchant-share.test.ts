@@ -20,8 +20,16 @@
  *     spend parked on a bonus it never earned.
  *  3. Two cards bonusing the SAME merchant draw from ONE pool. Holding a second LuLu
  *     card does not double how much of your groceries happen at LuLu.
- *  4. A share of 1 is exactly the old behaviour, and an INVALID share falls back to
- *     the old behaviour rather than being clamped into the optimistic end.
+ *  4. A share of 1 is full merchant credit, and an INVALID share falls back to the
+ *     UNSTATED case rather than being clamped into the optimistic end.
+ *
+ * AND THE FALLBACK, pinned here too: an unstated merchant is bounded 0..full, not
+ * credited in full. That is a separate mechanism (`boundMerchantLockedRates`) and
+ * the two are disjoint — a lock either has a stated share, in which case the flow
+ * constrains it at its real rate, or it does not, in which case its rate becomes a
+ * range. Several assertions below therefore use `{ merchantLocksResolved: true }`
+ * as the full-credit reference, since that is now the only way to ask the engine
+ * "what would this card pay if every bonused dirham really landed at the merchant".
  */
 
 import { describe, it, expect } from "vitest";
@@ -83,22 +91,33 @@ const luluCard = mkCard("LULU_A", {
 describe("rule 1 + 2 — a share caps the bonus, and the rest falls to the base rate", () => {
   const spending = { groceries: 1000 };
 
-  it("credits the WHOLE category when no share is stated (the old behaviour)", () => {
-    // 1,000 x 10% x 12 = 1,200/yr.
-    expect(scoreCard(spending, luluCard).grossAnnualValue).toEqual({ min: 1200, max: 1200 });
+  it("BOUNDS the bonus 0..full when no share is stated", () => {
+    /*
+      No share and no resolved merchant, so nothing tells us how much of the 1,000
+      lands at LuLu. The bonus is bounded rather than credited: max is the full
+      1,000 x 10% x 12 = 1,200/yr the card pays if every dirham is spent there, min
+      is the 120/yr it pays if none is (the 1% base on all of it).
+
+      This REPLACED the old behaviour, which asserted the 1,200 as a point value.
+      That was the merchant half of the maximum-of-maxima defect — optimizePortfolio
+      picks the best of ~53 cards, so crediting every co-brand card its full merchant
+      rate let the optimum assume the user does all their retail at Emaar, all their
+      groceries at LuLu and all their dining through Talabat, simultaneously.
+    */
+    expect(scoreCard(spending, luluCard).grossAnnualValue).toEqual({ min: 0, max: 1200 });
   });
 
   it("credits only the stated share, and pays the base rate on the remainder", () => {
     // 250 at 10% = 25/mo; the other 750 is NOT lost — it earns the 1% base = 7.50/mo.
     // (25 + 7.5) x 12 = 390/yr. A rate haircut would have given 10% x 25% x 1,000 =
     // 25/mo and silently dropped the remaining 750's base-rate earning entirely.
-    const s = scoreCard(spending, luluCard, undefined, { LuLu: 0.25 });
+    const s = scoreCard(spending, luluCard, undefined, { merchantShares: { LuLu: 0.25 } });
     expect(s.grossAnnualValue).toEqual({ min: 390, max: 390 });
   });
 
   it("routes exactly the share to the merchant option and the rest to base_rate", () => {
     const { shares } = sanitizeMerchantShares({ LuLu: 0.25 });
-    const res = earnAcrossCards(spending, [precomputeCardData(luluCard)], shares);
+    const res = earnAcrossCards(spending, [precomputeCardData(luluCard, undefined, { merchantShares: { LuLu: 0.25 } })], shares);
     const bonus = res.optionOutcomes.find((o) => o.option.cardCategory === "lulu_supermarket");
     const base = res.optionOutcomes.find((o) => o.option.cardCategory === "base_rate");
     expect(bonus?.monthlySpendAed).toBeCloseTo(250, 6);
@@ -107,13 +126,22 @@ describe("rule 1 + 2 — a share caps the bonus, and the rest falls to the base 
 
   it("a share of 0 disables the bonus entirely — all spend earns the base rate", () => {
     // Someone who never shops at LuLu gets no LuLu bonus. 1,000 x 1% x 12 = 120/yr.
-    const s = scoreCard(spending, luluCard, undefined, { LuLu: 0 });
+    const s = scoreCard(spending, luluCard, undefined, { merchantShares: { LuLu: 0 } });
     expect(s.grossAnnualValue).toEqual({ min: 120, max: 120 });
   });
 
-  it("a share of 1 reproduces the no-share answer exactly", () => {
-    const withShare = scoreCard(spending, luluCard, undefined, { LuLu: 1 });
-    expect(withShare.grossAnnualValue).toEqual(scoreCard(spending, luluCard).grossAnnualValue);
+  it("a share of 1 collapses the bound onto its upper end", () => {
+    /*
+      "All of my groceries are at LuLu" is the one statement that makes the old
+      full-category behaviour CORRECT — and stating it turns the bound into a point
+      value, because the uncertainty the bound expressed is exactly what the user
+      just removed. So share=1 must equal the unstated MAX, and unlike the unstated
+      case it is certain: min === max.
+    */
+    const withShare = scoreCard(spending, luluCard, undefined, { merchantShares: { LuLu: 1 } });
+    const unstated = scoreCard(spending, luluCard);
+    expect(withShare.grossAnnualValue).toEqual({ min: 1200, max: 1200 });
+    expect(withShare.grossAnnualValue.max).toBe(unstated.grossAnnualValue.max);
   });
 });
 
@@ -129,7 +157,10 @@ describe("rule 3 — cards bonusing the same merchant share ONE pool", () => {
     const { shares } = sanitizeMerchantShares({ LuLu: 0.3 });
     const res = earnAcrossCards(
       { groceries: 1000 },
-      [precomputeCardData(luluCard), precomputeCardData(luluB)],
+      [
+        precomputeCardData(luluCard, undefined, { merchantShares: { LuLu: 0.3 } }),
+        precomputeCardData(luluB, undefined, { merchantShares: { LuLu: 0.3 } }),
+      ],
       shares,
     );
     const atLulu = res.optionOutcomes
@@ -143,7 +174,10 @@ describe("rule 3 — cards bonusing the same merchant share ONE pool", () => {
     const { shares } = sanitizeMerchantShares({ LuLu: 0.3 });
     const res = earnAcrossCards(
       { groceries: 1000 },
-      [precomputeCardData(luluCard), precomputeCardData(luluB)],
+      [
+        precomputeCardData(luluCard, undefined, { merchantShares: { LuLu: 0.3 } }),
+        precomputeCardData(luluB, undefined, { merchantShares: { LuLu: 0.3 } }),
+      ],
       shares,
     );
     const onA = res.optionOutcomes.find((o) => o.option.cardCategory === "lulu_supermarket");
@@ -171,7 +205,7 @@ describe("rule 4 — invalid input falls back to 'unstated', never to the optimi
     // 30 must NOT be read as "all of it". It falls back to the unstated behaviour,
     // which still carries the loud merchant flag — the user is not silently given
     // the maximally optimistic reading of their own typo.
-    const bad = scoreCard({ groceries: 1000 }, luluCard, undefined, { LuLu: 30 });
+    const bad = scoreCard({ groceries: 1000 }, luluCard, undefined, { merchantShares: { LuLu: 30 } });
     const none = scoreCard({ groceries: 1000 }, luluCard);
     expect(bad.grossAnnualValue).toEqual(none.grossAnnualValue);
     expect(bad.flags.some((f) => f.message.includes("spend occurs at"))).toBe(true);
@@ -192,7 +226,7 @@ describe("flags — a stated share is an INPUT, not an assumption we made", () =
   });
 
   it("states a supplied share without the 'spend occurs at' phrase or uncertainty", () => {
-    const s = scoreCard({ groceries: 1000 }, luluCard, undefined, { LuLu: 0.25 });
+    const s = scoreCard({ groceries: 1000 }, luluCard, undefined, { merchantShares: { LuLu: 0.25 } });
     // The phrase is what the gap study's SOUND filter rejects on, so dropping it is
     // precisely the mechanism that moves a co-brand card into the publishable
     // universe. If this assertion ever fails, that mechanism has broken.
@@ -264,14 +298,34 @@ describe("the real dataset — shares can only remove value, never add it", () =
     "Emirates Leisure": 0.03,
   };
 
-  it("never scores a card higher with shares than without", () => {
+  /*
+    THE BASELINE IS `merchantLocksResolved`, NOT "no options at all".
+
+    The property being pinned is that stating a share can only ever REMOVE value the
+    engine was crediting without evidence. The natural way to write that was "score
+    with shares <= score without shares", and while an unstated merchant meant
+    "credit the whole category" it was the same thing.
+
+    It is not any more. Unstated now means BOUNDED 0..full, and the flow routes a
+    bounded option on its midpoint — so the unstated score is not the optimistic
+    ceiling, it is a differently-routed number that can sit either side of the
+    stated-share answer. Comparing against it would pin nothing.
+
+    `{ merchantLocksResolved: true }` IS the full-credit case: every lock scored at
+    its real rate, which is what the old unstated behaviour computed. So it is the
+    correct upper reference, and the assertion below says what it always meant.
+  */
+  const fullCredit = { merchantLocksResolved: true } as const;
+
+  it("never scores a card higher with shares than at full merchant credit", () => {
     for (const card of realCards) {
       if (card.excluded_from_scoring) continue;
-      const withShares = scoreCard(profile, card, undefined, shares);
-      const without = scoreCard(profile, card);
-      expect(withShares.grossAnnualValue.max).toBeLessThanOrEqual(
-        without.grossAnnualValue.max + 1e-6,
-      );
+      const withShares = scoreCard(profile, card, undefined, { merchantShares: shares });
+      const credited = scoreCard(profile, card, undefined, fullCredit);
+      expect(
+        withShares.grossAnnualValue.max,
+        `${card.id} scored HIGHER with shares than at full credit`,
+      ).toBeLessThanOrEqual(credited.grossAnnualValue.max + 1e-6);
     }
   });
 
@@ -281,10 +335,23 @@ describe("the real dataset — shares can only remove value, never add it", () =
     // bug as the dead study filters this project has hit twice.
     const moved = realCards.filter((card) => {
       if (card.excluded_from_scoring) return false;
-      const a = scoreCard(profile, card, undefined, shares).grossAnnualValue.max;
-      const b = scoreCard(profile, card).grossAnnualValue.max;
+      const a = scoreCard(profile, card, undefined, { merchantShares: shares }).grossAnnualValue.max;
+      const b = scoreCard(profile, card, undefined, fullCredit).grossAnnualValue.max;
       return b - a > 1;
     });
     expect(moved.length).toBeGreaterThan(5);
+  });
+
+  it("bounding also bites — an unstated merchant is not scored at full credit", () => {
+    // The other half of the blend. If `boundMerchantLockedRates` were ever wired out,
+    // the test above would still pass (shares would still beat full credit) while the
+    // engine quietly returned to assuming every co-brand bonus applies in full.
+    const bounded = realCards.filter((card) => {
+      if (card.excluded_from_scoring) return false;
+      const unstated = scoreCard(profile, card);
+      const credited = scoreCard(profile, card, undefined, fullCredit);
+      return credited.grossAnnualValue.min - unstated.grossAnnualValue.min > 1;
+    });
+    expect(bounded.length).toBeGreaterThan(5);
   });
 });

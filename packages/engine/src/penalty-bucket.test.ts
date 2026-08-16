@@ -231,16 +231,38 @@ describe("penalty bucket — dataset-wide invariant", () => {
       if (card.excluded_from_scoring) continue;
       const cd = precomputeCardData(card);
       const res = earnAcrossCards(profile, [cd]);
-      // The catch-all's yield, and the best yield of every named category.
+      /*
+        SUPPRESSION IS JUDGED ON THE UNBOUNDED YIELDS — `basis`, not `cd`.
+
+        A suppressed ("penalty") bucket is a fact about the ISSUER'S SCHEDULE: this
+        card deliberately pays less for petrol than for general retail, so petrol must
+        not escape into the base rate. `applySuppressedCategoryLock` decides that from
+        the unbounded yields, BEFORE merchant bounding, precisely so the answer does
+        not change with what we happen to know about the user's merchants. This test
+        has to ask the question on the same basis or it is testing a different rule.
+
+        `merchantLocksResolved` is what reproduces that basis: it is the only flag that
+        leaves every merchant rate at its real value. Scored normally, a bounded
+        merchant bonus reads as a low yield and this invariant reports things like
+        `rakbank_air_arabia_platinum: "travel" suppressed to 0.00206 but paid catch-all
+        0.00225` — which describes the bound, not a penalty bucket.
+
+        Excluding merchant options from `bestNamed` instead is NOT equivalent, and gets
+        `enbd_dnata_world` wrong: canonical `other` there is named both by a 0.375%
+        insurance/car-dealer bucket AND by a 10% Duty Free bonus. The lock rightly
+        declines to suppress `other` — most of it really does earn the 1.5% base — and
+        a test that ignored the 10% option would call that a leak.
+      */
+      const basis = precomputeCardData(card, undefined, { merchantLocksResolved: true });
       const catchallYield = Math.max(
         0,
-        ...cd.options.map((o, i) => (o.rule.kind === "catchall" ? cd.yields[i]! : 0)),
+        ...basis.options.map((o, i) => (o.rule.kind === "catchall" ? basis.yields[i]! : 0)),
       );
       const bestNamed = new Map<string, number>();
-      cd.options.forEach((o, i) => {
+      basis.options.forEach((o, i) => {
         if (o.rule.kind !== "categories") return;
         for (const c of o.rule.categories) {
-          bestNamed.set(c, Math.max(bestNamed.get(c) ?? 0, cd.yields[i]!));
+          bestNamed.set(c, Math.max(bestNamed.get(c) ?? 0, basis.yields[i]!));
         }
       });
       for (const outcome of res.optionOutcomes) {
