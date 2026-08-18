@@ -17,7 +17,7 @@ const holdings: PointsHolding[] = [
 const spending = { groceries: 3000, dining: 2000, other: 1500 };
 
 describe("groupByMonth", () => {
-  it("drops nothing — count in equals count out", () => {
+  it("drops nothing - count in equals count out", () => {
     // The wrapper's one real risk: a grouping bug that quietly loses an event would
     // recreate, in the UI, exactly the omission failure the engine's `undated` list
     // exists to prevent.

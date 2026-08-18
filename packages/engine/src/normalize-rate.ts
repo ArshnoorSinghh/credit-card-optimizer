@@ -203,7 +203,7 @@ function normalizeCurrencyLabel(s: string): string {
  *
  * Matched on whole words rather than by equality because the rate strings and the
  * `rewards.currency` field are written by different hands and don't always agree on
- * the issuer prefix — dib_shams_infinite says "5% back as Wala'a Rewards" while its
+ * the issuer prefix - dib_shams_infinite says "5% back as Wala'a Rewards" while its
  * currency field reads "DIB Wala'a Rewards". Requiring an exact match would leave
  * that pair flagged for a difference in labelling, not in substance.
  */
@@ -396,7 +396,7 @@ export function normalizeRate(raw: string, ctx: RateContext = {}): NormalizedRat
     unit: null,
     confidence: "unknown",
     range: { min: 0, max: null },
-    note: "Unrecognized rate pattern — needs manual review",
+    note: "Unrecognized rate pattern - needs manual review",
   };
 }
 

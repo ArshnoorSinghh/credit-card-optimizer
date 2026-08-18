@@ -227,14 +227,14 @@ export function checkStatement(
     */
     if (mappedSpendAed + unmappedSpendAed >= gate) {
       flags.unshift(
-        `LIKELY FALSE GATE: total spend on the statement (AED ${Math.round(totalSpend)}) DOES clear the AED ${gate}/mo minimum — it is the unmapped lines that pushed the mapped total below it. Map more lines before trusting this comparison`,
+        `LIKELY FALSE GATE: total spend on the statement (AED ${Math.round(totalSpend)}) DOES clear the AED ${gate}/mo minimum - it is the unmapped lines that pushed the mapped total below it. Map more lines before trusting this comparison`,
       );
     }
   }
 
   if (score.breakdown.some((b) => b.capBound === "annual")) {
     flags.push(
-      "an ANNUAL cap bound this cycle's earning — the check gives it 1/12 of its yearly room, which is right for a typical cycle and wrong if spend is front-loaded",
+      "an ANNUAL cap bound this cycle's earning - the check gives it 1/12 of its yearly room, which is right for a typical cycle and wrong if spend is front-loaded",
     );
   }
   /*
@@ -251,17 +251,17 @@ export function checkStatement(
   const rangeIsWide = predictedAed.max - predictedAed.min > 1e-9;
   if (rangeIsWide) {
     flags.push(
-      "the prediction is a RANGE, not a figure — whether the range contains what the bank paid is the meaningful test here, not the midpoint gap",
+      "the prediction is a RANGE, not a figure - whether the range contains what the bank paid is the meaningful test here, not the midpoint gap",
     );
   } else if (score.uncertain) {
     flags.push(
-      "the prediction is exact, but the score carries confidence flags (typically the reward valuation) that do not widen the range — an AED gap may sit in the valuation rather than the earn model",
+      "the prediction is exact, but the score carries confidence flags (typically the reward valuation) that do not widen the range - an AED gap may sit in the valuation rather than the earn model",
     );
   }
   // Rewards only. The fee is a separate line on the statement and is not what the
   // rate model claims to predict.
   if (score.fees.ongoingFeeAed > 0) {
-    flags.push("compares REWARDS only — the annual fee is excluded from both sides");
+    flags.push("compares REWARDS only - the annual fee is excluded from both sides");
   }
 
   const check: StatementCheck = {
@@ -294,7 +294,7 @@ export function checkStatement(
     check.unitsGapPct = pctDiff(mid, actual);
   } else {
     flags.push(
-      "no actual reward UNITS on this statement — the units comparison, which isolates the earn model from the valuation table, could not be made",
+      "no actual reward UNITS on this statement - the units comparison, which isolates the earn model from the valuation table, could not be made",
     );
   }
 
@@ -307,13 +307,13 @@ export function checkStatement(
     check.aedGapPct = pctDiff(midAed, actual);
     if (statement.actualRewardUnits === undefined) {
       flags.push(
-        "the AED comparison tests the earn model AND the valuation table together — a gap here does not say which of the two is wrong",
+        "the AED comparison tests the earn model AND the valuation table together - a gap here does not say which of the two is wrong",
       );
     }
   }
 
   if (statement.actualRewardUnits === undefined && statement.actualRewardAed === undefined) {
-    flags.push("NO GROUND TRUTH on this statement — nothing was validated, only predicted");
+    flags.push("NO GROUND TRUTH on this statement - nothing was validated, only predicted");
   }
 
   return check;
@@ -373,11 +373,11 @@ export function summariseStatementChecks(checks: readonly StatementCheck[]): Sta
   }
 
   if (withTruth.length === 0) {
-    flags.push("NOTHING WAS VALIDATED — no statement carried an actual reward figure");
+    flags.push("NOTHING WAS VALIDATED - no statement carried an actual reward figure");
   } else if (withTruth.length < 3) {
     // Said plainly because the temptation to quote a number off one statement is real.
     flags.push(
-      `only ${withTruth.length} statement${withTruth.length === 1 ? "" : "s"} carried ground truth — too few to characterise the engine, and not a figure to put on a slide`,
+      `only ${withTruth.length} statement${withTruth.length === 1 ? "" : "s"} carried ground truth - too few to characterise the engine, and not a figure to put on a slide`,
     );
   }
 

@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { MERCHANT_MAP, resolveMerchant } from "./merchant-map";
 import { SPEND_CATEGORIES } from "./score-card";
 
-describe("resolveMerchant — single-category merchants", () => {
+describe("resolveMerchant - single-category merchants", () => {
   it("maps Carrefour to groceries, with no multi-category ambiguity", () => {
     expect(resolveMerchant("Carrefour")).toEqual({
       merchant: "carrefour",
@@ -39,7 +39,7 @@ describe("resolveMerchant — single-category merchants", () => {
     }
   });
 
-  it("maps general marketplaces to `other` — the engine has no `shopping` category", () => {
+  it("maps general marketplaces to `other` - the engine has no `shopping` category", () => {
     // No card in cards.json bonuses online shopping, so this spend earns the base
     // rate, which is exactly what `other` models.
     for (const input of ["Amazon.ae", "Amazon", "Noon", "Namshi"]) {
@@ -48,7 +48,7 @@ describe("resolveMerchant — single-category merchants", () => {
   });
 });
 
-describe("resolveMerchant — multi-category merchants", () => {
+describe("resolveMerchant - multi-category merchants", () => {
   it("flags Talabat as dining primary that also covers groceries", () => {
     expect(resolveMerchant("Talabat")).toEqual({
       merchant: "talabat",
@@ -76,7 +76,7 @@ describe("resolveMerchant — multi-category merchants", () => {
   });
 });
 
-describe("resolveMerchant — input tolerance", () => {
+describe("resolveMerchant - input tolerance", () => {
   it("is case-insensitive and trims whitespace", () => {
     for (const input of ["carrefour", "CARREFOUR", "  Carrefour  ", "CaRrEfOuR", "\tcarrefour\n"]) {
       expect(resolveMerchant(input)?.category, JSON.stringify(input)).toBe("groceries");
@@ -99,7 +99,7 @@ describe("resolveMerchant — input tolerance", () => {
     expect(resolveMerchant("Fly Dubai")?.merchant).toBe("flydubai");
   });
 
-  it("matches on word boundaries only — 'dubai' is not 'du'", () => {
+  it("matches on word boundaries only - 'dubai' is not 'du'", () => {
     // The nastiest false positive the table invites: a 2-letter merchant.
     expect(resolveMerchant("dubai mall")).toBeNull();
     expect(resolveMerchant("du")?.category).toBe("utilities");
@@ -107,7 +107,7 @@ describe("resolveMerchant — input tolerance", () => {
   });
 });
 
-describe("resolveMerchant — unknown input is never guessed", () => {
+describe("resolveMerchant - unknown input is never guessed", () => {
   it("returns null rather than mapping an unknown merchant to a plausible category", () => {
     for (const input of ["Whole Foods", "Trader Joe's", "some random shop", "xyzzy", "Tesco"]) {
       expect(resolveMerchant(input), input).toBeNull();

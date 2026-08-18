@@ -72,7 +72,7 @@ function mkCard(
  * tie on value, size and fees, so the optimizer's final tie-break (lexicographic
  * card id) hands it to "cash_card" — which is why the flip sits AT 0.01, not below.
  */
-describe("valuationSensitivity — flips at the hand-computed break-even", () => {
+describe("valuationSensitivity - flips at the hand-computed break-even", () => {
   const cards = [
     mkCard("cash_card", { base_rate: "1% on all spend" }),
     mkCard("points_card", { base_rate: "1 point per AED 1", type: "points", currency: "TestPts" }),
@@ -143,7 +143,7 @@ describe("valuationSensitivity — flips at the hand-computed break-even", () =>
  * Below that the fee outweighs the better rate; above it the 5% card wins. This
  * is the whole "is the annual fee worth it" question as one number.
  */
-describe("spendingSensitivity — finds the threshold where a fee-carrying card overtakes", () => {
+describe("spendingSensitivity - finds the threshold where a fee-carrying card overtakes", () => {
   const cards = [
     mkCard("flat_2pct", { base_rate: "2% on all spend" }),
     mkCard("grocery_5pct", {
@@ -204,7 +204,7 @@ describe("spendingSensitivity — finds the threshold where a fee-carrying card 
 });
 
 /** A recommendation that nothing in range can dislodge must report no flips. */
-describe("sensitivity — a robust recommendation reports no flips", () => {
+describe("sensitivity - a robust recommendation reports no flips", () => {
   const cards = [
     mkCard("dominant", { base_rate: "5% on all spend" }),
     mkCard("weak", { base_rate: "1% on all spend" }),
@@ -247,7 +247,7 @@ describe("sensitivity — a robust recommendation reports no flips", () => {
  * (0.011 - 0.01)/0.011 = 9.1% BELOW baseline, so a 9% error in a number we admit
  * we never researched changes the answer. That must be flagged.
  */
-describe("assessValuationFragility — flags a recommendation resting on an unverified valuation", () => {
+describe("assessValuationFragility - flags a recommendation resting on an unverified valuation", () => {
   const cards = [
     mkCard("cash_card", { base_rate: "1% on all spend" }),
     mkCard("points_card", { base_rate: "1 point per AED 1", type: "points", currency: "TestPts" }),
@@ -255,7 +255,7 @@ describe("assessValuationFragility — flags a recommendation resting on an unve
   const spending: SpendingProfile = { other: 1000 };
 
   const fragileTable = withValuations({
-    TestPts: { aedPerUnit: 0.011, confidence: "low", note: "NOT researched — placeholder" },
+    TestPts: { aedPerUnit: 0.011, confidence: "low", note: "NOT researched - placeholder" },
   });
 
   const assessment = assessValuationFragility(spending, OPEN_PROFILE, cards, {
@@ -317,7 +317,7 @@ describe("assessValuationFragility — flags a recommendation resting on an unve
   });
 });
 
-describe("assessValuationFragility — stays quiet when the recommendation is robust", () => {
+describe("assessValuationFragility - stays quiet when the recommendation is robust", () => {
   const cards = [
     mkCard("cash_card", { base_rate: "1% on all spend" }),
     mkCard("points_card", { base_rate: "1 point per AED 1", type: "points", currency: "TestPts" }),
@@ -367,7 +367,7 @@ describe("assessValuationFragility — stays quiet when the recommendation is ro
 });
 
 /** Cost accounting and input validation. */
-describe("sensitivity — cost accounting and guardrails", () => {
+describe("sensitivity - cost accounting and guardrails", () => {
   const cards = [
     mkCard("a", { base_rate: "1% on all spend" }),
     mkCard("b", { categories: [{ category: "groceries", rate: "5%" }], annual_fee: 600 }),

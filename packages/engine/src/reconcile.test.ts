@@ -25,7 +25,7 @@ const OPEN: UserProfile = { monthlySalaryAed: 1_000_000, uaeResident: true };
  * they must return identical financial numbers for all 51 cards. If a user sees a
  * card on the single-card screen and again as a 1-card portfolio, the numbers agree.
  */
-describe("reconciliation — scoreCard === best-1-card portfolio for every card", () => {
+describe("reconciliation - scoreCard === best-1-card portfolio for every card", () => {
   for (const card of cards) {
     it(`agrees for ${card.id}`, () => {
       const s = scoreCard(PROFILE, card);

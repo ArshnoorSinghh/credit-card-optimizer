@@ -257,7 +257,7 @@
       "Airport lounge access subject to Mastercard conditions"
     ],
     "source_url": "https://www.emiratesnbd.com/en/cards/credit-cards/dnata-world-credit-card",
-    "data_caveat": "1 dnata Point = AED 1. Standard domestic/international non-partner retail is capped at 3,000 points per statement cycle; partner brackets (dnata Travel and partner stores) are bound to an independent 20,000 points per calendar year. The 3,000/cycle BASE cap is recorded here rather than encoded: the schema caps categories, not base_rate, and `overall_cap` would wrongly bound the partner brackets too. It is immaterial at realistic spend — at the 1.5% base it only binds above AED 200,000/month — but it must be encoded if base-rate caps ever become expressible."
+    "data_caveat": "1 dnata Point = AED 1. Standard domestic/international non-partner retail is capped at 3,000 points per statement cycle; partner brackets (dnata Travel and partner stores) are bound to an independent 20,000 points per calendar year. The 3,000/cycle BASE cap is recorded here rather than encoded: the schema caps categories, not base_rate, and `overall_cap` would wrongly bound the partner brackets too. It is immaterial at realistic spend - at the 1.5% base it only binds above AED 200,000/month - but it must be encoded if base-rate caps ever become expressible."
   },
   {
     "id": "enbd_duo",
@@ -433,7 +433,7 @@
       "Lifestyle and Mastercard benefits"
     ],
     "source_url": "https://www.adcb.com/en/personal/cards/credit-cards/365-cashback-card",
-    "data_caveat": "Category rates reflect the July 2026 restructure: groceries reduced to 3%, fuel and Salik increased to 5%, AI/digital subscriptions codified at 5%. Total cashback is bound by the AED 1,000 monthly overall cap. UNDERSTATEMENT, deliberate: the official base rate pays 1% on NON-EU international spend but only 0.5% on EU spend. The engine has a single canonical `international` category and cannot tell the two apart, so a blanket 1% international rate would shadow the 0.5% EU rate and OVERSTATE. All international is therefore left at the 0.5% already encoded by `selected_categories_and_eu_spend`. Non-EU international is understated by 0.5pp — the conservative direction. Resolving this needs an EU/non-EU split in the spend model, not a data fix."
+    "data_caveat": "Category rates reflect the July 2026 restructure: groceries reduced to 3%, fuel and Salik increased to 5%, AI/digital subscriptions codified at 5%. Total cashback is bound by the AED 1,000 monthly overall cap. UNDERSTATEMENT, deliberate: the official base rate pays 1% on NON-EU international spend but only 0.5% on EU spend. The engine has a single canonical `international` category and cannot tell the two apart, so a blanket 1% international rate would shadow the 0.5% EU rate and OVERSTATE. All international is therefore left at the 0.5% already encoded by `selected_categories_and_eu_spend`. Non-EU international is understated by 0.5pp - the conservative direction. Resolving this needs an EU/non-EU split in the spend model, not a data fix."
   },
   {
     "id": "adcb_traveller",
@@ -558,7 +558,7 @@
       "No minimum monthly spend to earn"
     ],
     "source_url": "https://www.mashreq.com/en/uae/neo/cards/credit-cards/cashback-credit-card/",
-    "data_caveat": "Mashreq publishes the general local rate only as up to 1% and does not expose the underlying local tier table on the current product page. The compound base rate was split: the international clause is now the `international_spend` category at 1% (safe — `local_and_international_dining` maps to `dining` only, so nothing is shadowed). The parenthetical 'up to 2% during promotional periods' is EXCLUDED as a promo, not a steady-state rate."
+    "data_caveat": "Mashreq publishes the general local rate only as up to 1% and does not expose the underlying local tier table on the current product page. The compound base rate was split: the international clause is now the `international_spend` category at 1% (safe - `local_and_international_dining` maps to `dining` only, so nothing is shadowed). The parenthetical 'up to 2% during promotional periods' is EXCLUDED as a promo, not a steady-state rate."
   },
   {
     "id": "mashreq_platinum_plus",
@@ -610,7 +610,7 @@
       "Accelerated supermarket, fuel and dining earn"
     ],
     "source_url": "https://www.mashreq.com/en/uae/neo/cards/credit-cards/platinum-plus-credit-card/",
-    "data_caveat": "IMPLAUSIBLE AS RECORDED — do not publish a figure from this card. 10 Vantage points/AED on an UNCAPPED bucket covering groceries + fuel + dining, valued at the engine's placeholder 0.0075 AED/point, implies a 7.5% return on the largest spend categories with no ceiling. No UAE card pays that uncapped. Either a monthly cap exists and is missing here, or the Vantage valuation is wrong (valuations.ts marks it 'NOT researched'). Both must be resolved from the official T&C before this card carries a claim."
+    "data_caveat": "IMPLAUSIBLE AS RECORDED - do not publish a figure from this card. 10 Vantage points/AED on an UNCAPPED bucket covering groceries + fuel + dining, valued at the engine's placeholder 0.0075 AED/point, implies a 7.5% return on the largest spend categories with no ceiling. No UAE card pays that uncapped. Either a monthly cap exists and is missing here, or the Vantage valuation is wrong (valuations.ts marks it 'NOT researched'). Both must be resolved from the official T&C before this card carries a claim."
   },
   {
     "id": "hsbc_live_plus",
@@ -911,7 +911,7 @@
       "Category cashback across common UAE household spending"
     ],
     "source_url": "https://www.dib.ae/personal/cards/consumer-platinum-card",
-    "data_caveat": "2026-08-04: base_rate was \"No general base cashback published\", which the normalizer could not parse, so all non-category spend scored as an unbounded unknown. Set to 0% — the CONSERVATIVE floor, not a sourced value. Neither the official page nor any aggregator states a rate on spend outside the categories listed above, and the per-category caps plus the overall monthly cap describe a category-only product. If a general rate is sourced, restore it here. Cashback is a shared pool of up to 4% across everyday household categories, not an independent 4% per category. If billing-cycle spend falls below AED 4,000, all cashback earned in that statement cycle is forfeited entirely."
+    "data_caveat": "2026-08-04: base_rate was \"No general base cashback published\", which the normalizer could not parse, so all non-category spend scored as an unbounded unknown. Set to 0% - the CONSERVATIVE floor, not a sourced value. Neither the official page nor any aggregator states a rate on spend outside the categories listed above, and the per-category caps plus the overall monthly cap describe a category-only product. If a general rate is sourced, restore it here. Cashback is a shared pool of up to 4% across everyday household categories, not an independent 4% per category. If billing-cycle spend falls below AED 4,000, all cashback earned in that statement cycle is forfeited entirely."
   },
   {
     "id": "dib_consumer_reward",
@@ -994,7 +994,7 @@
       "Category cashback across common UAE household spending"
     ],
     "source_url": "https://www.dib.ae/personal/cards/consumer-reward-card",
-    "data_caveat": "2026-08-04: base_rate was \"No general base cashback published\", which the normalizer could not parse, so all non-category spend scored as an unbounded unknown. Set to 0% — the CONSERVATIVE floor, not a sourced value. Neither the official page nor any aggregator states a rate on spend outside the categories listed above, and the per-category caps plus the overall monthly cap describe a category-only product. If a general rate is sourced, restore it here. Cashback is a shared pool of up to 3% across combined everyday household categories. If billing-cycle spend falls below AED 3,000, all cashback earned in that statement cycle is forfeited entirely."
+    "data_caveat": "2026-08-04: base_rate was \"No general base cashback published\", which the normalizer could not parse, so all non-category spend scored as an unbounded unknown. Set to 0% - the CONSERVATIVE floor, not a sourced value. Neither the official page nor any aggregator states a rate on spend outside the categories listed above, and the per-category caps plus the overall monthly cap describe a category-only product. If a general rate is sourced, restore it here. Cashback is a shared pool of up to 3% across combined everyday household categories. If billing-cycle spend falls below AED 3,000, all cashback earned in that statement cycle is forfeited entirely."
   },
   {
     "id": "adib_cashback_visa",
@@ -1558,7 +1558,7 @@
       "Optional paid Miles Accelerator: 7.5 miles per AED 10 for AED 250/month (AED 3,000/year)"
     ],
     "source_url": "https://www.bankfab.com/en-ae/personal/credit-cards/etihad-guest-infinite",
-    "data_caveat": "The optional Miles Accelerator was previously a scored category, which credited 7.5 miles/AED 10 on ALL spend while its AED 250/month (AED 3,000/year) cost was invisible to the fee model — an unambiguous overstatement. It now lives in `benefits`, displayed but never scored. Encoding it properly needs an opt-in add-on with its own cost, which the schema has no slot for; until then the card scores on its unaccelerated 3.5 miles/AED 10 base, which is the conservative direction."
+    "data_caveat": "The optional Miles Accelerator was previously a scored category, which credited 7.5 miles/AED 10 on ALL spend while its AED 250/month (AED 3,000/year) cost was invisible to the fee model - an unambiguous overstatement. It now lives in `benefits`, displayed but never scored. Encoding it properly needs an opt-in add-on with its own cost, which the schema has no slot for; until then the card scores on its unaccelerated 3.5 miles/AED 10 base, which is the conservative direction."
   },
   {
     "id": "fab_etihad_guest_signature",
@@ -1612,7 +1612,7 @@
       "Optional paid Miles Accelerator: 6.5 miles per AED 10 for AED 250/month (AED 3,000/year)"
     ],
     "source_url": "https://www.bankfab.com/en-ae/personal/credit-cards/etihad-guest-signature",
-    "data_caveat": "2026-08-05: the prior note said the page does not expose 'the category-level earn table'. IT DOES — refetched successfully. The card previously had base 'Up to 6.5 miles per AED 10' and NO categories, so its entire score rested on one ceiling. The 6.5 turns out to be the OPTIONAL PAID Miles Accelerator rate (AED 250/month, AED 3,000/year) used as the headline — the identical defect removed from fab_etihad_guest_infinite. Real published rates now encoded: 2.75 per AED 10 domestic (base), 4.5 non-AED international, 5.5 Etihad and partners. The accelerator moved to `benefits`, displayed but never scored, because the schema has no slot for a paid opt-in with its own cost. Page states no reduced categories, caps or annual maximums. Source: bankfab.com/en-ae/personal/credit-cards/etihad-guest-signature."
+    "data_caveat": "2026-08-05: the prior note said the page does not expose 'the category-level earn table'. IT DOES - refetched successfully. The card previously had base 'Up to 6.5 miles per AED 10' and NO categories, so its entire score rested on one ceiling. The 6.5 turns out to be the OPTIONAL PAID Miles Accelerator rate (AED 250/month, AED 3,000/year) used as the headline - the identical defect removed from fab_etihad_guest_infinite. Real published rates now encoded: 2.75 per AED 10 domestic (base), 4.5 non-AED international, 5.5 Etihad and partners. The accelerator moved to `benefits`, displayed but never scored, because the schema has no slot for a paid opt-in with its own cost. Page states no reduced categories, caps or annual maximums. Source: bankfab.com/en-ae/personal/credit-cards/etihad-guest-signature."
   },
   {
     "id": "adcb_lulu_platinum",
@@ -1828,7 +1828,7 @@
       "Acquisition promo: 35% back (max AED 35 per order) on the FIRST 10 talabat orders only"
     ],
     "source_url": "https://www.adcb.com/en/personal/cards/credit-cards/talabat-credit-card",
-    "data_caveat": "The current official page does not expose the annual or joining fee in accessible text. If AED 2,500 monthly spend is not reached, talabat orders earn the 1.25% base rate. The 35%-back offer is a ONE-TIME acquisition promo on the first 10 orders; it was previously encoded as a scored category, which applied it to all dining forever and inflated this card. It now lives in `benefits` (displayed, never scored) — steady-state talabat spend correctly earns the 1.25% base."
+    "data_caveat": "The current official page does not expose the annual or joining fee in accessible text. If AED 2,500 monthly spend is not reached, talabat orders earn the 1.25% base rate. The 35%-back offer is a ONE-TIME acquisition promo on the first 10 orders; it was previously encoded as a scored category, which applied it to all dining forever and inflated this card. It now lives in `benefits` (displayed, never scored) - steady-state talabat spend correctly earns the 1.25% base."
   },
   {
     "id": "mashreq_noon",
@@ -2164,7 +2164,7 @@
       "Lounge access, golf and meet-and-greet benefits"
     ],
     "source_url": "https://www.emiratesislamic.ae/en/cards/credit-cards/skywards-infinite-credit-card",
-    "data_caveat": "2026-08-05: the prior note said the page 'does not expose the reduced-category table in accessible text'. IT DOES — refetched successfully and it publishes the full grid, which is why the three 'Up to' ceilings are now certain rates. The 'up to' existed BECAUSE of the reduced buckets, and those are now encoded: grocery 0.5, fuel/telecom/real-estate 0.25, government/automobiles/takaful/education 0.15 miles per USD 1, against a general domestic 1, Emirates/flydubai 2, non-AED 1.5. This is NOT the discredited 'score a ceiling at its ceiling' move — the variance is enumerated and encoded, not assumed away. TWO conservative compromises: (1) telecom officially earns 0.25 but the canonical model has no telecom separate from utilities, so all utilities take the LOWER 0.15; (2) automobiles/takaful have no canonical category and fall to `other` at the base rate. RESIDUAL RISK: if reduced buckets exist that the page does not list, the base is overstated. Salary and fee are still not exposed. Source: emiratesislamic.ae/en/cards/credit-cards/skywards-infinite-credit-card."
+    "data_caveat": "2026-08-05: the prior note said the page 'does not expose the reduced-category table in accessible text'. IT DOES - refetched successfully and it publishes the full grid, which is why the three 'Up to' ceilings are now certain rates. The 'up to' existed BECAUSE of the reduced buckets, and those are now encoded: grocery 0.5, fuel/telecom/real-estate 0.25, government/automobiles/takaful/education 0.15 miles per USD 1, against a general domestic 1, Emirates/flydubai 2, non-AED 1.5. This is NOT the discredited 'score a ceiling at its ceiling' move - the variance is enumerated and encoded, not assumed away. TWO conservative compromises: (1) telecom officially earns 0.25 but the canonical model has no telecom separate from utilities, so all utilities take the LOWER 0.15; (2) automobiles/takaful have no canonical category and fall to `other` at the base rate. RESIDUAL RISK: if reduced buckets exist that the page does not list, the base is overstated. Salary and fee are still not exposed. Source: emiratesislamic.ae/en/cards/credit-cards/skywards-infinite-credit-card."
   },
   {
     "id": "ei_cashback",
@@ -2216,7 +2216,7 @@
       "No minimum spend to begin earning"
     ],
     "source_url": "https://www.emiratesislamic.ae/en/cards/credit-cards/cashback-card",
-    "data_caveat": "2026-08-04: the official product page WAS readable and does publish both. base_rate set to the stated \"Up to 1%\" ceiling (scored 0..1%, not 1%), and the 5% Etisalat/du telecom category — previously absent from this record entirely — was added. Source: emiratesislamic.ae/en/cards/credit-cards/cashback-card. Prior note follows: the current page confirms 5% electronics cashback and no minimum spend, but not the base rate, caps, eligibility or fee in accessible text. Those values are not inferred."
+    "data_caveat": "2026-08-04: the official product page WAS readable and does publish both. base_rate set to the stated \"Up to 1%\" ceiling (scored 0..1%, not 1%), and the 5% Etisalat/du telecom category - previously absent from this record entirely - was added. Source: emiratesislamic.ae/en/cards/credit-cards/cashback-card. Prior note follows: the current page confirms 5% electronics cashback and no minimum spend, but not the base rate, caps, eligibility or fee in accessible text. Those values are not inferred."
   },
   {
     "id": "dib_shams_platinum",
@@ -2449,7 +2449,7 @@
       "Airport transfer benefits subject to conditions"
     ],
     "source_url": "https://www.dib.ae/personal/cards/emirates-skywards-dib-infinite-covered-card",
-    "data_caveat": "2026-08-05: the prior note said the page does not expose 'the lower-rate category grid'. IT DOES — refetched successfully. The reduced bucket (government bills, supermarkets, utilities, insurance, automobiles, education, fuel, real estate, telecom, transport) is a flat 0.3 miles per USD 1 and maps EXACTLY onto the existing `government_transit_utilities_telecom_education_real_estate_fuel_grocery_insurance_auto` key. Encoding it is what makes the 'Up to 1 mile' local ceiling a certain 1 — the variance is enumerated, not assumed away. FOREIGN SPEND, deliberate understatement: the page gives 1.5 miles general foreign but 0.75 for the European Economic Area, and both collapse into the single canonical `international` category, so the LOWER 0.75 is encoded per the conservative rule. This understates non-EEA foreign spend by half. It coincidentally preserves the previous ranking exactly, since the old 'Up to 1.5' scored as a 0..1.5 range whose midpoint was also 0.75. Fixing it properly needs an EEA/non-EEA split in the spend model — the same structural gap adcb_365_cashback documents. Application salary is still not exposed. Source: dib.ae/personal/cards/emirates-skywards-dib-infinite-covered-card."
+    "data_caveat": "2026-08-05: the prior note said the page does not expose 'the lower-rate category grid'. IT DOES - refetched successfully. The reduced bucket (government bills, supermarkets, utilities, insurance, automobiles, education, fuel, real estate, telecom, transport) is a flat 0.3 miles per USD 1 and maps EXACTLY onto the existing `government_transit_utilities_telecom_education_real_estate_fuel_grocery_insurance_auto` key. Encoding it is what makes the 'Up to 1 mile' local ceiling a certain 1 - the variance is enumerated, not assumed away. FOREIGN SPEND, deliberate understatement: the page gives 1.5 miles general foreign but 0.75 for the European Economic Area, and both collapse into the single canonical `international` category, so the LOWER 0.75 is encoded per the conservative rule. This understates non-EEA foreign spend by half. It coincidentally preserves the previous ranking exactly, since the old 'Up to 1.5' scored as a 0..1.5 range whose midpoint was also 0.75. Fixing it properly needs an EEA/non-EEA split in the spend model - the same structural gap adcb_365_cashback documents. Application salary is still not exposed. Source: dib.ae/personal/cards/emirates-skywards-dib-infinite-covered-card."
   },
   {
     "id": "rakbank_world",
@@ -2572,7 +2572,7 @@
       "Complimentary annual return flight and airport transfers subject to conditions"
     ],
     "source_url": "https://www.rakbank.ae/en/cards/credit-cards/air-arabia-platinum",
-    "data_caveat": "DO NOT PUBLISH — the live official page does not expose earn rates, caps, salary or fee figures in accessible text, so the rates here are unverified provenance. The AirRewards valuation is also an unresearched 0.0075 placeholder and the rates are per-AED, so unit counts bite directly. The rate STRINGS parse cleanly (0.3 = 1.5 per AED 5), which is why the card is sound; soundness is not provenance. Restore to publishable only once the official earn schedule is sourced."
+    "data_caveat": "DO NOT PUBLISH - the live official page does not expose earn rates, caps, salary or fee figures in accessible text, so the rates here are unverified provenance. The AirRewards valuation is also an unresearched 0.0075 placeholder and the rates are per-AED, so unit counts bite directly. The rate STRINGS parse cleanly (0.3 = 1.5 per AED 5), which is why the card is sound; soundness is not provenance. Restore to publishable only once the official earn schedule is sourced."
   },
   {
     "id": "cbd_one",
@@ -2730,7 +2730,7 @@
       "Airport lounge access and cinema offers subject to conditions"
     ],
     "source_url": "https://www.sc.com/ae/credit-cards/simply-cash/",
-    "data_caveat": "NOT AVAILABLE TO NEW CLIENTS — the current page is an official servicing page for existing cardholders, so this card must never be surfaced as an acquisition recommendation. See the open question in CARD_DATA_CHANGELOG D14 about whether closed-to-new-business cards belong in the scored universe at all. RATES (2026-08-05, refetched successfully): the page states a FLAT '2% cashback on all spends made overseas or in foreign currencies' and '2% on international and airline spends' — not the 'Up to 2%' ceiling previously recorded, so that is now a certain rate. Airline spend qualifies only when transacted DIRECTLY with the airline; aggregators and travel agencies are excluded, which the canonical `travel` category cannot express, so travel booked through an OTA is overstated at 2%. No caps or tiered reductions are published. Source: sc.com/ae/credit-cards/simply-cash/"
+    "data_caveat": "NOT AVAILABLE TO NEW CLIENTS - the current page is an official servicing page for existing cardholders, so this card must never be surfaced as an acquisition recommendation. See the open question in CARD_DATA_CHANGELOG D14 about whether closed-to-new-business cards belong in the scored universe at all. RATES (2026-08-05, refetched successfully): the page states a FLAT '2% cashback on all spends made overseas or in foreign currencies' and '2% on international and airline spends' - not the 'Up to 2%' ceiling previously recorded, so that is now a certain rate. Airline spend qualifies only when transacted DIRECTLY with the airline; aggregators and travel agencies are excluded, which the canonical `travel` category cannot express, so travel booked through an OTA is overstated at 2%. No caps or tiered reductions are published. Source: sc.com/ae/credit-cards/simply-cash/"
   },
   {
     "id": "sc_smart_saadiq",

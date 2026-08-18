@@ -92,7 +92,7 @@ function eligibleFor(salary: number): Card[] {
 // 1. LIVENESS — every clause must still match something real.
 // ===========================================================================
 
-describe("filter liveness — no clause may match zero rows", () => {
+describe("filter liveness - no clause may match zero rows", () => {
   /*
     Scored WITHOUT merchant shares on purpose. The merchant clause is supposed to
     fire on the unverified full-category assumption; supplying a share is exactly
@@ -128,7 +128,7 @@ describe("filter liveness — no clause may match zero rows", () => {
     expect(realCards.filter(hasDoNotPublishCaveat).length).toBeGreaterThan(0);
   });
 
-  it("rejects a real number of cards — the filter is a filter, not a no-op", () => {
+  it("rejects a real number of cards - the filter is a filter, not a no-op", () => {
     const seg = SEGMENT_CENTRES[4]!; // dual-income, the mid-range profile
     const eligible = eligibleFor(seg.salary);
     const sound = eligible.filter((c) => isSoundScore(scoreCard(seg.spend, c).flags));
@@ -227,7 +227,7 @@ const SHARES: Record<string, number> = {
   "Emirates Leisure": 0.03, RTA: 0.35, Talabat: 0.2,
 };
 
-describe("plausibility — the publishable headline must stay inside the stated bar", () => {
+describe("plausibility - the publishable headline must stay inside the stated bar", () => {
   /*
     OBSERVED 2026-08-09, at the commit that introduced merchant shares. A CHECKSUM in
     the same spirit as the tier counts in normalize-rate.test.ts: not a target, a
@@ -285,7 +285,7 @@ describe("plausibility — the publishable headline must stay inside the stated 
     expect(
       median,
       `Median publishable return across the five segment centres is ${median.toFixed(2)}%. ` +
-        `That is above the ${TRIPWIRE_PCT}% tripwire. Something moved — re-derive the ` +
+        `That is above the ${TRIPWIRE_PCT}% tripwire. Something moved - re-derive the ` +
         `headline before quoting it, and only then adjust this number with a note.`,
     ).toBeLessThan(TRIPWIRE_PCT);
   }, 60_000);
@@ -302,7 +302,7 @@ describe("plausibility — the publishable headline must stay inside the stated 
         expect(
           pct,
           `${card.id} returns ${pct.toFixed(2)}% of spend on ${seg.name} and is in the ` +
-            `PUBLISHABLE universe. Check its earn rate and its currency valuation — ` +
+            `PUBLISHABLE universe. Check its earn rate and its currency valuation - ` +
             `especially whether the rate is quoted per USD and recorded per AED.`,
         ).toBeLessThan(CEILING_PCT);
       }
@@ -314,7 +314,7 @@ describe("plausibility — the publishable headline must stay inside the stated 
 // 3. LOCKSTEP — the study and its diagnostic share one definition.
 // ===========================================================================
 
-describe("lockstep — the universe predicates have exactly one definition", () => {
+describe("lockstep - the universe predicates have exactly one definition", () => {
   it("supplying a merchant share moves cards INTO the sound universe", () => {
     /*
       The mechanism the merchant-share work rests on, asserted end to end: a stated
@@ -328,7 +328,7 @@ describe("lockstep — the universe predicates have exactly one definition", () 
     expect(withShares).toBeGreaterThan(without);
   });
 
-  it("a share of zero still admits the card — it just earns nothing extra", () => {
+  it("a share of zero still admits the card - it just earns nothing extra", () => {
     // "I never shop there" is an ANSWER. The card should be scored honestly (at its
     // base rate) rather than held back for an unverified assumption nobody made.
     const seg = SEGMENT_CENTRES[4]!;

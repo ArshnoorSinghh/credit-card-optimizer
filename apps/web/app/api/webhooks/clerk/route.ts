@@ -62,7 +62,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       if (email === null) {
         // 200, not 4xx: a retry would fail identically, so asking Clerk to redeliver
         // forever helps nobody. Swallow it visibly instead.
-        console.error(`Clerk webhook: user ${data.id} has no email address — skipping sync.`);
+        console.error(`Clerk webhook: user ${data.id} has no email address - skipping sync.`);
         return new Response("No email address on user; skipped.", { status: 200 });
       }
       await upsertUser({ clerkUserId: data.id, email });

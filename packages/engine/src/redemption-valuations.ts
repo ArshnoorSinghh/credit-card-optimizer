@@ -148,10 +148,10 @@ export const REDEMPTION_VALUATIONS: RedemptionValuationTable = {
     premiumCabin: {
       basedOn: "flight_economy",
       confidence: "low",
-      note: "premium value = economy × your multiplier; ~15% premium devaluation effective 20 May 2026 — supply a multiplier from your actual target redemption rather than trusting a fixed number",
+      note: "premium value = economy × your multiplier; ~15% premium devaluation effective 20 May 2026 - supply a multiplier from your actual target redemption rather than trusting a fixed number",
     },
     blendedReference: { aedPerUnit: 0.028, confidence: "medium", source: "WalletHub", note: "conservative blended reference across redemptions" },
-    note: "convertible from ADCB TouchPoints (22:1) and Mashreq Salaam (32:1) — see conversions.ts",
+    note: "convertible from ADCB TouchPoints (22:1) and Mashreq Salaam (32:1) - see conversions.ts",
   },
 
   // Etihad: economy firm; business is a researched fixed number (unlike Skywards).
@@ -179,7 +179,7 @@ export const REDEMPTION_VALUATIONS: RedemptionValuationTable = {
       route("voucher", "voucher", 0.004, "high"),
       route("bill_payment", "external_bill", 0.004348, "high", "utility / donation / Zakat / school / Salik"),
     ],
-    note: "NO card-bill / statement-credit redemption; converts to Skywards 22:1 or Etihad 14:1 (conversions.ts) — rarely beats direct partner spend at baseline mile value",
+    note: "NO card-bill / statement-credit redemption; converts to Skywards 22:1 or Etihad 14:1 (conversions.ts) - rarely beats direct partner spend at baseline mile value",
   },
 
   // Etisalat Smiles — NO card-bill route. Every route is the official 100 pts = AED 1.
@@ -192,7 +192,7 @@ export const REDEMPTION_VALUATIONS: RedemptionValuationTable = {
       route("merchant", "partner_spend", 0.01, "high"),
       route("travel", "voucher", 0.01, "high"),
     ],
-    note: "cashback not permitted — no card-bill / statement-credit route exists",
+    note: "cashback not permitted - no card-bill / statement-credit route exists",
   },
 
   // ── Cash-CAPABLE bank currencies ─────────────────────────────────────────────
@@ -206,11 +206,11 @@ export const REDEMPTION_VALUATIONS: RedemptionValuationTable = {
     cashCapable: true,
     primary: "card_bill_cashback",
     routes: [
-      route("fixed_use", "fixed_use", 1.0, "high", "Nol / education / donation / in-store — assumes you have these specific uses"),
-      route("card_bill_cashback", "card_bill", 0.75, "high", "min 500 PP + AED 375 outstanding balance; NOT adopted into Engine 1 — earn rate needs verification"),
+      route("fixed_use", "fixed_use", 1.0, "high", "Nol / education / donation / in-store - assumes you have these specific uses"),
+      route("card_bill_cashback", "card_bill", 0.75, "high", "min 500 PP + AED 375 outstanding balance; NOT adopted into Engine 1 - earn rate needs verification"),
       route("rewards_hub", "voucher", 0.75, "high"),
     ],
-    note: "transfer to miles available but ratio unresearched — not quantified here",
+    note: "transfer to miles available but ratio unresearched - not quantified here",
   },
 
   // FAB Rewards — cash-capable. Note the sourced conflict on the card-bill rate.
@@ -218,7 +218,7 @@ export const REDEMPTION_VALUATIONS: RedemptionValuationTable = {
     cashCapable: true,
     primary: "cashback",
     routes: [
-      route("cashback", "card_bill", 0.007, "high", "FAB FAQ PDF states 0.004 — CONFLICT, verify"),
+      route("cashback", "card_bill", 0.007, "high", "FAB FAQ PDF states 0.004 - CONFLICT, verify"),
       route("voucher", "voucher", 0.007, "medium"),
     ],
     note: "transfer to miles available",
@@ -236,7 +236,7 @@ export const REDEMPTION_VALUATIONS: RedemptionValuationTable = {
       route("hotel", "hotel", 2.0, "high"),
       route("flight", "flight_economy", 2.0, "high"),
     ],
-    note: "not present in cards.json — no current card earns this currency",
+    note: "not present in cards.json - no current card earns this currency",
   },
 
   // DIB Wala'a — cash-capable. All base routes at 0.005.
@@ -249,7 +249,7 @@ export const REDEMPTION_VALUATIONS: RedemptionValuationTable = {
       route("bill_payment", "external_bill", 0.005, "medium"),
       route("base", "voucher", 0.005, "medium"),
     ],
-    note: "transfer to Etihad 20:1 or Avios 20:1 — see conversions.ts",
+    note: "transfer to Etihad 20:1 or Avios 20:1 - see conversions.ts",
   },
 
   // Mashreq (Vantage / Salaam). Gift-card routes edge out plain card-bill cashback.
@@ -262,7 +262,7 @@ export const REDEMPTION_VALUATIONS: RedemptionValuationTable = {
       route("amazon_giftcard", "voucher", 0.0033, "high"),
       route("travel", "voucher", 0.00329, "high"),
     ],
-    note: "Mashreq Vantage/Salaam; transfer to Skywards 32:1 or Etihad 22:1 — see conversions.ts. NOT present in cards.json since the 2026-07 Amex-network cleanup removed the Mashreq Solitaire Amex; research kept here for if a Salaam card returns",
+    note: "Mashreq Vantage/Salaam; transfer to Skywards 32:1 or Etihad 22:1 - see conversions.ts. NOT present in cards.json since the 2026-07 Amex-network cleanup removed the Mashreq Solitaire Amex; research kept here for if a Salaam card returns",
   },
 
   // Citi ThankYou (UAE) — cash-capable. Both routes offset card spend.
@@ -286,7 +286,7 @@ export const REDEMPTION_VALUATIONS: RedemptionValuationTable = {
       route("purchase_with_rewards", "partner_spend", 0.02, "medium"),
       route("voucher", "voucher", 0.02, "low", "value varies by catalogue item"),
     ],
-    note: "not present in cards.json — SC cards earn AED cashback directly",
+    note: "not present in cards.json - SC cards earn AED cashback directly",
   },
 
   // ── Low-confidence: no official UAE per-point figure — SEEDED & FLAGGED ───────
@@ -295,23 +295,23 @@ export const REDEMPTION_VALUATIONS: RedemptionValuationTable = {
   "HSBC Reward Points": {
     cashCapable: true,
     primary: "statement_credit",
-    routes: [route("statement_credit", "card_bill", 0.0075, "low", "no official UAE per-point figure published — verify in-app")],
+    routes: [route("statement_credit", "card_bill", 0.0075, "low", "no official UAE per-point figure published - verify in-app")],
   },
   "RAKrewards Points": {
     cashCapable: true,
     primary: "statement_credit",
-    routes: [route("statement_credit", "card_bill", 0.0075, "low", "no official UAE per-point figure published — verify in-app")],
+    routes: [route("statement_credit", "card_bill", 0.0075, "low", "no official UAE per-point figure published - verify in-app")],
   },
   "CBD Reward Points": {
     cashCapable: true,
     primary: "statement_credit",
-    routes: [route("statement_credit", "card_bill", 0.0075, "low", "no official UAE per-point figure published — verify in-app")],
+    routes: [route("statement_credit", "card_bill", 0.0075, "low", "no official UAE per-point figure published - verify in-app")],
   },
   // Emirates Islamic SmartMiles — a miles product; not present in cards.json.
   "SmartMiles": {
     cashCapable: false,
     primary: "flight_economy",
-    routes: [route("flight", "flight_economy", 0.0075, "low", "no official UAE per-point figure published — verify in-app")],
+    routes: [route("flight", "flight_economy", 0.0075, "low", "no official UAE per-point figure published - verify in-app")],
     note: "not present in cards.json",
   },
 
@@ -319,7 +319,7 @@ export const REDEMPTION_VALUATIONS: RedemptionValuationTable = {
   AED: {
     cashCapable: true,
     primary: "statement_credit",
-    routes: [route("statement_credit", "card_bill", 1.0, "high", "cashback — face value by definition")],
+    routes: [route("statement_credit", "card_bill", 1.0, "high", "cashback - face value by definition")],
   },
   "AED (Salaam Points convertible)": {
     cashCapable: true,
@@ -331,7 +331,7 @@ export const REDEMPTION_VALUATIONS: RedemptionValuationTable = {
   "AED (RAKBANK cashback)": {
     cashCapable: true,
     primary: "statement_credit",
-    routes: [route("statement_credit", "card_bill", 1.0, "high", "cashback — face value; expires 15 months after earning")],
+    routes: [route("statement_credit", "card_bill", 1.0, "high", "cashback - face value; expires 15 months after earning")],
   },
   "AED (Nol points)": {
     cashCapable: false, // Nol fare credit, not a card-bill route
@@ -341,7 +341,7 @@ export const REDEMPTION_VALUATIONS: RedemptionValuationTable = {
   "AED (Booking.com credit)": {
     cashCapable: false,
     primary: "booking_credit",
-    routes: [route("booking_credit", "voucher", 0.85, "low", "restricted travel credit; card data conflicts with issuer's current structure — re-verify")],
+    routes: [route("booking_credit", "voucher", 0.85, "low", "restricted travel credit; card data conflicts with issuer's current structure - re-verify")],
   },
 
   // ── Store / niche points — no researched UAE figure; conservative flagged 0.0075 ─
@@ -356,28 +356,28 @@ export const REDEMPTION_VALUATIONS: RedemptionValuationTable = {
   "LuLu Points": {
     cashCapable: false,
     primary: "voucher",
-    routes: [route("voucher", "voucher", 0.0075, "low", "no official UAE per-point figure — verify")],
+    routes: [route("voucher", "voucher", 0.0075, "low", "no official UAE per-point figure - verify")],
   },
   "U By Emaar Points": {
     cashCapable: false,
     primary: "voucher",
-    routes: [route("voucher", "voucher", 0.0075, "low", "no official UAE per-point figure — verify")],
+    routes: [route("voucher", "voucher", 0.0075, "low", "no official UAE per-point figure - verify")],
   },
   "dnata Points": {
     cashCapable: false,
     primary: "voucher",
-    routes: [route("voucher", "voucher", 0.0075, "low", "no official UAE per-point figure — verify")],
+    routes: [route("voucher", "voucher", 0.0075, "low", "no official UAE per-point figure - verify")],
   },
   // (DDF Reward Points was removed with the Amex DDF card in 2026-07.)
   "Diners Club Reward Points": {
     cashCapable: true,
     primary: "statement_credit",
-    routes: [route("statement_credit", "card_bill", 0.0075, "low", "no official UAE per-point figure — verify")],
+    routes: [route("statement_credit", "card_bill", 0.0075, "low", "no official UAE per-point figure - verify")],
   },
   "Multiple programs (customizable)": {
     cashCapable: false,
     primary: "voucher",
-    routes: [route("voucher", "voucher", 0.0075, "low", "user-customizable currency — genuinely unknown; needs valuation")],
+    routes: [route("voucher", "voucher", 0.0075, "low", "user-customizable currency - genuinely unknown; needs valuation")],
     note: "card is excluded from scoring pending verification",
   },
 };
@@ -391,8 +391,8 @@ export function defaultRedemptionProfile(currency: string): CurrencyRedemptionPr
   return {
     cashCapable: false,
     primary: "unknown",
-    routes: [route("unknown", "voucher", 0.0075, "low", "estimated — research pending")],
-    note: `unknown currency "${currency}" — redemption routes not researched; modeled as a flagged placeholder`,
+    routes: [route("unknown", "voucher", 0.0075, "low", "estimated - research pending")],
+    note: `unknown currency "${currency}" - redemption routes not researched; modeled as a flagged placeholder`,
   };
 }
 
@@ -474,7 +474,7 @@ export function primaryRoute(
   const found = profile.routes.find((r) => r.type === profile.primary);
   if (found) return found;
   // A well-formed profile always has its primary present; fall back defensively.
-  return profile.routes[0] ?? route("unknown", "voucher", 0, "low", "profile has no routes — treated as 0 AED/unit");
+  return profile.routes[0] ?? route("unknown", "voucher", 0, "low", "profile has no routes - treated as 0 AED/unit");
 }
 
 /** Routes whose class is in `allowed`. */
@@ -544,7 +544,7 @@ export function premiumFlightRoute(
     "flight_premium",
     economy.aedPerUnit * multiplier,
     "low", // a user-supplied multiplier is inherently low-confidence
-    `economy ${economy.aedPerUnit} × your ${multiplier} multiplier — ${profile.premiumCabin.note}`,
+    `economy ${economy.aedPerUnit} × your ${multiplier} multiplier - ${profile.premiumCabin.note}`,
   );
 }
 
@@ -566,7 +566,7 @@ export function deriveFlatValuationTable(
     out[currency] = {
       aedPerUnit: r.aedPerUnit,
       confidence: r.confidence,
-      note: `primary route: ${r.type} (${r.class})${r.note ? ` — ${r.note}` : ""}`,
+      note: `primary route: ${r.type} (${r.class})${r.note ? ` - ${r.note}` : ""}`,
     };
   }
   return out;

@@ -78,7 +78,7 @@ function mkCard(
  * Best 2-card = {X,Y}: 10% + 10% = 100 + 100 = 200/mo = 2400/yr — the complementary
  * pair beats any pair containing Z, and beats Z alone.
  */
-describe("optimizePortfolio — complementary pair beats the strongest single card", () => {
+describe("optimizePortfolio - complementary pair beats the strongest single card", () => {
   const cards = [
     mkCard("X", { categories: [{ category: "groceries", rate: "10%" }] }),
     mkCard("Y", { categories: [{ category: "dining", rate: "10%" }] }),
@@ -128,7 +128,7 @@ describe("optimizePortfolio — complementary pair beats the strongest single ca
  * The exact optimum instead reserves A entirely for groceries (fills the cap for
  * 1200/yr) and sends dining to B's 8% (960/yr) → 2160/yr. We assert the optimum.
  */
-describe("optimizePortfolio — exact assignment beats greedy under a binding cap", () => {
+describe("optimizePortfolio - exact assignment beats greedy under a binding cap", () => {
   const cards = [
     mkCard("A", { categories: [{ category: "groceries_dining", rate: "10%", monthly_cap: 100 }] }),
     mkCard("B", { categories: [{ category: "dining", rate: "8%" }] }),
@@ -160,7 +160,7 @@ describe("optimizePortfolio — exact assignment beats greedy under a binding ca
  * A absorbs 1000 (→ 1200/yr, cap bound); the 500 overflow flows to B at 5%
  * (→ 300/yr). Total 1500/yr.
  */
-describe("optimizePortfolio — cap overflow reroutes to the next-best card", () => {
+describe("optimizePortfolio - cap overflow reroutes to the next-best card", () => {
   const cards = [
     mkCard("A", { categories: [{ category: "groceries", rate: "10%", monthly_cap: 100 }] }),
     mkCard("B", { categories: [{ category: "groceries", rate: "5%" }] }),
@@ -193,7 +193,7 @@ describe("optimizePortfolio — cap overflow reroutes to the next-best card", ()
  *   video_streaming 5% cap AED 100/mo -> 2000 AED/mo productive -> 1200/yr
  *   entertainment 4000/mo fills both -> ONE row: 4000/mo spend, 2400/yr value.
  */
-describe("optimizePortfolio — merges same-category slices on one card into a single row", () => {
+describe("optimizePortfolio - merges same-category slices on one card into a single row", () => {
   const card = mkCard("E", {
     categories: [
       { category: "cinemas", rate: "5%", monthly_cap: 100 },
@@ -220,7 +220,7 @@ describe("optimizePortfolio — merges same-category slices on one card into a s
  *
  * H gross = 1440/yr but net = 1440 − 5000 = −3560. L gross = 5% × 1000 × 12 = 600/yr, net = 600.
  */
-describe("optimizePortfolio — nets out fees, not just gross rewards", () => {
+describe("optimizePortfolio - nets out fees, not just gross rewards", () => {
   const cards = [
     mkCard("H", { categories: [{ category: "groceries", rate: "12%" }], annual_fee: 5000 }),
     mkCard("L", { categories: [{ category: "groceries", rate: "5%" }] }),
@@ -244,7 +244,7 @@ describe("optimizePortfolio — nets out fees, not just gross rewards", () => {
  * Case 5 — eligibility filter drops cards the user can't get.
  *   P: min salary 25000.   R: min salary 5000.   User earns 10000.
  */
-describe("optimizePortfolio — eligibility filter excludes unaffordable cards", () => {
+describe("optimizePortfolio - eligibility filter excludes unaffordable cards", () => {
   const cards = [
     mkCard("P", { categories: [{ category: "groceries", rate: "10%" }], min_salary: 25000 }),
     mkCard("R", { categories: [{ category: "groceries", rate: "5%" }], min_salary: 5000 }),
@@ -265,7 +265,7 @@ describe("optimizePortfolio — eligibility filter excludes unaffordable cards",
  * Case 6 — portfolio-level rule: a salary can only be transferred to ONE bank, so
  * no portfolio may contain two salary_transfer_required cards.
  */
-describe("optimizePortfolio — never returns two salary-transfer cards together", () => {
+describe("optimizePortfolio - never returns two salary-transfer cards together", () => {
   const cards = [
     mkCard("S1", { categories: [{ category: "groceries", rate: "10%" }], salary_transfer: true }),
     mkCard("S2", { categories: [{ category: "dining", rate: "10%" }], salary_transfer: true }),
@@ -290,7 +290,7 @@ describe("optimizePortfolio — never returns two salary-transfer cards together
  * Case 7 — full-data smoke test: all real cards, a realistic profile. Must run
  * fast and return sane, flagged output.
  */
-describe("optimizePortfolio — full 51-card smoke test", () => {
+describe("optimizePortfolio - full 51-card smoke test", () => {
   const spending: SpendingProfile = {
     groceries: 3000,
     dining: 2000,
@@ -374,7 +374,7 @@ describe("optimizePortfolio — full 51-card smoke test", () => {
         /^\s*up\s+to\b/i.test(s),
       ),
     );
-    expect(ceilingCards.length, "no 'up to' rates left — this test now asserts nothing").toBeGreaterThan(0);
+    expect(ceilingCards.length, "no 'up to' rates left - this test now asserts nothing").toBeGreaterThan(0);
 
     // 1. Every ceiling must reach the ranking as a genuine BAND, not a point estimate.
     for (const card of ceilingCards) {

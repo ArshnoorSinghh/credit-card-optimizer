@@ -146,7 +146,7 @@ describe("POST /api/optimize", () => {
 });
 
 describe("the optimizer stays PUBLIC (guest/demo mode)", () => {
-  it("serves an anonymous request — no session, no auth mocks, still 200", async () => {
+  it("serves an anonymous request - no session, no auth mocks, still 200", async () => {
     // Note what is NOT here: no Clerk mock. If the route ever started asking for a
     // user, this test would fail because there is no session to find. That is the
     // point — anyone can try the optimizer without an account.

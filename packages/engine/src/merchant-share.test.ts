@@ -88,7 +88,7 @@ const luluCard = mkCard("LULU_A", {
   categories: [{ category: "lulu_supermarket", rate: "10%" }],
 });
 
-describe("rule 1 + 2 — a share caps the bonus, and the rest falls to the base rate", () => {
+describe("rule 1 + 2 - a share caps the bonus, and the rest falls to the base rate", () => {
   const spending = { groceries: 1000 };
 
   it("BOUNDS the bonus 0..full when no share is stated", () => {
@@ -124,7 +124,7 @@ describe("rule 1 + 2 — a share caps the bonus, and the rest falls to the base 
     expect(base?.monthlySpendAed).toBeCloseTo(750, 6);
   });
 
-  it("a share of 0 disables the bonus entirely — all spend earns the base rate", () => {
+  it("a share of 0 disables the bonus entirely - all spend earns the base rate", () => {
     // Someone who never shops at LuLu gets no LuLu bonus. 1,000 x 1% x 12 = 120/yr.
     const s = scoreCard(spending, luluCard, undefined, { merchantShares: { LuLu: 0 } });
     expect(s.grossAnnualValue).toEqual({ min: 120, max: 120 });
@@ -145,7 +145,7 @@ describe("rule 1 + 2 — a share caps the bonus, and the rest falls to the base 
   });
 });
 
-describe("rule 3 — cards bonusing the same merchant share ONE pool", () => {
+describe("rule 3 - cards bonusing the same merchant share ONE pool", () => {
   // Second LuLu card, deliberately WORSE (5%), so the allocator has a reason to
   // prefer the first and the test can tell "split the pool" from "each gets its own".
   const luluB = mkCard("LULU_B", {
@@ -187,7 +187,7 @@ describe("rule 3 — cards bonusing the same merchant share ONE pool", () => {
   });
 });
 
-describe("rule 4 — invalid input falls back to 'unstated', never to the optimistic end", () => {
+describe("rule 4 - invalid input falls back to 'unstated', never to the optimistic end", () => {
   it("rejects a percentage entered where a fraction belongs", () => {
     const { shares, issues } = sanitizeMerchantShares({ LuLu: 30 });
     expect(shares.size).toBe(0);
@@ -217,7 +217,7 @@ describe("rule 4 — invalid input falls back to 'unstated', never to the optimi
   });
 });
 
-describe("flags — a stated share is an INPUT, not an assumption we made", () => {
+describe("flags - a stated share is an INPUT, not an assumption we made", () => {
   it("flags an unstated merchant as an assumption, and marks the score uncertain", () => {
     const s = scoreCard({ groceries: 1000 }, luluCard);
     const flag = s.flags.find((f) => f.message.includes("spend occurs at"));
@@ -236,7 +236,7 @@ describe("flags — a stated share is an INPUT, not an assumption we made", () =
   });
 });
 
-describe("merchantShareQuestions — derived from the real card data", () => {
+describe("merchantShareQuestions - derived from the real card data", () => {
   const questions = merchantShareQuestions(realCards);
 
   it("asks about the merchants the real co-brand cards are locked to", () => {
@@ -279,7 +279,7 @@ describe("merchantShareQuestions — derived from the real card data", () => {
   });
 });
 
-describe("the real dataset — shares can only remove value, never add it", () => {
+describe("the real dataset - shares can only remove value, never add it", () => {
   /*
     The safety property. A share is a CAP on how much spend reaches a merchant
     bonus, so for any card and any profile, scoring with a share in [0,1] can never
@@ -329,7 +329,7 @@ describe("the real dataset — shares can only remove value, never add it", () =
     }
   });
 
-  it("actually bites — some real card scores lower once shares are applied", () => {
+  it("actually bites - some real card scores lower once shares are applied", () => {
     // Guards against the inverse failure: a share model that is wired in but has no
     // effect would pass every assertion above and measure nothing. Same class of
     // bug as the dead study filters this project has hit twice.
@@ -342,7 +342,7 @@ describe("the real dataset — shares can only remove value, never add it", () =
     expect(moved.length).toBeGreaterThan(5);
   });
 
-  it("bounding also bites — an unstated merchant is not scored at full credit", () => {
+  it("bounding also bites - an unstated merchant is not scored at full credit", () => {
     // The other half of the blend. If `boundMerchantLockedRates` were ever wired out,
     // the test above would still pass (shares would still beat full credit) while the
     // engine quietly returned to assuming every co-brand bonus applies in full.

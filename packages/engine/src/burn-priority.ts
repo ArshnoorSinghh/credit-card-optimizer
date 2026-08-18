@@ -126,7 +126,7 @@ function resolveExpiry(
       // We can project a concrete date — but it's an estimate off program policy.
       const projected = addMonthsISO(holding.earnedDate, def.months);
       flags.push(
-        `expiry projected as ${projected} (${def.months} months ${def.basis === "from_earning" ? "from earning" : "from last activity"}) — ${def.note}`,
+        `expiry projected as ${projected} (${def.months} months ${def.basis === "from_earning" ? "from earning" : "from last activity"}) - ${def.note}`,
       );
       return { expiryDate: projected, source: "projected_default", flags };
     }
@@ -137,7 +137,7 @@ function resolveExpiry(
     return { source: "unknown", flags };
   }
   // No explicit date and no known default -> genuinely unknown. No false urgency.
-  flags.push("expiry unknown — no explicit date and no known program default");
+  flags.push("expiry unknown - no explicit date and no known program default");
   return { source: "unknown", flags };
 }
 
@@ -157,7 +157,7 @@ export function burnPriority(
     const { currency, balance } = holding;
     const isUnknown = !table[currency];
     if (isUnknown) {
-      planFlags.push(`unknown currency "${currency}" — value-at-risk uses a flagged placeholder rate`);
+      planFlags.push(`unknown currency "${currency}" - value-at-risk uses a flagged placeholder rate`);
     }
 
     const { expiryDate, source, flags } = resolveExpiry(holding, expiryDefaults);
@@ -173,7 +173,7 @@ export function burnPriority(
     const rate = bestRoute(currency, table);
     const valueAtRiskAed = balance * rate.aedPerUnit;
     // Route types are snake_case keys in the table; spell them out for the reader.
-    if (rate.note) flags.push(`best-rate basis: ${rate.type.replace(/_/g, " ")} — ${rate.note}`);
+    if (rate.note) flags.push(`best-rate basis: ${rate.type.replace(/_/g, " ")} - ${rate.note}`);
 
     // Versatility = number of distinct redemption CLASSES (genuine flexibility): a
     // currency with a card-bill route escapes more ways than a voucher-only one.

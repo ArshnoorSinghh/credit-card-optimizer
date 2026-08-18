@@ -138,15 +138,15 @@ export async function POST(request: Request): Promise<Response> {
     // configured in this environment. The log line is for us; the response is
     // for a reader who should not lose what they typed.
     console.error(
-      "[suggestions] SUGGESTIONS_SMTP_USER / SUGGESTIONS_SMTP_PASS are not set — cannot send.",
+      "[suggestions] SUGGESTIONS_SMTP_USER / SUGGESTIONS_SMTP_PASS are not set - cannot send.",
     );
     return bad("Sending isn't set up yet. Please email us directly instead.", 503);
   }
 
   const sender = user
-    ? `${user.email} (signed in — verified)`
+    ? `${user.email} (signed in - verified)`
     : selfReported
-      ? `${selfReported} (typed into the form — NOT verified)`
+      ? `${selfReported} (typed into the form - NOT verified)`
       : "anonymous, no reply address given";
 
   /*
@@ -178,8 +178,8 @@ export async function POST(request: Request): Promise<Response> {
       // the subject means they can be told apart, and filtered, without opening
       // them. It goes on the anonymous ones because those are the exception.
       subject: replyAddress
-        ? `Fils feedback — ${category}`
-        : `Fils feedback [no reply] — ${category}`,
+        ? `Fils feedback - ${category}`
+        : `Fils feedback [no reply] - ${category}`,
       text: lines.join("\n"),
       // Only set Reply-To when there is somewhere for a reply to land. Setting
       // it to our own address would make the Reply button look functional while

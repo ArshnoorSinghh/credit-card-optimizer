@@ -68,7 +68,7 @@ export const DEVALUATIONS: Devaluation[] = [
     // instead of a fixed number. Deleting it would leave that modelling decision
     // looking arbitrary to the next reader. Consumers filter by date, so a past
     // devaluation raises no warning — see `upcomingDevaluations`.
-    note: "~15% premium-cabin devaluation — burn premium (business/first) redemptions before this date",
+    note: "~15% premium-cabin devaluation - burn premium (business/first) redemptions before this date",
   },
 ];
 

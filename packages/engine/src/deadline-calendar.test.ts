@@ -22,7 +22,7 @@ const byId = (id: string): Card => {
 
 const ASOF = "2026-07-15";
 
-describe("deadlineCalendar — points expiry mirrors burnPriority, never recomputes it", () => {
+describe("deadlineCalendar - points expiry mirrors burnPriority, never recomputes it", () => {
   /*
     The drift guard. The calendar's whole design rests on it COMPOSING the burn
     engine rather than reimplementing "when do these expire". A second
@@ -78,7 +78,7 @@ describe("deadlineCalendar — points expiry mirrors burnPriority, never recompu
   });
 });
 
-describe("deadlineCalendar — undateable deadlines are shown, never dropped", () => {
+describe("deadlineCalendar - undateable deadlines are shown, never dropped", () => {
   /*
     The defect this whole module is shaped around. A holding whose expiry cannot be
     dated must not vanish: an empty calendar reads as "nothing is coming up", which
@@ -118,7 +118,7 @@ describe("deadlineCalendar — undateable deadlines are shown, never dropped", (
   });
 });
 
-describe("deadlineCalendar — devaluations", () => {
+describe("deadlineCalendar - devaluations", () => {
   const future: Devaluation[] = [
     {
       currency: "Skywards Miles",
@@ -214,7 +214,7 @@ describe("devaluation table freshness", () => {
   });
 });
 
-describe("deadlineCalendar — annual-fee renewal", () => {
+describe("deadlineCalendar - annual-fee renewal", () => {
   const feeCard = realCards.find((c) => c.fees.annual_fee_aed > 0 && !c.fees.waiver_conditions)!;
 
   it("dates the renewal from the anniversary the user gave us", () => {
@@ -294,7 +294,7 @@ describe("deadlineCalendar — annual-fee renewal", () => {
   });
 });
 
-describe("deadlineCalendar — shape and ordering", () => {
+describe("deadlineCalendar - shape and ordering", () => {
   const inventory: PointsInventory = [
     { currency: "Skywards Miles", balance: 40000, expiryDate: "2026-09-01" },
     { currency: "Etihad Guest Miles", balance: 12000, expiryDate: "2026-08-01" },

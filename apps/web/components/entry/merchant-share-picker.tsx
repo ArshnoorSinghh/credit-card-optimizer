@@ -134,7 +134,7 @@ export function MerchantSharePicker({
         <Badge tone="neutral">
           {answered}/{SHARE_QUESTIONS.length}
         </Badge>
-        Optional — but skipping one means we assume <em>all</em> of that spending happens
+        Optional - but skipping one means we assume <em>all</em> of that spending happens
         there, which flatters those cards. We&apos;ll say so on the estimate.
       </p>
     </div>

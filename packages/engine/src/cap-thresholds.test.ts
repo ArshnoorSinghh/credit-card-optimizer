@@ -50,7 +50,7 @@ function mkCard(o: {
   };
 }
 
-describe("optionSpendThresholds — each cap in its OWN period, never converted", () => {
+describe("optionSpendThresholds - each cap in its OWN period, never converted", () => {
   /*
     The honesty point of the whole module. `optionCapacityAnnualAed` deliberately
     collapses both caps into one annual number for the flow solver, carrying the
@@ -88,7 +88,7 @@ describe("optionSpendThresholds — each cap in its OWN period, never converted"
   });
 });
 
-describe("capThresholds — the switch target", () => {
+describe("capThresholds - the switch target", () => {
   const capped = mkCard({
     id: "CAPPED",
     base: "0.5% on all spend",
@@ -130,7 +130,7 @@ describe("capThresholds — the switch target", () => {
   });
 });
 
-describe("capThresholds — reached, proximity and ordering", () => {
+describe("capThresholds - reached, proximity and ordering", () => {
   const capped = mkCard({
     id: "CAPPED",
     categories: [{ category: "supermarkets", rate: "5%", monthly_cap: 300 }],
@@ -152,7 +152,7 @@ describe("capThresholds — reached, proximity and ordering", () => {
     expect(t.detail).toMatch(/would not reach it/);
   });
 
-  it("does not call an EXACT tie 'reached' — the float-chain regression", () => {
+  it("does not call an EXACT tie 'reached' - the float-chain regression", () => {
     /*
       Found by rendering the real screen. fab_cashback pays 5% capped at AED 150/mo,
       which is exactly AED 3,000 of spend — but the cap travels a float chain (AED cap
@@ -216,7 +216,7 @@ describe("capThresholds — reached, proximity and ordering", () => {
   });
 });
 
-describe("capThresholds — refuses to state a threshold off a midpoint", () => {
+describe("capThresholds - refuses to state a threshold off a midpoint", () => {
   /*
     A merchant-locked bonus with no stated share is bounded 0..full and the scorer
     routes it on the midpoint. Dividing a cap by that midpoint yields a confident
@@ -236,7 +236,7 @@ describe("capThresholds — refuses to state a threshold off a midpoint", () => 
     expect(report.unstated[0]!.reason).toMatch(/range, not a number/);
   });
 
-  it("states it normally once the share is known — proving the bound is the reason", () => {
+  it("states it normally once the share is known - proving the bound is the reason", () => {
     /*
       The control for the test above. With `merchantLocksResolved` the rate is a real
       number again, so a threshold IS statable. If this ever failed while the test
@@ -271,7 +271,7 @@ describe("capThresholds — refuses to state a threshold off a midpoint", () => 
   });
 });
 
-describe("capThresholds — against the real dataset", () => {
+describe("capThresholds - against the real dataset", () => {
   const spending: SpendingProfile = {
     groceries: 3000, dining: 2000, fuel: 900, utilities: 700,
     travel: 1200, transport: 400, entertainment: 600, international: 700, other: 1500,

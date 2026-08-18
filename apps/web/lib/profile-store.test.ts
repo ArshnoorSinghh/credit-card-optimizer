@@ -48,7 +48,7 @@ describe("isUnwrittenServerState", () => {
 });
 
 describe("hasLocalWork", () => {
-  it("is false for an untouched guest — nothing to carry over", () => {
+  it("is false for an untouched guest - nothing to carry over", () => {
     expect(hasLocalWork(local())).toBe(false);
   });
 

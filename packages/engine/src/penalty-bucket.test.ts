@@ -89,7 +89,7 @@ function mkCard(
  *   total 12.50/mo = AED 150/yr.
  * The old answer routed fuel to the base rate too: 20/mo = AED 240/yr.
  */
-describe("penalty bucket — spend below the base rate cannot escape to the base rate", () => {
+describe("penalty bucket - spend below the base rate cannot escape to the base rate", () => {
   const card = mkCard("PENALTY", {
     base_rate: "1% on all spend",
     categories: [{ category: "fuel_utilities", rate: "0.25%" }],
@@ -113,7 +113,7 @@ describe("penalty bucket — spend below the base rate cannot escape to the base
  * Case 2 — the same rule for an EXPLICIT catch-all (`all_other_spend`), not just
  * the virtual base-rate option. Same numbers as case 1.
  */
-describe("penalty bucket — an explicit all_other_spend catch-all is narrowed too", () => {
+describe("penalty bucket - an explicit all_other_spend catch-all is narrowed too", () => {
   const card = mkCard("EXPLICIT", {
     base_rate: "0% on all spend",
     categories: [
@@ -139,7 +139,7 @@ describe("penalty bucket — an explicit all_other_spend catch-all is narrowed t
  *   1,000 fills the 10% cap (100/mo); the other 1,000 earns base 1% (10/mo).
  *   total 110/mo = AED 1,320/yr.
  */
-describe("penalty bucket — over-cap spend on a real bonus still reaches the base rate", () => {
+describe("penalty bucket - over-cap spend on a real bonus still reaches the base rate", () => {
   const card = mkCard("BONUS", {
     base_rate: "1% on all spend",
     categories: [{ category: "groceries", rate: "10%", monthly_cap: 100 }],
@@ -162,7 +162,7 @@ describe("penalty bucket — over-cap spend on a real bonus still reaches the ba
  *   utilities -> 0.25% (only ever named suppressed)       =  2.5/mo
  *   total 32.5/mo = AED 390/yr.
  */
-describe("penalty bucket — only categories suppressed EVERYWHERE are locked down", () => {
+describe("penalty bucket - only categories suppressed EVERYWHERE are locked down", () => {
   const card = mkCard("MIXED", {
     base_rate: "1% on all spend",
     categories: [
@@ -194,7 +194,7 @@ describe("penalty bucket — only categories suppressed EVERYWHERE are locked do
  *   total 586.5/mo = AED 7,038/yr  (overall cap 1,250/mo does not bind)
  * The old answer paid the 1,800 of suppressed spend at 1%: AED 7,200/yr.
  */
-describe("penalty bucket — real card: rakbank_world honours its 0.25% bucket", () => {
+describe("penalty bucket - real card: rakbank_world honours its 0.25% bucket", () => {
   const profile: SpendingProfile = {
     groceries: 2200, dining: 1800, fuel: 700, utilities: 700, education: 0,
     travel: 1500, transport: 400, entertainment: 900, international: 900, other: 1400,
@@ -219,7 +219,7 @@ describe("penalty bucket — real card: rakbank_world honours its 0.25% bucket",
  * category that all of its own reward categories suppress below that base rate.
  * Written as a sweep so a future data edit that reintroduces the shape is caught.
  */
-describe("penalty bucket — dataset-wide invariant", () => {
+describe("penalty bucket - dataset-wide invariant", () => {
   const profile: SpendingProfile = {
     groceries: 2000, dining: 1500, fuel: 1000, utilities: 900, education: 2000,
     travel: 1200, transport: 500, entertainment: 700, international: 800, other: 1200,

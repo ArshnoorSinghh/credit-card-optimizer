@@ -106,7 +106,7 @@ describe("statement validation", () => {
 
     if (!isReal) {
       out.push(
-        "\n  NO data/statements.local.json FOUND — running on the EXAMPLE file.",
+        "\n  NO data/statements.local.json FOUND - running on the EXAMPLE file.",
         "  These numbers validate NOTHING. Copy statements.example.json to",
         "  statements.local.json and fill it in from real statements.\n",
       );
@@ -124,7 +124,7 @@ describe("statement validation", () => {
 
     out.push("\n═══ STATEMENT VALIDATION ═══════════════════════════════════════");
     for (const c of checks) {
-      out.push(`\n  ${c.cardName} — ${c.cycle}`);
+      out.push(`\n  ${c.cardName} - ${c.cycle}`);
       out.push(
         `    spend mapped AED ${Math.round(c.mappedSpendAed)}` +
           (c.unmappedSpendAed > 0

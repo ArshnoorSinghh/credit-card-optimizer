@@ -71,7 +71,7 @@ function mkCard(id: string, caveat?: string, rate = "5%"): Card {
   };
 }
 
-describe("publishability — do-not-publish cards are never recommended", () => {
+describe("publishability - do-not-publish cards are never recommended", () => {
   it("drops the caveated card even when it is comfortably the best", () => {
     const cards = [
       mkCard("LOUD", "DO NOT PUBLISH pending verification of the cap schedule.", "20%"),
@@ -127,7 +127,7 @@ describe("publishability — do-not-publish cards are never recommended", () => 
   });
 });
 
-describe("publishability — real dataset", () => {
+describe("publishability - real dataset", () => {
   it("has do-not-publish cards to exclude (guards the test's own premise)", () => {
     expect(realCards.filter(isDoNotPublish).length).toBeGreaterThan(0);
   });
@@ -155,7 +155,7 @@ describe("publishability — real dataset", () => {
   });
 });
 
-describe("publishability — which-card never suggests acquiring a caveated card", () => {
+describe("publishability - which-card never suggests acquiring a caveated card", () => {
   const owned = realCards.filter((c) => c.id === "hsbc_live_plus");
 
   it("excludes do-not-publish cards from the unowned suggestion", () => {

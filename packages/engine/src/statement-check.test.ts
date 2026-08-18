@@ -26,7 +26,7 @@ function stmt(over: Partial<Statement> = {}): Statement {
   };
 }
 
-describe("checkStatement — building the profile from real lines", () => {
+describe("checkStatement - building the profile from real lines", () => {
   it("sums mapped lines into a spend profile", () => {
     const c = checkStatement(byId("fab_cashback"), stmt());
     expect(c.profile).toEqual({ groceries: 2000, travel: 2000 });
@@ -77,7 +77,7 @@ describe("checkStatement — building the profile from real lines", () => {
   });
 });
 
-describe("checkStatement — the single-cycle approximation", () => {
+describe("checkStatement - the single-cycle approximation", () => {
   it("predicts ONE cycle, not a year", () => {
     /*
       scoreCard is months-in / years-out. This cycle earns AED 120, not AED 1,440.
@@ -103,7 +103,7 @@ describe("checkStatement — the single-cycle approximation", () => {
     const annualCapped = realCards.find((card) =>
       card.rewards.categories.some((x) => x.annual_cap !== null),
     );
-    if (!annualCapped) throw new Error("dataset has no annual-capped card — update this test");
+    if (!annualCapped) throw new Error("dataset has no annual-capped card - update this test");
     const cat = annualCapped.rewards.categories.find((x) => x.annual_cap !== null)!;
     // Enough spend to bind the annual cap within one cycle.
     const c = checkStatement(annualCapped, {
@@ -119,7 +119,7 @@ describe("checkStatement — the single-cycle approximation", () => {
   });
 });
 
-describe("checkStatement — range containment is the headline", () => {
+describe("checkStatement - range containment is the headline", () => {
   it("reports containment when the bank's figure falls inside the range", () => {
     const c = checkStatement(
       byId("fab_cashback"),
@@ -157,7 +157,7 @@ describe("checkStatement — range containment is the headline", () => {
   });
 });
 
-describe("checkStatement — units vs AED", () => {
+describe("checkStatement - units vs AED", () => {
   it("says so when only AED was available, because that tests two models at once", () => {
     /*
       An AED gap cannot distinguish "the rate is wrong" from "the point valuation is

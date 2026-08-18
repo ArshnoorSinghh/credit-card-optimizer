@@ -33,7 +33,7 @@ export interface ShareBucket {
 }
 
 export const SHARE_BUCKETS: ShareBucket[] = [
-  { id: "never", label: "Never", value: 0, hint: "0% — the bonus is worth nothing to you" },
+  { id: "never", label: "Never", value: 0, hint: "0% - the bonus is worth nothing to you" },
   { id: "sometimes", label: "Sometimes", value: 0.15, hint: "about 15% of that spend" },
   { id: "often", label: "Often", value: 0.35, hint: "about 35% of that spend" },
   { id: "mostly", label: "Mostly there", value: 0.6, hint: "about 60% of that spend" },

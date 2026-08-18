@@ -37,7 +37,7 @@ export type ValuationTable = Record<string, ValuationEntry>;
 // "AED" stays at face value.
 export const DEFAULT_VALUATIONS: ValuationTable = {
   // Cashback — face value by definition.
-  AED: { aedPerUnit: 1.0, confidence: "high", note: "Cashback — face value by definition" },
+  AED: { aedPerUnit: 1.0, confidence: "high", note: "Cashback - face value by definition" },
 
   // Airline miles — deep, liquid programs; firm data. 0.037 = economy-flight value
   // from the 2026-07 redemption research (Skywards economy Saver NOT devalued;
@@ -58,7 +58,7 @@ export const DEFAULT_VALUATIONS: ValuationTable = {
   "Plus Points": { aedPerUnit: 0.01, confidence: "low", note: "HELD at 0.01 pending earn-rate + per-point verification (research suggests ~0.75; would imply implausible >75% return on the Emirates NBD Visa Flexi)" },
   // ADCB TouchPoints: primary = in-store instant redemption 0.005 (research 2026-07);
   // NO card-bill route exists. // was 0.01.
-  "TouchPoints (convertible to miles)": { aedPerUnit: 0.005, confidence: "high", note: "ADCB TouchPoints — in-store instant redemption (research 2026-07)" },
+  "TouchPoints (convertible to miles)": { aedPerUnit: 0.005, confidence: "high", note: "ADCB TouchPoints - in-store instant redemption (research 2026-07)" },
   "Marriott Bonvoy Points": { aedPerUnit: 0.028, confidence: "medium", note: "hotel-night value (research 2026-07)" }, // was 0.03
 
   /*
@@ -119,7 +119,7 @@ export const DEFAULT_VALUATIONS: ValuationTable = {
   "AED (Booking.com credit)": {
     aedPerUnit: 0.85,
     confidence: "low",
-    note: "card data conflicts with issuer's current published structure — this currency may not exist; full card re-verification required (ADIB Booking.com Signature).",
+    note: "card data conflicts with issuer's current published structure - this currency may not exist; full card re-verification required (ADIB Booking.com Signature).",
   },
 
   // RAKBANK cashback: face value like any cashback, but it EXPIRES 15 months after
@@ -134,7 +134,7 @@ export const DEFAULT_VALUATIONS: ValuationTable = {
   "AED (RAKBANK cashback)": {
     aedPerUnit: 1.0,
     confidence: "high",
-    note: "Cashback — face value; expires 15 months after earning (see expiry-policy.ts)",
+    note: "Cashback - face value; expires 15 months after earning (see expiry-policy.ts)",
   },
 
   // Nol fare credit: transit fares are paid from Nol balance at face, so 1 unit
@@ -159,7 +159,7 @@ export const DEFAULT_VALUATIONS: ValuationTable = {
   "Multiple programs (customizable)": {
     aedPerUnit: 0.0075,
     confidence: "low",
-    note: "NOT researched — currency is user-customizable; genuinely unknown. Needs valuation.",
+    note: "NOT researched - currency is user-customizable; genuinely unknown. Needs valuation.",
   },
 
   // ── 2026-07 dataset: currency labels renamed + new programs added ──────────────
@@ -208,7 +208,7 @@ export const DEFAULT_VALUATIONS: ValuationTable = {
     confidence: "medium",
     note: "issuer-stated 100 Rewards Points = AED 1 via Purchase with Rewards (sc.com/ae, 2026-08-08)",
   },
-  "AirRewards": { aedPerUnit: 0.0075, confidence: "low", note: "NOT researched — new program (Air Arabia AirRewards). Placeholder." },
+  "AirRewards": { aedPerUnit: 0.0075, confidence: "low", note: "NOT researched - new program (Air Arabia AirRewards). Placeholder." },
   // Emirates Islamic states the transfer rate outright: 1 Amazon Reward Point =
   // AED 1, spent on Amazon.ae at face value. // was an 0.0075 placeholder — 133x
   // too low, though the AED result was unaffected because every rate on the card
@@ -220,7 +220,7 @@ export const DEFAULT_VALUATIONS: ValuationTable = {
   },
   // EI SmartMiles are quoted per-AED (unit counts matter), so the value bites
   // directly. Researched 2026-07 to 0.010 AED/mile (was a 0.0075 placeholder).
-  "EI SmartMiles": { aedPerUnit: 0.01, confidence: "medium", note: "Emirates Islamic SmartMiles — researched 2026-07 (was 0.0075 placeholder)" },
+  "EI SmartMiles": { aedPerUnit: 0.01, confidence: "medium", note: "Emirates Islamic SmartMiles - researched 2026-07 (was 0.0075 placeholder)" },
   // Cashback-type currencies redeemed as statement credit / store credit at face value.
   "Cashback Points": { aedPerUnit: 1.0, confidence: "medium", note: "cashback redeemed as statement credit at face value" },
   "talabat credit": { aedPerUnit: 1.0, confidence: "medium", note: "talabat store credit, spent 1:1 at face value" },
@@ -251,6 +251,6 @@ export function resolveValuation(currency: string, table: ValuationTable = DEFAU
   return {
     aedPerUnit: 0,
     confidence: "low",
-    note: `No valuation for "${currency}" — treated as 0 AED/unit, needs an entry`,
+    note: `No valuation for "${currency}" - treated as 0 AED/unit, needs an entry`,
   };
 }

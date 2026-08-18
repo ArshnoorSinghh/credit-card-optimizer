@@ -8,8 +8,8 @@ import { parseBlocks, parseInline } from "./markdown";
  */
 describe("parseBlocks", () => {
   it("keeps a plain sentence as one paragraph", () => {
-    expect(parseBlocks("ADCB 365 comes out ahead — about AED 181/year more.")).toEqual([
-      { kind: "p", lines: ["ADCB 365 comes out ahead — about AED 181/year more."] },
+    expect(parseBlocks("ADCB 365 comes out ahead - about AED 181/year more.")).toEqual([
+      { kind: "p", lines: ["ADCB 365 comes out ahead - about AED 181/year more."] },
     ]);
   });
 

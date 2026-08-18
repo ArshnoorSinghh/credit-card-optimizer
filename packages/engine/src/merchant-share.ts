@@ -124,7 +124,7 @@ export function sanitizeMerchantShares(input: MerchantShares | undefined): {
       issues.push({
         merchant,
         value,
-        reason: "outside 0..1 — a share is a fraction, not a percentage",
+        reason: "outside 0..1 - a share is a fraction, not a percentage",
       });
       continue;
     }

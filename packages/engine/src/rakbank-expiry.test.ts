@@ -24,7 +24,7 @@ import { REDEMPTION_VALUATIONS } from "./redemption-valuations";
 const realCards = cardsData as Card[];
 const RAKBANK_CASHBACK = "AED (RAKBANK cashback)";
 
-describe("RAKBANK cashback — its own currency, so the expiry can be scoped", () => {
+describe("RAKBANK cashback - its own currency, so the expiry can be scoped", () => {
   it("labels the three RAKBANK cashback cards with the scoped currency", () => {
     const ids = realCards
       .filter((c) => c.rewards.currency === RAKBANK_CASHBACK)
@@ -33,7 +33,7 @@ describe("RAKBANK cashback — its own currency, so the expiry can be scoped", (
     expect(ids).toEqual(["rakbank_red", "rakbank_titanium", "rakbank_world"]);
   });
 
-  it("values it at face, exactly like plain cashback — no expiry haircut", () => {
+  it("values it at face, exactly like plain cashback - no expiry haircut", () => {
     const entry = DEFAULT_VALUATIONS[RAKBANK_CASHBACK]!;
     expect(entry.aedPerUnit).toBe(1.0);
     expect(entry.aedPerUnit).toBe(DEFAULT_VALUATIONS["AED"]!.aedPerUnit);
@@ -46,7 +46,7 @@ describe("RAKBANK cashback — its own currency, so the expiry can be scoped", (
   });
 });
 
-describe("Engine 1 — flags the expiry as a fact, without pricing it", () => {
+describe("Engine 1 - flags the expiry as a fact, without pricing it", () => {
   const card = realCards.find((c) => c.id === "rakbank_world")!;
   const spending = { groceries: 3000, dining: 2000 };
   const score = scoreCard(spending, card);
@@ -58,7 +58,7 @@ describe("Engine 1 — flags the expiry as a fact, without pricing it", () => {
     expect(flag!.message).toContain("after being earned");
   });
 
-  it("does NOT mark the score uncertain — the term is certain, only the value's timing isn't", () => {
+  it("does NOT mark the score uncertain - the term is certain, only the value's timing isn't", () => {
     const expiryFlag = score.flags.find((f) => /expire/i.test(f.message))!;
     expect(expiryFlag.level).toBe("low"); // advisory, not an "unknown"
   });
@@ -85,7 +85,7 @@ describe("Engine 1 — flags the expiry as a fact, without pricing it", () => {
   });
 });
 
-describe("Engine 2 — projects the real date and ranks urgency", () => {
+describe("Engine 2 - projects the real date and ranks urgency", () => {
   it("projects expiry 15 months from the earned date", () => {
     // Earned 2026-01-15 -> expires 2027-04-15. As of 2026-07-23 that is >180 days
     // out, so it is not yet urgent.
@@ -119,7 +119,7 @@ describe("Engine 2 — projects the real date and ranks urgency", () => {
     expect(plan.items[0]!.flags.join(" ")).toMatch(/not user-confirmed/);
   });
 
-  it("stays honest when the balance has no earned date — no invented urgency", () => {
+  it("stays honest when the balance has no earned date - no invented urgency", () => {
     const plan = burnPriority([{ currency: RAKBANK_CASHBACK, balance: 500 }], "2026-07-23");
     expect(plan.items[0]!.urgency).toBe("unknown");
     expect(plan.items[0]!.expiryDate).toBeUndefined();
@@ -143,7 +143,7 @@ describe("expiry policy table", () => {
     expect(entry.basis).toBe("from_earning");
   });
 
-  it("has no entry for generic AED — that would hit every cashback card", () => {
+  it("has no entry for generic AED - that would hit every cashback card", () => {
     expect(PROGRAM_EXPIRY_DEFAULTS.some((e) => e.currency === "AED")).toBe(false);
   });
 });

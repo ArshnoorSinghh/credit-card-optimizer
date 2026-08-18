@@ -133,7 +133,7 @@ const emiratesCard = makeCard({
   },
 });
 
-describe("askWhichCard — merchant vs category: equal EXCEPT merchant-locked bonuses", () => {
+describe("askWhichCard - merchant vs category: equal EXCEPT merchant-locked bonuses", () => {
   // The honest rule. Naming a merchant is strictly MORE information than naming a
   // category, and the extra information is the merchant locks: a category can't say
   // where you shopped, a merchant can. Everywhere no lock is involved, they agree.
@@ -220,7 +220,7 @@ describe("askWhichCard — merchant vs category: equal EXCEPT merchant-locked bo
   });
 });
 
-describe("askWhichCard — how the input was resolved", () => {
+describe("askWhichCard - how the input was resolved", () => {
   it("records whether it came from a merchant or a category, without changing the outcome", () => {
     const base = { monthlySpend: SPEND, userCards: [grocerHero, flatTwo], includeUnowned: false };
     const m = askWhichCard({ ...base, merchantOrCategory: "Carrefour" });
@@ -234,7 +234,7 @@ describe("askWhichCard — how the input was resolved", () => {
   });
 });
 
-describe("askWhichCard — picking the winner", () => {
+describe("askWhichCard - picking the winner", () => {
   it("picks the clear bonus winner", () => {
     const r = askWhichCard({
       merchantOrCategory: "groceries",
@@ -265,7 +265,7 @@ describe("askWhichCard — picking the winner", () => {
     expect(r.bestOwnedCard?.viaCardCategory).toBe("base_rate");
   });
 
-  it("ranks on EARNINGS, not net-of-fee — the fee on a card you hold is sunk", () => {
+  it("ranks on EARNINGS, not net-of-fee - the fee on a card you hold is sunk", () => {
     // premiumGrocer earns the same 1800/yr but costs 4200/yr, so it is net-NEGATIVE
     // and optimizePortfolio would never hold it. For "which card do I swipe", it is
     // still the right answer: the fee is already paid either way.
@@ -302,7 +302,7 @@ describe("askWhichCard — picking the winner", () => {
   });
 });
 
-describe("askWhichCard — reuses the scorer's cap logic rather than reimplementing it", () => {
+describe("askWhichCard - reuses the scorer's cap logic rather than reimplementing it", () => {
   it("applies the monthly cap and reroutes the overflow to the base rate", () => {
     // 5% of 3000 = 150/mo, capped to 100/mo -> 1200/yr. The productive 2000/mo is
     // capped out, so the remaining 1000/mo earns the 1% base = 10/mo -> 120/yr.
@@ -328,7 +328,7 @@ describe("askWhichCard — reuses the scorer's cap logic rather than reimplement
   });
 });
 
-describe("askWhichCard — multi-category merchants", () => {
+describe("askWhichCard - multi-category merchants", () => {
   it("answers for the primary category and surfaces the ambiguity instead of guessing", () => {
     const r = askWhichCard({
       merchantOrCategory: "Talabat",
@@ -358,7 +358,7 @@ describe("askWhichCard — multi-category merchants", () => {
   });
 });
 
-describe("askWhichCard — no cards, and nothing that earns", () => {
+describe("askWhichCard - no cards, and nothing that earns", () => {
   it("handles owning zero cards without crashing", () => {
     const r = askWhichCard({
       merchantOrCategory: "groceries",
@@ -395,7 +395,7 @@ describe("askWhichCard — no cards, and nothing that earns", () => {
   });
 });
 
-describe("askWhichCard — unrecognized input", () => {
+describe("askWhichCard - unrecognized input", () => {
   it("returns a structured prompt, not a crash or a guess", () => {
     const r = askWhichCard({
       merchantOrCategory: "Whole Foods",
@@ -422,7 +422,7 @@ describe("askWhichCard — unrecognized input", () => {
   });
 });
 
-describe("askWhichCard — the unowned-card upsell", () => {
+describe("askWhichCard - the unowned-card upsell", () => {
   const allCards = [flatTwo, grocerHero, premiumGrocer];
 
   it("surfaces a better unowned card with the correct positive delta", () => {

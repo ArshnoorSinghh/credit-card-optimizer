@@ -216,7 +216,7 @@ function expiryEvent(item: BurnItem, asOf: string): DeadlineEvent | null {
     // Straight from burnPriority — the AED it already computed for this holding.
     valueAtRiskAed: item.valueAtRiskAed,
     action: past
-      ? "Check your balance — these may already be gone."
+      ? "Check your balance - these may already be gone."
       : "Redeem or transfer before this date.",
     // burnPriority's own flags travel with the event, including the "estimated from
     // program policy, not user-confirmed" text. Restating them here in the calendar's
@@ -233,7 +233,7 @@ function expiryUndated(item: BurnItem): UndatedDeadline {
     // policy but not your dates" from "we don't know this program's policy at all",
     // and that distinction is exactly what the user needs to hear.
     reason:
-      item.flags[0] ?? "expiry unknown — no explicit date and no known program default",
+      item.flags[0] ?? "expiry unknown - no explicit date and no known program default",
     prompt: `When do your ${item.currency} expire, or when did you earn them?`,
   };
 }
@@ -290,7 +290,7 @@ function renewalEvent(
   if (!held.openedOn) {
     return {
       kind: "fee_renewal",
-      title: `${held.card.name} — AED ${aed(fees.ongoingFeeAed)} a year`,
+      title: `${held.card.name} - AED ${aed(fees.ongoingFeeAed)} a year`,
       reason: "We don't know when this card renews.",
       prompt: `When did you open your ${held.card.name}?`,
     };
@@ -325,7 +325,7 @@ function renewalEvent(
     action = `Review: earns ${earns} a year on your spending, costs AED ${aed(fees.ongoingFeeAed)}.`;
     if (score.uncertain) {
       flags.push(
-        "earning is a range because this card carries an unconfirmed rate or merchant assumption — see the card's own flags",
+        "earning is a range because this card carries an unconfirmed rate or merchant assumption - see the card's own flags",
       );
     }
   }
@@ -406,7 +406,7 @@ export function deadlineCalendar(
   */
   if (devaluations === DEVALUATIONS && devaluationReviewIsStale(asOf)) {
     flags.push(
-      `devaluation table last reviewed ${devaluationReviewAgeMonths(asOf)} months ago — "no upcoming devaluations" is not trustworthy until it is swept again`,
+      `devaluation table last reviewed ${devaluationReviewAgeMonths(asOf)} months ago - "no upcoming devaluations" is not trustworthy until it is swept again`,
     );
   }
 

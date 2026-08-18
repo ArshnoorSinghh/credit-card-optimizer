@@ -6,7 +6,7 @@ import { normalizeRate, rateTier, type NormalizedRate } from "./normalize-rate";
 // surface the sweep uses so this stays type-clean without pulling in @types/node.
 declare const console: { log(...args: unknown[]): void };
 
-describe("normalizeRate — tier 1 (clean, high confidence)", () => {
+describe("normalizeRate - tier 1 (clean, high confidence)", () => {
   it("parses percent cashback", () => {
     expect(normalizeRate("5%")).toMatchObject({
       value: 0.05,
@@ -60,7 +60,7 @@ describe("normalizeRate — tier 1 (clean, high confidence)", () => {
 
 });
 
-describe("normalizeRate — 'up to X%' is a ceiling, capped or not", () => {
+describe("normalizeRate - 'up to X%' is a ceiling, capped or not", () => {
   /*
     This pair used to assert opposite things: a CAPPED "up to X%" was tier 1 at X,
     an UNCAPPED one was tier 3 bounded 0..X. The fork was removed — see the long
@@ -89,7 +89,7 @@ describe("normalizeRate — 'up to X%' is a ceiling, capped or not", () => {
   });
 });
 
-describe("normalizeRate — naming the reward currency is not a condition", () => {
+describe("normalizeRate - naming the reward currency is not a condition", () => {
   /*
     "6.25% back in UPoints" is exactly as certain as "6.25%": the trailing text
     names the currency, which rewards.currency already carries and valuations.ts
@@ -131,7 +131,7 @@ describe("normalizeRate — naming the reward currency is not a condition", () =
   });
 });
 
-describe("normalizeRate — tier 2 (parses but condition missing, low confidence)", () => {
+describe("normalizeRate - tier 2 (parses but condition missing, low confidence)", () => {
   it("flags a merchant-scoped base rate", () => {
     const r = normalizeRate("10% on Emaar purchases");
     expect(r).toMatchObject({ value: 0.1, unit: "percent", confidence: "low" });
@@ -171,7 +171,7 @@ describe("normalizeRate — tier 2 (parses but condition missing, low confidence
   });
 });
 
-describe("normalizeRate — tier 3 (unresolvable, unknown confidence)", () => {
+describe("normalizeRate - tier 3 (unresolvable, unknown confidence)", () => {
   it("bounds 'up to X%' as 0..X when no cap models it", () => {
     const r = normalizeRate("Up to 5%"); // no context => no cap
     expect(r).toMatchObject({
@@ -227,7 +227,7 @@ describe("normalizeRate — tier 3 (unresolvable, unknown confidence)", () => {
  * review. The assertions lock in today's counts so a regression (or a new card
  * with a novel string) shows up as a failed test, not a silent reclassification.
  */
-describe("normalizeRate — cards.json sweep", () => {
+describe("normalizeRate - cards.json sweep", () => {
   interface Row {
     tier: 1 | 2 | 3;
     rate: NormalizedRate;

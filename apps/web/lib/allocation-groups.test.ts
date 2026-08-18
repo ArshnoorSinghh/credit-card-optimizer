@@ -77,7 +77,7 @@ describe("groupAllocationsByCategory", () => {
  * A takes 1000/mo at 10% (cap 100 AED/mo, → 1200/yr), B takes the 500 overflow at
  * 5% (→ 300/yr).
  */
-describe("groupAllocationsByCategory — against real engine output", () => {
+describe("groupAllocationsByCategory - against real engine output", () => {
   function mkCard(id: string, category: { category: string; rate: string; monthly_cap?: number }): Card {
     return {
       id,

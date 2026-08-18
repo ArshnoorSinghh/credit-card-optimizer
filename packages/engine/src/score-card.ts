@@ -253,10 +253,10 @@ const MATCH_TABLE: Record<string, MatchRule> = {
   // per-category profile cannot express. Scoring them would require inventing a
   // realization assumption, so we flag them instead. review: revisit if the product
   // decides to model threshold bonuses.
-  monthly_spend_bonus: { kind: "unmatched", reason: "Threshold lump bonus (reach AED X/mo) — not modeled from a steady profile" },
-  quarterly_spend_bonus: { kind: "unmatched", reason: "Threshold lump bonus (cumulative quarter) — not modeled from a steady profile" },
-  optional_miles_accelerator: { kind: "unmatched", reason: "Opt-in paid accelerator — depends on an unmodeled enrollment choice" },
-  weekend_spend: { kind: "unmatched", reason: "Time-of-week bonus — a category profile can't say which spend fell on a weekend" },
+  monthly_spend_bonus: { kind: "unmatched", reason: "Threshold lump bonus (reach AED X/mo) - not modeled from a steady profile" },
+  quarterly_spend_bonus: { kind: "unmatched", reason: "Threshold lump bonus (cumulative quarter) - not modeled from a steady profile" },
+  optional_miles_accelerator: { kind: "unmatched", reason: "Opt-in paid accelerator - depends on an unmodeled enrollment choice" },
+  weekend_spend: { kind: "unmatched", reason: "Time-of-week bonus - a category profile can't say which spend fell on a weekend" },
 };
 
 /**
@@ -460,7 +460,7 @@ export function buildEarnOptions(card: Card): { options: EarnOption[]; flags: Sc
   const options: EarnOption[] = card.rewards.categories.map((cat: RewardCategory) => {
     const rule = MATCH_TABLE[cat.category] ?? {
       kind: "unmatched" as const,
-      reason: `Unknown category "${label(cat.category)}" — not scored`,
+      reason: `Unknown category "${label(cat.category)}" - not scored`,
     };
     if (!MATCH_TABLE[cat.category]) {
       flags.push({ level: "unknown", message: `Unrecognized reward category "${label(cat.category)}"` });
@@ -746,7 +746,7 @@ function applyExcludedSpend(
     if (!canonical) {
       flags.push({
         level: "unknown",
-        message: `Unknown excluded spend category "${label(e.category)}" on ${card.name} — exclusion NOT applied`,
+        message: `Unknown excluded spend category "${label(e.category)}" on ${card.name} - exclusion NOT applied`,
       });
       continue;
     }
@@ -843,7 +843,7 @@ function applySuppressedCategoryLock(
     flags: [
       {
         level: "low",
-        message: `${suppressed.map(label).join(", ")} earn ${card.name}'s reduced rate, not its base rate — that spend cannot fall back to the base`,
+        message: `${suppressed.map(label).join(", ")} earn ${card.name}'s reduced rate, not its base rate - that spend cannot fall back to the base`,
       },
     ],
   };
@@ -1469,7 +1469,7 @@ function annotateGateFlags(
             level: "low",
             message:
               `This card receives AED ${allocated[i]!.toFixed(0)}/mo of your spend, below its ` +
-              `AED ${g.threshold}/mo minimum spend — ${
+              `AED ${g.threshold}/mo minimum spend - ${
                 forfeits
                   ? "it FORFEITS all rewards for the cycle, earning nothing"
                   : "bonus rates disabled, earns the base rate only"
@@ -1617,7 +1617,7 @@ export function scoreCard(
       flags: [
         {
           level: "unknown",
-          message: `Excluded from scoring — pending data verification${card.notes ? ` (${card.notes})` : ""}`,
+          message: `Excluded from scoring - pending data verification${card.notes ? ` (${card.notes})` : ""}`,
         },
       ],
       uncertain: true,
@@ -1659,7 +1659,7 @@ export function scoreCard(
       uncertain = true;
       flags.push({
         level: "unknown",
-        message: `Unresolved rate on ${on} ("${rate.raw}") — scored as a range`,
+        message: `Unresolved rate on ${on} ("${rate.raw}") - scored as a range`,
       });
     } else if (rate.confidence === "low") {
       uncertain = true;
@@ -1668,7 +1668,7 @@ export function scoreCard(
     if (o.earning.unbounded) {
       flags.push({
         level: "unknown",
-        message: `${on} has an unbounded variable rate — upside not scored`,
+        message: `${on} has an unbounded variable rate - upside not scored`,
       });
     }
     if (o.capBound) {
@@ -1676,7 +1676,7 @@ export function scoreCard(
       // dropped — it earns the card's base rate (the unified reroute rule).
       flags.push({
         level: "low",
-        message: `${o.capBound} cap reached on ${on} — over-cap spend earns the base rate`,
+        message: `${o.capBound} cap reached on ${on} - over-cap spend earns the base rate`,
       });
     }
     /*
@@ -1776,7 +1776,7 @@ export function scoreCard(
     const capAed = overallCapAnnualAed(card, valuation.aedPerUnit)!;
     flags.push({
       level: "low",
-      message: `Overall reward cap reached — total earnings capped at AED ${(capAed / 12).toFixed(0)}/mo (AED ${capAed.toFixed(0)}/yr); the per-category lines above are before this cap`,
+      message: `Overall reward cap reached - total earnings capped at AED ${(capAed / 12).toFixed(0)}/mo (AED ${capAed.toFixed(0)}/yr); the per-category lines above are before this cap`,
     });
   }
 
@@ -1808,7 +1808,7 @@ export function scoreCard(
       level: "low",
       message: `Rewards expire ${expiry.months} months ${
         expiry.basis === "from_earning" ? "after being earned" : "after your last account activity"
-      } — redeem within that window or the value is lost (${expiry.note})`,
+      } - redeem within that window or the value is lost (${expiry.note})`,
     });
   }
 
@@ -1837,7 +1837,7 @@ export function scoreCard(
     uncertain = true;
     flags.push({
       level: "unknown",
-      message: `Implausible — net annual value (${netAnnualValue.toFixed(0)} AED) exceeds total annual spend (${totalAnnualSpendAed.toFixed(0)} AED); check earn rate/valuation`,
+      message: `Implausible - net annual value (${netAnnualValue.toFixed(0)} AED) exceeds total annual spend (${totalAnnualSpendAed.toFixed(0)} AED); check earn rate/valuation`,
     });
   }
 

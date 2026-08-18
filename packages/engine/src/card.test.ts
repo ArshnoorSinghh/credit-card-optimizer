@@ -99,7 +99,7 @@ describe("cards.json conforms to the Card type", () => {
         seen.add(cat.category);
       }
     }
-    expect(duplicates, "duplicated reward categories (see D19e — likely a bad merge)").toEqual([]);
+    expect(duplicates, "duplicated reward categories (see D19e - likely a bad merge)").toEqual([]);
   });
 
   // Runtime half of the type check: verify the one field the compiler couldn't.

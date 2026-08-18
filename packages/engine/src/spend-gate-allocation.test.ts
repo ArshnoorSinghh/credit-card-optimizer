@@ -99,7 +99,7 @@ function mkCard(
  *
  * So the single card genuinely beats the pair — and the optimizer must say so.
  */
-describe("spend gate — judged on allocated spend, not total profile spend", () => {
+describe("spend gate - judged on allocated spend, not total profile spend", () => {
   const cards = [
     mkCard("GATED", {
       categories: [{ category: "groceries", rate: "10%" }],
@@ -111,7 +111,7 @@ describe("spend gate — judged on allocated spend, not total profile spend", ()
   const spending: SpendingProfile = { groceries: 1500, dining: 1000 };
   const result = optimizePortfolio(spending, OPEN, cards);
 
-  it("scores the lone gated card with its bonus ON — it really does see all the spend", () => {
+  it("scores the lone gated card with its bonus ON - it really does see all the spend", () => {
     expect(result.best1?.cardIds).toEqual(["GATED"]);
     expect(result.best1?.grossAnnualValue).toEqual({ min: 1920, max: 1920 });
   });
@@ -142,7 +142,7 @@ describe("spend gate — judged on allocated spend, not total profile spend", ()
  * has nowhere else to go (PLAIN's base is 0%), so only dining earns:
  *   dining 1,000 x 5% = 50/mo = AED 600/yr.
  */
-describe("spend gate — forfeit mode zeroes the card when the allocation starves it", () => {
+describe("spend gate - forfeit mode zeroes the card when the allocation starves it", () => {
   const cards = [
     mkCard("FORFEIT", {
       categories: [{ category: "groceries", rate: "10%" }],
@@ -168,7 +168,7 @@ describe("spend gate — forfeit mode zeroes the card when the allocation starve
  * GATED receives 2,000 >= 1,000, so its 10% stands:
  *   2,000 x 10% = 200/mo, dining 1,000 x 5% = 50/mo -> 250/mo = AED 3,000/yr.
  */
-describe("spend gate — a satisfied threshold still pays the bonus", () => {
+describe("spend gate - a satisfied threshold still pays the bonus", () => {
   const cards = [
     mkCard("GATED", {
       categories: [{ category: "groceries", rate: "10%" }],
@@ -191,7 +191,7 @@ describe("spend gate — a satisfied threshold still pays the bonus", () => {
  * that made the old shortcut defensible for `scoreCard`, `which-card` and
  * comparison views, none of which split spend.
  */
-describe("spend gate — single-card scoring is exact and unchanged", () => {
+describe("spend gate - single-card scoring is exact and unchanged", () => {
   const card = mkCard("SOLO", {
     categories: [{ category: "groceries", rate: "10%" }],
     base_rate: "1% on all spend",
@@ -217,7 +217,7 @@ describe("spend gate — single-card scoring is exact and unchanged", () => {
  * least its threshold. This is the invariant whose violation made the old
  * recommendations unachievable; it is checked across several archetypes.
  */
-describe("spend gate — real-data recommendations are self-consistent", () => {
+describe("spend gate - real-data recommendations are self-consistent", () => {
   const PROFILES: { name: string; salary: number; spend: SpendingProfile }[] = [
     { name: "early-career", salary: 12000,
       spend: { groceries: 900, dining: 700, fuel: 400, utilities: 350, travel: 200, transport: 250, entertainment: 250, international: 150, other: 500 } },

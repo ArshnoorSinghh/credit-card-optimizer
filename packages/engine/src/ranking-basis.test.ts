@@ -66,7 +66,7 @@ function mkCard(id: string, rate: string, fee = 0): Card {
  * Midpoint ranking prefers CEILING (360 > 240). Lower-bound ranking prefers
  * CERTAIN (240 > 0), which is the only one of the two we can stand behind.
  */
-describe("ranking basis — a demonstrable rate beats an unproven ceiling", () => {
+describe("ranking basis - a demonstrable rate beats an unproven ceiling", () => {
   const cards = [mkCard("CERTAIN", "2%"), mkCard("CEILING", "Up to 6%")];
   const result = optimizePortfolio({ groceries: 1000 }, OPEN, cards);
 
@@ -92,7 +92,7 @@ describe("ranking basis — a demonstrable rate beats an unproven ceiling", () =
  * A wider band must not win on upside alone. WIDE's midpoint (600) beats TIGHT's
  * certain 480, but its floor (0) does not.
  */
-describe("ranking basis — upside never outranks a demonstrable floor", () => {
+describe("ranking basis - upside never outranks a demonstrable floor", () => {
   const cards = [mkCard("TIGHT", "4%"), mkCard("WIDE", "Up to 10%")];
   const result = optimizePortfolio({ groceries: 1000 }, OPEN, cards);
 
@@ -114,7 +114,7 @@ describe("ranking basis — upside never outranks a demonstrable floor", () => {
  * basis, or "which card should I hold" and "which card should I swipe" disagree
  * about what a ceiling rate is worth.
  */
-describe("ranking basis — which-card ranks on the same floor", () => {
+describe("ranking basis - which-card ranks on the same floor", () => {
   it("recommends the certain card over the higher-midpoint ceiling card", () => {
     const cards = [mkCard("CERTAIN", "2%"), mkCard("CEILING", "Up to 6%")];
     const a = askWhichCard({

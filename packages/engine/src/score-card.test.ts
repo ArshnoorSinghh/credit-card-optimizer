@@ -37,7 +37,7 @@ const PROFILE: SpendingProfile = {
  *   Gross = 1,800 + 1,800 + 1,200 + 540 + 840 = 6,180. Fee 300, no waiver.
  *   (overall_cap 1000 AED/mo = 12,000/yr is NOT reached at 6,180/yr.)
  */
-describe("scoreCard — cashback with AED caps + min-spend gate (fab_cashback)", () => {
+describe("scoreCard - cashback with AED caps + min-spend gate (fab_cashback)", () => {
   const score = scoreCard(PROFILE, byId("fab_cashback"));
 
   it("reads the 150 cap as AED 150/mo (not 150 FAB Rewards) and binds it", () => {
@@ -75,7 +75,7 @@ describe("scoreCard — cashback with AED caps + min-spend gate (fab_cashback)",
  *   everything else 15000 -> base 0.75 mile/USD = 0.75*(15000/3.6725)*12 = 36759.700 miles/yr
  *   miles * 0.037: intl 181.3479 + base 1360.1089 = 1541.4568 gross.
  */
-describe("scoreCard — miles card with USD conversion (enbd_skywards_signature)", () => {
+describe("scoreCard - miles card with USD conversion (enbd_skywards_signature)", () => {
   const score = scoreCard(PROFILE, byId("enbd_skywards_signature"));
 
   it("uses the fixed USD peg", () => {
@@ -112,7 +112,7 @@ describe("scoreCard — miles card with USD conversion (enbd_skywards_signature)
  *   remaining 13500 -> base 1 pt/AED = 162000/yr -> 1134 AED
  *   Gross = 2394. Fee 0 (free for life). Net = 2394.
  */
-describe("scoreCard — free-for-life points card (fab_rewards_indulge)", () => {
+describe("scoreCard - free-for-life points card (fab_rewards_indulge)", () => {
   const score = scoreCard(PROFILE, byId("fab_rewards_indulge"));
 
   it("shows points earned per category before conversion", () => {
@@ -160,7 +160,7 @@ function synthCard(over: Partial<Card> & { rewards: Card["rewards"] }): Card {
   };
 }
 
-describe("scoreCard — cashback category caps are AED, not reward units", () => {
+describe("scoreCard - cashback category caps are AED, not reward units", () => {
   it("caps a 5% bonus at AED 150/mo even when the currency is valued below 1.0", () => {
     // Currency valued 0.01. A "150" cap must mean AED 150/mo (cap ÷ 0.01 = 15,000
     // units), NOT 150 units (= AED 1.50/mo). groceries 5,000 @ 5% = AED 250/mo,
@@ -184,7 +184,7 @@ describe("scoreCard — cashback category caps are AED, not reward units", () =>
   });
 });
 
-describe("scoreCard — overall_cap (card-level cap, applied before fees)", () => {
+describe("scoreCard - overall_cap (card-level cap, applied before fees)", () => {
   // Cashback card: base 10% on all spend, overall_cap AED 100/mo (= 1,200/yr).
   const cashbackCard = synthCard({
     rewards: {
@@ -233,7 +233,7 @@ describe("scoreCard — overall_cap (card-level cap, applied before fees)", () =
 });
 
 /** Range scoring: a card with an unresolved (tier-3) rate must produce a range. */
-describe("scoreCard — unresolved rate scores as a range", () => {
+describe("scoreCard - unresolved rate scores as a range", () => {
   it("does not fabricate a point value for an unbounded variable-rate card", () => {
     // The only real "Variable" card (ei_flex_elite) is now benched, so we exercise
     // the unbounded path with a synthetic card: groceries at "Variable" (tier 3, no
@@ -329,7 +329,7 @@ describe("scoreCard — unresolved rate scores as a range", () => {
  *                                              = 7,500 x 1.5% = 112.5/mo -> 1,350/yr
  *   gross = AED 1,758/yr; free for life, so net = 1,758.
  */
-describe("scoreCard — percent-quoted points card with suppressed categories (enbd_visa_flexi)", () => {
+describe("scoreCard - percent-quoted points card with suppressed categories (enbd_visa_flexi)", () => {
   const score = scoreCard(PROFILE, byId("enbd_visa_flexi"));
 
   it("pays the base rate only on spend the card does not suppress", () => {
@@ -379,7 +379,7 @@ describe("scoreCard — percent-quoted points card with suppressed categories (e
  * spend is a >100% return, which in this dataset always means a bad earn rate or
  * valuation — never a real card. It must be FLAGGED, not crashed, not dropped.
  */
-describe("scoreCard — implausibility guardrail", () => {
+describe("scoreCard - implausibility guardrail", () => {
   // why a synthetic card (2026-07): the real cards now quote most points bonuses as
   // PERCENTS, and a percent's AED value is invariant to the per-point valuation, so
   // the old "value the currency absurdly" trick no longer inflates the total. A
@@ -425,7 +425,7 @@ describe("scoreCard — implausibility guardrail", () => {
  * a synthetic card carrying `excluded_from_scoring` — the behaviour must still hold
  * for when a future card needs benching.
  */
-describe("scoreCard — benched card (synthetic excluded_from_scoring)", () => {
+describe("scoreCard - benched card (synthetic excluded_from_scoring)", () => {
   const benchedCard: Card = {
     id: "synthetic_benched",
     name: "Synthetic Benched",
@@ -439,7 +439,7 @@ describe("scoreCard — benched card (synthetic excluded_from_scoring)", () => {
     benefits: [],
     source_url: "",
     excluded_from_scoring: true,
-    notes: "synthetic — customizable structure can't be scored",
+    notes: "synthetic - customizable structure can't be scored",
   };
   const score = scoreCard(PROFILE, benchedCard);
 
@@ -449,7 +449,7 @@ describe("scoreCard — benched card (synthetic excluded_from_scoring)", () => {
     expect(score.grossAnnualValue).toEqual({ min: 0, max: 0 });
     expect(score.breakdown).toHaveLength(0);
     expect(score.uncertain).toBe(true);
-    expect(score.flags.some((f) => /Excluded from scoring — pending data verification/.test(f.message))).toBe(true);
+    expect(score.flags.some((f) => /Excluded from scoring - pending data verification/.test(f.message))).toBe(true);
   });
 
   it("leaves every real card scored normally (none benched in current data)", () => {
@@ -458,7 +458,7 @@ describe("scoreCard — benched card (synthetic excluded_from_scoring)", () => {
 });
 
 /** Every card must score without throwing (smoke test across all 51). */
-describe("scoreCard — runs on all cards", () => {
+describe("scoreCard - runs on all cards", () => {
   it("produces a finite ranking number for every card", () => {
     for (const card of cards) {
       const score = scoreCard(PROFILE, card);

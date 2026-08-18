@@ -62,7 +62,7 @@ beforeEach(() => {
   process.env.SUGGESTIONS_SMTP_PASS = "app-password";
 });
 
-describe("POST /api/suggestions — validation", () => {
+describe("POST /api/suggestions - validation", () => {
   it("rejects an unknown category", async () => {
     const res = await post({ ...VALID, category: "Nonsense" });
     expect(res.status).toBe(400);
@@ -94,14 +94,14 @@ describe("POST /api/suggestions — validation", () => {
   });
 });
 
-describe("POST /api/suggestions — who sent it", () => {
+describe("POST /api/suggestions - who sent it", () => {
   it("marks a signed-in sender as verified, from the session", async () => {
     getCurrentUserMock.mockResolvedValue({ id: "usr_1", email: "real@user.com" });
 
     await post(VALID);
 
     const { text, replyTo } = sentMail();
-    expect(text).toContain("real@user.com (signed in — verified)");
+    expect(text).toContain("real@user.com (signed in - verified)");
     expect(replyTo).toBe("real@user.com");
   });
 
@@ -109,9 +109,9 @@ describe("POST /api/suggestions — who sent it", () => {
     await post({ ...VALID, replyTo: "someone@example.com" });
 
     const { text, replyTo } = sentMail();
-    expect(text).toContain("someone@example.com (typed into the form — NOT verified)");
+    expect(text).toContain("someone@example.com (typed into the form - NOT verified)");
     // the label that would imply the session vouched for it must not appear
-    expect(text).not.toContain("signed in — verified");
+    expect(text).not.toContain("signed in - verified");
     expect(replyTo).toBe("someone@example.com");
   });
 
@@ -136,13 +136,13 @@ describe("POST /api/suggestions — who sent it", () => {
   it("tags the subject when nothing can be replied to", async () => {
     await post(VALID);
 
-    expect(sentMail().subject).toBe("Fils feedback [no reply] — General feedback");
+    expect(sentMail().subject).toBe("Fils feedback [no reply] - General feedback");
   });
 
   it("leaves the subject untagged when a typed address is present", async () => {
     await post({ ...VALID, replyTo: "someone@example.com" });
 
-    expect(sentMail().subject).toBe("Fils feedback — General feedback");
+    expect(sentMail().subject).toBe("Fils feedback - General feedback");
   });
 
   it("leaves the subject untagged for a signed-in sender", async () => {
@@ -162,7 +162,7 @@ describe("POST /api/suggestions — who sent it", () => {
   });
 });
 
-describe("POST /api/suggestions — abuse and failure", () => {
+describe("POST /api/suggestions - abuse and failure", () => {
   it("swallows a honeypot submission without sending", async () => {
     const res = await post({ ...VALID, website: "http://spam.example" });
     expect(res.status).toBe(200);

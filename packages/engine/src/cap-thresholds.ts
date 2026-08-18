@@ -212,7 +212,7 @@ export function capThresholds(
           cardCategory: option.cardCategory,
           reason:
             rule.merchant !== undefined
-              ? `The bonus pays only at ${rule.merchant} and nobody has said what share of this spend goes there, so the rate — and therefore the threshold — is a range, not a number.`
+              ? `The bonus pays only at ${rule.merchant} and nobody has said what share of this spend goes there, so the rate - and therefore the threshold - is a range, not a number.`
               : "This rate is a range rather than a fixed figure, so the spend it covers before the cap binds is a range too.",
         });
         return;

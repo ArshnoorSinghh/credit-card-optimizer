@@ -156,7 +156,7 @@ export default function CalendarPage() {
             What you lose by forgetting
           </h1>
           <p className="mt-3 max-w-xl text-muted">
-            Points that expire, programs that devalue, and annual fees that renew — on one
+            Points that expire, programs that devalue, and annual fees that renew - on one
             timeline, with what to do about each. Dates come from your own records or from
             published program policy. We never invent one.
           </p>
@@ -239,7 +239,7 @@ export default function CalendarPage() {
                     Nothing dated in the next 12 months.{" "}
                     {view.calendar.undated.length > 0 && (
                       <>
-                        That is not the same as nothing coming up — there{" "}
+                        That is not the same as nothing coming up - there{" "}
                         {view.calendar.undated.length === 1 ? "is" : "are"}{" "}
                         {view.calendar.undated.length} deadline
                         {view.calendar.undated.length === 1 ? "" : "s"} below we can&apos;t date
@@ -285,7 +285,7 @@ export default function CalendarPage() {
                   <h2 className="font-display text-2xl font-semibold">We can&apos;t date these yet</h2>
                 </div>
                 <p className="mt-2 max-w-2xl text-muted">
-                  These deadlines are real — we just don&apos;t have the one date each needs. They
+                  These deadlines are real - we just don&apos;t have the one date each needs. They
                   are listed rather than hidden, because an empty calendar would otherwise read as
                   &ldquo;nothing is coming up&rdquo;.
                 </p>
@@ -313,7 +313,7 @@ export default function CalendarPage() {
               </div>
               <p className="mt-2 max-w-2xl text-muted">
                 Not dates. A monthly cap binds after a certain amount of spend, and when that
-                happens depends on how you actually spend — so we give you the amount, which is
+                happens depends on how you actually spend - so we give you the amount, which is
                 exact, rather than a guessed day of the month.
               </p>
 
@@ -384,7 +384,7 @@ export default function CalendarPage() {
                       className="rounded-[var(--radius-md)] border border-dashed border-line bg-surface-2/40 p-4"
                     >
                       <p className="text-sm font-medium text-fg">
-                        {u.cardName} — {prettyLabel(u.cardCategory).toLowerCase()}
+                        {u.cardName} - {prettyLabel(u.cardCategory).toLowerCase()}
                       </p>
                       <p className="mt-1 text-sm text-muted">{u.reason}</p>
                     </div>

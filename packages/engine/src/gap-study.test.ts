@@ -425,7 +425,7 @@ describe.skipIf(!process.env.GAP_STUDY)("gap study", () => {
       const b199 = gapNaive.filter((g) => g >= 199).length;
       P(`   gap >= AED 199 (1x price): ${((b199 / rows.length) * 100).toFixed(1)}%`);
       P("");
-      P("   PER SEGMENT — weight-independent, prefer these over any pooled number.");
+      P("   PER SEGMENT - weight-independent, prefer these over any pooled number.");
       P("   Every row is cross-checkable: naive% + gap% should equal optimal%.");
       P("   segment                  wt   ann.spend    naive%  best1%  optimal%   gap%   gap AED");
       for (const seg of SEGMENTS) {
@@ -461,17 +461,17 @@ describe.skipIf(!process.env.GAP_STUDY)("gap study", () => {
       P("");
       P(`   >> POPULATION-WEIGHTED: gap AED ${aed(wGap / wTotal)}/yr on ` +
         `AED ${aed(wSpend / wTotal)} annual spend  (= ${((wGap / wSpend) * 100).toFixed(2)}% of spend)`);
-      P(`      vs unweighted pooled median AED ${aed(pct(gapNaive, 0.5))} — ` +
+      P(`      vs unweighted pooled median AED ${aed(pct(gapNaive, 0.5))} - ` +
         `the difference is sample mix, not optimizer skill.`);
     };
 
     P("");
     P("══════════════════════════════════════════════════════════════════");
-    P("  FILS GAP STUDY — modeled, not observed");
+    P("  FILS GAP STUDY - modeled, not observed");
     P(`  ${profilesSeen} profiles · ${CARDS.length} cards · seed 20260804`);
     P("══════════════════════════════════════════════════════════════════");
 
-    report("UNIVERSE: ALL cards, midpoint  (optimistic — every range read at its centre)", all);
+    report("UNIVERSE: ALL cards, midpoint  (optimistic - every range read at its centre)", all);
     report("UNIVERSE: ALL cards, LOWER BOUND  (<<< THE DEFENSIBLE FLOOR)", floorRows);
     report("UNIVERSE: SOUND rates  (promo/merchant defects removed)", sound);
     report("UNIVERSE: PUBLISHABLE, no merchant shares  (co-brand cards excluded)", pub);
@@ -479,7 +479,7 @@ describe.skipIf(!process.env.GAP_STUDY)("gap study", () => {
       "UNIVERSE: PUBLISHABLE + MERCHANT SHARES  (<-- THE ONE A CLAIM CAN REST ON)",
       pubShared,
     );
-    report("UNIVERSE: CLEAN cards only  (zero flags — too strict, degenerate)", clean);
+    report("UNIVERSE: CLEAN cards only  (zero flags - too strict, degenerate)", clean);
 
     P("");
     P("── DATA QUALITY ──────────────────────────────────────────");

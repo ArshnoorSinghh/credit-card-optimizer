@@ -17,7 +17,7 @@ const INVENTORY: PointsInventory = [
 const pick = (plan: ReturnType<typeof recommendRedemptions>, cur: string) =>
   plan.suggestions.find((s) => s.currency === cur)!;
 
-describe("recommendRedemptions — never says 'cash'; phrasing follows cash-capability", () => {
+describe("recommendRedemptions - never says 'cash'; phrasing follows cash-capability", () => {
   const plan = recommendRedemptions(INVENTORY, "cash_equivalent");
 
   it("no generated receipt contains the word 'cash' (inherited source notes like Smiles' 'cashback not permitted' are data, not our phrasing)", () => {
@@ -26,7 +26,7 @@ describe("recommendRedemptions — never says 'cash'; phrasing follows cash-capa
     }
   });
 
-  it("TouchPoints (no card bill): 'pay AED X of a utility bill / redeem as vouchers — no card-bill payment available'", () => {
+  it("TouchPoints (no card bill): 'pay AED X of a utility bill / redeem as vouchers - no card-bill payment available'", () => {
     const s = pick(plan, "TouchPoints (convertible to miles)");
     expect(s.best?.type).toBe("bill_payment");
     expect(s.best?.aedValue).toBeCloseTo(95.656, 6); // 22000 × 0.004348
@@ -52,7 +52,7 @@ describe("recommendRedemptions — never says 'cash'; phrasing follows cash-capa
   });
 });
 
-describe("recommendRedemptions — card-bill phrasing for a statement-credit currency", () => {
+describe("recommendRedemptions - card-bill phrasing for a statement-credit currency", () => {
   it("FAB card-bill redemption reads 'off your card bill (statement credit)'", () => {
     const plan = recommendRedemptions([{ currency: "FAB Rewards", balance: 10000 }], "cash_equivalent");
     const s = plan.suggestions[0]!;
@@ -62,7 +62,7 @@ describe("recommendRedemptions — card-bill phrasing for a statement-credit cur
   });
 });
 
-describe("recommendRedemptions — conversions only when they beat direct", () => {
+describe("recommendRedemptions - conversions only when they beat direct", () => {
   it("max_value: TouchPoints keeps its 0.006 partner spend; conversion is rejected and the finding is flagged", () => {
     const plan = recommendRedemptions(INVENTORY, "max_value");
     const s = pick(plan, "TouchPoints (convertible to miles)");
@@ -82,7 +82,7 @@ describe("recommendRedemptions — conversions only when they beat direct", () =
   });
 });
 
-describe("recommendRedemptions — premium multiplier", () => {
+describe("recommendRedemptions - premium multiplier", () => {
   it("values Skywards premium seats at economy × multiplier when supplied", () => {
     const plan = recommendRedemptions([{ currency: "Skywards Miles", balance: 10000 }], "flights", undefined, undefined, {
       premiumMultiplier: 2,
@@ -100,7 +100,7 @@ describe("recommendRedemptions — premium multiplier", () => {
   });
 });
 
-describe("recommendRedemptions — goal filtering & ranking", () => {
+describe("recommendRedemptions - goal filtering & ranking", () => {
   it("hotels: only a hotel currency qualifies", () => {
     const plan = recommendRedemptions(
       [
@@ -125,7 +125,7 @@ describe("recommendRedemptions — goal filtering & ranking", () => {
   });
 });
 
-describe("recommendRedemptions — constraints", () => {
+describe("recommendRedemptions - constraints", () => {
   it("Smiles is never routed to a card bill (it has none)", () => {
     for (const goal of ["cash_equivalent", "max_value"] as const) {
       const s = recommendRedemptions([{ currency: "Smiles Points", balance: 5000 }], goal).suggestions[0]!;

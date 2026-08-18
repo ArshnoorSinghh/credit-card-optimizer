@@ -343,7 +343,7 @@ export function askWhichCard(input: AskWhichCardInput): WhichCardResult {
       return {
         status: "unrecognized",
         input: raw,
-        message: `"${raw}" isn't a spend category or a merchant we recognise — pick a category instead.`,
+        message: `"${raw}" isn't a spend category or a merchant we recognise - pick a category instead.`,
         validCategories: SPEND_CATEGORIES,
       };
     }

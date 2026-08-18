@@ -317,18 +317,18 @@ function collectFlags(
 
     if (rate.confidence === "unknown") {
       uncertain = true;
-      flags.push({ level: "unknown", message: `Unresolved rate on ${where} ("${rate.raw}") — scored as a range` });
+      flags.push({ level: "unknown", message: `Unresolved rate on ${where} ("${rate.raw}") - scored as a range` });
     } else if (rate.confidence === "low") {
       uncertain = true;
       flags.push({ level: "low", message: `Low-confidence rate on ${where} ("${rate.raw}")` });
     }
     if (o.earning.unbounded) {
-      flags.push({ level: "unknown", message: `${where} has an unbounded variable rate — upside not scored` });
+      flags.push({ level: "unknown", message: `${where} has an unbounded variable rate - upside not scored` });
     }
     if (o.capBound) {
       flags.push({
         level: "low",
-        message: `${o.capBound} cap reached on ${where} — overflow routed to the next-best option`,
+        message: `${o.capBound} cap reached on ${where} - overflow routed to the next-best option`,
       });
     }
     // Mirrors scoreCard exactly: a share the user STATED is an input, not an
@@ -383,7 +383,7 @@ function collectFlags(
     if (bound) {
       flags.push({
         level: "low",
-        message: `${result.cards[i]!.card.name}: overall reward cap reached — that card's total earnings were capped`,
+        message: `${result.cards[i]!.card.name}: overall reward cap reached - that card's total earnings were capped`,
       });
     }
   });
