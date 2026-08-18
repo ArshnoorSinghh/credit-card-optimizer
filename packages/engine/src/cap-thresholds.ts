@@ -152,6 +152,44 @@ function switchTargetFor(
   };
 }
 
+/**
+ * A category as it reads INSIDE a sentence: "AED 3,000 of ___ this month".
+ *
+ * why not `label()`: that renders a category title-case for a flag ("Other"), which is
+ * right there and wrong here. Two of the keys are bare adjectives that need a noun
+ * before they can sit in a prose sentence — "AED 3,000 of other this month" reads as
+ * a bug to anyone looking at it. Only these two need it; the rest are already nouns.
+ */
+const SPEND_PHRASE: Partial<Record<SpendCategory, string>> = {
+  other: "other spending",
+  international: "international spend",
+};
+
+function spendPhrase(category: SpendCategory): string {
+  return SPEND_PHRASE[category] ?? label(category).toLowerCase();
+}
+
+/**
+ * Do these two figures PRINT as the same AED number?
+ *
+ * why this matters: every figure in the sentence is rounded for display, so a spend of
+ * AED 2,999.60 against a threshold of AED 3,000 renders as "AED 3,000" twice and then
+ * asserts a difference between them. That is the same readability defect `hasReached`
+ * documents — two identical numbers with a claim about their ordering — arriving
+ * through rounding rather than through the float chain.
+ */
+function printsSame(a: number, b: number): boolean {
+  return Math.round(a) === Math.round(b);
+}
+
+/**
+ * Is the user's spend sitting exactly ON the cap, within the same tolerance
+ * `hasReached` uses? Neither past it nor short of it.
+ */
+function isExactlyAt(spendAed: number, thresholdAed: number): boolean {
+  return !hasReached(spendAed, thresholdAed) && !hasReached(thresholdAed, spendAed);
+}
+
 function describe(
   cardName: string,
   categories: readonly SpendCategory[],
@@ -160,13 +198,25 @@ function describe(
   reached: boolean,
   yourSpendAed: number,
 ): string {
-  const cats = categories.map(label).join(" / ").toLowerCase();
+  const cats = categories.map(spendPhrase).join(" / ");
   const when = period === "monthly" ? "this month" : "this year";
   const amount = `AED ${Math.round(thresholdAed).toLocaleString("en-US")}`;
+  const yours = `AED ${Math.round(yourSpendAed).toLocaleString("en-US")}`;
   if (reached) {
-    return `You spend about AED ${Math.round(yourSpendAed).toLocaleString("en-US")} on ${cats} ${when}, so ${cardName}'s bonus stops paying after ${amount} of it.`;
+    return `You spend about ${yours} on ${cats} ${when}, so ${cardName}'s bonus stops paying after ${amount} of it.`;
   }
-  return `${cardName}'s bonus stops paying after ${amount} of ${cats} ${when}. On your stated spend of AED ${Math.round(yourSpendAed).toLocaleString("en-US")} you would not reach it.`;
+  // Landing exactly ON the cap is not passing it (see `hasReached`), but it is not
+  // "you would not reach it" either — that sentence printed the same number twice and
+  // contradicted itself. Spend at the cap earns the bonus on all of it.
+  if (isExactlyAt(yourSpendAed, thresholdAed)) {
+    return `${cardName}'s bonus stops paying after ${amount} of ${cats} ${when}. Your stated spend of ${yours} reaches that exactly, so all of it still earns the bonus. Anything above would not.`;
+  }
+  // Genuinely under, but close enough that both figures round to the same AED number.
+  // Naming the gap we cannot show is more honest than printing it twice.
+  if (printsSame(yourSpendAed, thresholdAed)) {
+    return `${cardName}'s bonus stops paying after ${amount} of ${cats} ${when}. Your stated spend is just under that.`;
+  }
+  return `${cardName}'s bonus stops paying after ${amount} of ${cats} ${when}. On your stated spend of ${yours} you would not reach it.`;
 }
 
 /**

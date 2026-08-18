@@ -181,6 +181,45 @@ describe("capThresholds - reached, proximity and ordering", () => {
     expect(grocery.reached).toBe(true);
   });
 
+  it("does not tell a user at the cap that they 'would not reach it'", () => {
+    /*
+      The wording half of the tie regression above. `reached` was already correct, but
+      the sentence it produced printed "AED 3,000" twice and then denied they were the
+      same: "stops paying after AED 3,000 ... on your stated spend of AED 3,000 you
+      would not reach it." Spend sitting exactly on the cap earns the bonus on all of
+      it, which is what the copy now says.
+    */
+    const report = capThresholds([byId("fab_cashback")], { groceries: 3000 });
+    const grocery = report.thresholds.find((t) => t.spendCategories.includes("groceries"))!;
+    expect(grocery.reached).toBe(false);
+    expect(grocery.detail).toMatch(/reaches that exactly/);
+    expect(grocery.detail).not.toMatch(/would not reach it/);
+  });
+
+  it("does not print two identical figures and assert a difference", () => {
+    // A genuine near-miss, not a float artefact: AED 2,999.60 of spend against a
+    // AED 3,000 threshold. Both round to "AED 3,000" for display, so the sentence
+    // must not claim an ordering the reader cannot see.
+    const report = capThresholds([byId("fab_cashback")], { groceries: 2999.6 });
+    const grocery = report.thresholds.find((t) => t.spendCategories.includes("groceries"))!;
+    expect(grocery.reached).toBe(false);
+    expect(grocery.detail).toMatch(/just under that/);
+  });
+
+  it("names a category so it reads as English inside the sentence", () => {
+    // "AED 3,000 of other this month" is the storage key leaking into prose. Every
+    // other category is already a noun and is left alone.
+    const otherCapped = mkCard({
+      id: "OTHERCAP",
+      categories: [{ category: "fashion", rate: "5%", monthly_cap: 300 }],
+    });
+    const report = capThresholds([otherCapped], { other: 1000 });
+    const t = report.thresholds[0]!;
+    expect(t.spendCategories).toContain("other");
+    expect(t.detail).toMatch(/of other spending this month/);
+    expect(t.detail).not.toMatch(/of other this month/);
+  });
+
   it("compares an ANNUAL cap against annualised spend", () => {
     const annual = mkCard({
       id: "ANNUAL",
