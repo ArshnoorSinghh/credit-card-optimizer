@@ -20,7 +20,7 @@ function r(currency: string, type: string) {
   return REDEMPTION_VALUATIONS[currency]!.routes.find((x) => x.type === type);
 }
 
-describe("REDEMPTION_VALUATIONS — sourced values", () => {
+describe("REDEMPTION_VALUATIONS - sourced values", () => {
   it("Skywards: economy 0.037 high, mall trap 0.011 low, blended 0.028; premium is a multiplier, not a fixed number", () => {
     expect(r("Skywards Miles", "economy_flight")).toMatchObject({ aedPerUnit: 0.037, confidence: "high", class: "flight_economy" });
     expect(r("Skywards Miles", "mall_non_flight")).toMatchObject({ aedPerUnit: 0.011, confidence: "low" });
@@ -114,7 +114,7 @@ describe("premiumFlightRoute", () => {
   });
 });
 
-describe("resolveRedemptionProfile — unknown currency", () => {
+describe("resolveRedemptionProfile - unknown currency", () => {
   it("returns a loudly-flagged, non-cash placeholder instead of crashing", () => {
     const p = resolveRedemptionProfile("Imaginary Coins");
     expect(p.cashCapable).toBe(false);

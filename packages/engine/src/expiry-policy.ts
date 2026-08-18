@@ -38,7 +38,7 @@ export const PROGRAM_EXPIRY_DEFAULTS: ProgramExpiryDefault[] = [
     currency: "Etihad Guest Miles",
     months: 18,
     basis: "from_earning",
-    note: "estimated from program policy (18 months, extendable ONLY by flight activity — not purchases/transfers — since June 2024), not user-confirmed",
+    note: "estimated from program policy (18 months, extendable ONLY by flight activity - not purchases/transfers - since June 2024), not user-confirmed",
   },
   {
     currency: "Skywards Miles",
@@ -67,6 +67,6 @@ export const PROGRAM_EXPIRY_DEFAULTS: ProgramExpiryDefault[] = [
     currency: "AED (RAKBANK cashback)",
     months: 15,
     basis: "from_earning",
-    note: "RAKBANK cashback validity window (15 months from earning) — program policy, not user-confirmed",
+    note: "RAKBANK cashback validity window (15 months from earning) - program policy, not user-confirmed",
   },
 ];

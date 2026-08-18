@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import cardsData from "../data/cards.json";
-import type { Card } from "./card";
+import { isRecommendable, isUnpublishable, type Card } from "./card";
 import { scoreCard, type SpendingProfile } from "./score-card";
 import { optimizePortfolio, type UserProfile } from "./optimize-portfolio";
 
@@ -25,7 +25,7 @@ const OPEN: UserProfile = { monthlySalaryAed: 1_000_000, uaeResident: true };
  * they must return identical financial numbers for all 51 cards. If a user sees a
  * card on the single-card screen and again as a 1-card portfolio, the numbers agree.
  */
-describe("reconciliation — scoreCard === best-1-card portfolio for every card", () => {
+describe("reconciliation - scoreCard === best-1-card portfolio for every card", () => {
   for (const card of cards) {
     it(`agrees for ${card.id}`, () => {
       const s = scoreCard(PROFILE, card);
@@ -34,6 +34,18 @@ describe("reconciliation — scoreCard === best-1-card portfolio for every card"
       if (s.benched) {
         // Benched cards are excluded from portfolios entirely (nothing to rank).
         expect(best1).toBeNull();
+        return;
+      }
+
+      if (!isRecommendable(card)) {
+        // Still SCORED (a holder deserves an honest number) but never RECOMMENDED
+        // — either we don't stand behind its figures, or the issuer has closed it
+        // to new applications. Either way there is no portfolio to reconcile
+        // against. See publishability.test.ts for that boundary.
+        expect(best1).toBeNull();
+        if (isUnpublishable(card)) {
+          expect(s.flags.some((f) => /data caveat/i.test(f.message))).toBe(true);
+        }
         return;
       }
 

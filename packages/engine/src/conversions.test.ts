@@ -19,7 +19,7 @@ describe("CONVERSIONS table", () => {
 describe("the general finding: at baseline economy value, direct beats conversion", () => {
   const ECONOMY = 0.037;
 
-  it("TouchPoints — direct partner spend (0.006) beats converting to Etihad economy", () => {
+  it("TouchPoints - direct partner spend (0.006) beats converting to Etihad economy", () => {
     const conv = CONVERSIONS.find((c) => c.from === "TouchPoints (convertible to miles)" && c.to === "Etihad Guest Miles")!;
     const o = evaluateConversion(14000, conv, 0.006, ECONOMY);
     expect(o.resultingUnits).toBe(1000);
@@ -27,14 +27,14 @@ describe("the general finding: at baseline economy value, direct beats conversio
     expect(o.breakEvenDestAedPerUnit).toBeCloseTo(0.084, 10); // 0.006 × 14
   });
 
-  it("Mashreq — direct (0.00347) beats converting to Etihad economy", () => {
+  it("Mashreq - direct (0.00347) beats converting to Etihad economy", () => {
     const conv = CONVERSIONS.find((c) => c.from === "Salaam Points" && c.to === "Etihad Guest Miles")!;
     const o = evaluateConversion(22000, conv, 0.00347, ECONOMY);
     expect(o.worthwhile).toBe(false);
     expect(o.breakEvenDestAedPerUnit).toBeCloseTo(0.07634, 10); // 0.00347 × 22
   });
 
-  it("DIB — direct (0.005) beats converting to Etihad economy", () => {
+  it("DIB - direct (0.005) beats converting to Etihad economy", () => {
     const conv = CONVERSIONS.find((c) => c.from === "DIB Points" && c.to === "Etihad Guest Miles")!;
     const o = evaluateConversion(20000, conv, 0.005, ECONOMY);
     expect(o.worthwhile).toBe(false);

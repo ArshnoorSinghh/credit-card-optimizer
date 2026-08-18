@@ -15,19 +15,28 @@ import { RafiqChat } from "@/components/rafiq-chat";
 import { useProfileStore } from "@/lib/profile-store";
 import { runOptimize } from "@/lib/optimizer";
 import { runBaseline } from "@/lib/baseline";
+import { toMerchantShares, type ShareAnswers } from "@/lib/merchant-shares";
 
 export default function ResultsPage() {
   const { state: stored, ready } = useProfileStore();
 
+  // The co-brand answers the user gave during onboarding. Every scoring path in the
+  // app must use the same ones, or a user who answered would see one number on the
+  // reveal and a different (more optimistic) one here.
+  const merchantShares = useMemo(
+    () => toMerchantShares(stored.merchantShares as ShareAnswers),
+    [stored.merchantShares],
+  );
+
   const result = useMemo(
-    () => (ready ? runOptimize(stored.spending, stored.profile) : null),
-    [ready, stored],
+    () => (ready ? runOptimize(stored.spending, stored.profile, merchantShares) : null),
+    [ready, stored, merchantShares],
   );
 
   // Anchor the recommendation against the user's current cards, if they gave any.
   const baseline = useMemo(
-    () => (ready ? runBaseline(stored.cardIds, stored.spending, stored.profile) : null),
-    [ready, stored],
+    () => (ready ? runBaseline(stored.cardIds, stored.spending, stored.profile, merchantShares) : null),
+    [ready, stored, merchantShares],
   );
 
   return (

@@ -48,15 +48,58 @@ describe("cards.json conforms to the Card type", () => {
     }
   });
 
-  it("gives every card 0-7 reward categories", () => {
+  it("gives every card 0-8 reward categories", () => {
     // Lower bound 0: a flat-rate card (enbd_visa_flexi) legitimately has NO bonus
-    // categories and earns via base_rate only. Upper bound raised 3 -> 7 by the
-    // 2026-07 data: several cards (e.g. dib_consumer_platinum, ei_switch_cashback)
-    // now enumerate up to 7 compound reward categories.
+    // categories and earns via base_rate only. adcb_talabat joined it when its
+    // first-10-orders promo was moved out of `categories` (D12).
+    // Upper bound raised 3 -> 7 by the 2026-07 data, then 7 -> 8 by the D13 base-rate
+    // splits: ei_switch_cashback gained `government_utilities_charity` when its
+    // compound base ("1% on other; 0.5% on telecom/utilities/real estate/government")
+    // was split, taking it to 8. This bound DESCRIBES the data — it is not a
+    // constraint the engine relies on — so it moves when a legitimate split adds one.
     for (const card of cards) {
       expect(card.rewards.categories.length).toBeGreaterThanOrEqual(0);
-      expect(card.rewards.categories.length).toBeLessThanOrEqual(7);
+      expect(card.rewards.categories.length).toBeLessThanOrEqual(8);
     }
+  });
+
+  /*
+    A card must never name the same reward category twice.
+
+    THIS IS A MERGE GUARD, and it exists because the failure it catches actually
+    happened (D19e). Merging `origin/main` on 2026-08-16 met a case git cannot
+    handle: both sides had REORDERED the `categories` array on the same four cards
+    (`international_spend` first on one side, last on the other). A line-based merge
+    reads a move as a deletion in one place plus an insertion in another, keeps both
+    halves, and produces a duplicate. It did — on adcb_touchpoints_gold_titanium,
+    dib_shams_platinum, dib_shams_infinite and sc_smart_saadiq.
+
+    Why nothing else caught it: the result was still valid JSON, still satisfied the
+    Card type, still had 53 cards, still passed the 0-8 bound, and the app ran. It
+    surfaced only because the tier-count checksum in normalize-rate.test.ts read 200
+    tier-1 strings where 196 was expected — a guard firing for a defect it was never
+    written for, whose first and entirely plausible explanation was a normalizer
+    change that had nothing to do with it.
+
+    A duplicate is always a defect, never a data choice: `buildEarnOptions` turns each
+    entry into its own earn option, so a duplicated category is a second option
+    claiming the same spend with its own independent caps. Two uncapped copies are
+    merely redundant; two CAPPED copies would let a card earn twice its real cap.
+
+    Asserted over ALL cards at once so a failure names every offender in one run —
+    a merge produces them in batches, and fixing them one test-run at a time is how
+    the second and third get missed.
+  */
+  it("never names the same reward category twice on one card", () => {
+    const duplicates: string[] = [];
+    for (const card of cards) {
+      const seen = new Set<string>();
+      for (const cat of card.rewards.categories) {
+        if (seen.has(cat.category)) duplicates.push(`${card.id}: "${cat.category}"`);
+        seen.add(cat.category);
+      }
+    }
+    expect(duplicates, "duplicated reward categories (see D19e - likely a bad merge)").toEqual([]);
   });
 
   // Runtime half of the type check: verify the one field the compiler couldn't.
@@ -105,7 +148,16 @@ describe("cards.json conforms to the Card type", () => {
     const rw = cards.find((c) => c.id === "rakbank_world");
     expect(rw).toBeDefined();
     expect(rw!.rewards.min_monthly_spend_required_aed).toBeGreaterThan(0);
-    expect(rw!.data_caveat).toContain("UNSOURCED");
+    /*
+      The threshold was originally recorded as an UNSOURCED modelling assumption and
+      this test asserted that word, to stop the figure hardening into fact. D16
+      sourced it: RAKBANK's own product page restates the AED 10,000 minimum against
+      every category, which is also what lifted the card's do-not-publish hold. So
+      the assertion now locks the SOURCING rather than the caveat — the point was
+      never the word, it was that the number must not be silently unattributed.
+    */
+    expect(rw!.data_caveat).toContain("D16");
+    expect(rw!.data_caveat).toContain("10,000 minimum monthly spend is restated");
   });
 
   // Same reasoning for excluded_spend: a category the scorer doesn't recognise

@@ -37,7 +37,7 @@ const PROFILE: SpendingProfile = {
  *   Gross = 1,800 + 1,800 + 1,200 + 540 + 840 = 6,180. Fee 300, no waiver.
  *   (overall_cap 1000 AED/mo = 12,000/yr is NOT reached at 6,180/yr.)
  */
-describe("scoreCard — cashback with AED caps + min-spend gate (fab_cashback)", () => {
+describe("scoreCard - cashback with AED caps + min-spend gate (fab_cashback)", () => {
   const score = scoreCard(PROFILE, byId("fab_cashback"));
 
   it("reads the 150 cap as AED 150/mo (not 150 FAB Rewards) and binds it", () => {
@@ -75,7 +75,7 @@ describe("scoreCard — cashback with AED caps + min-spend gate (fab_cashback)",
  *   everything else 15000 -> base 0.75 mile/USD = 0.75*(15000/3.6725)*12 = 36759.700 miles/yr
  *   miles * 0.037: intl 181.3479 + base 1360.1089 = 1541.4568 gross.
  */
-describe("scoreCard — miles card with USD conversion (enbd_skywards_signature)", () => {
+describe("scoreCard - miles card with USD conversion (enbd_skywards_signature)", () => {
   const score = scoreCard(PROFILE, byId("enbd_skywards_signature"));
 
   it("uses the fixed USD peg", () => {
@@ -112,7 +112,7 @@ describe("scoreCard — miles card with USD conversion (enbd_skywards_signature)
  *   remaining 13500 -> base 1 pt/AED = 162000/yr -> 1134 AED
  *   Gross = 2394. Fee 0 (free for life). Net = 2394.
  */
-describe("scoreCard — free-for-life points card (fab_rewards_indulge)", () => {
+describe("scoreCard - free-for-life points card (fab_rewards_indulge)", () => {
   const score = scoreCard(PROFILE, byId("fab_rewards_indulge"));
 
   it("shows points earned per category before conversion", () => {
@@ -160,7 +160,7 @@ function synthCard(over: Partial<Card> & { rewards: Card["rewards"] }): Card {
   };
 }
 
-describe("scoreCard — cashback category caps are AED, not reward units", () => {
+describe("scoreCard - cashback category caps are AED, not reward units", () => {
   it("caps a 5% bonus at AED 150/mo even when the currency is valued below 1.0", () => {
     // Currency valued 0.01. A "150" cap must mean AED 150/mo (cap ÷ 0.01 = 15,000
     // units), NOT 150 units (= AED 1.50/mo). groceries 5,000 @ 5% = AED 250/mo,
@@ -184,7 +184,7 @@ describe("scoreCard — cashback category caps are AED, not reward units", () =>
   });
 });
 
-describe("scoreCard — overall_cap (card-level cap, applied before fees)", () => {
+describe("scoreCard - overall_cap (card-level cap, applied before fees)", () => {
   // Cashback card: base 10% on all spend, overall_cap AED 100/mo (= 1,200/yr).
   const cashbackCard = synthCard({
     rewards: {
@@ -233,7 +233,7 @@ describe("scoreCard — overall_cap (card-level cap, applied before fees)", () =
 });
 
 /** Range scoring: a card with an unresolved (tier-3) rate must produce a range. */
-describe("scoreCard — unresolved rate scores as a range", () => {
+describe("scoreCard - unresolved rate scores as a range", () => {
   it("does not fabricate a point value for an unbounded variable-rate card", () => {
     // The only real "Variable" card (ei_flex_elite) is now benched, so we exercise
     // the unbounded path with a synthetic card: groceries at "Variable" (tier 3, no
@@ -310,21 +310,56 @@ describe("scoreCard — unresolved rate scores as a range", () => {
 });
 
 /**
- * enbd_visa_flexi, after the 2026-07 data: a flat-rate points card quoting PERCENTS
- * (base "1.5% back in Plus Points", plus two smaller 0.4%/0.2% category rates that
- * never beat the base, so all spend routes to the base). Free for life; no caveat.
+ * enbd_visa_flexi, after the 2026-07 data: a points card quoting PERCENTS — base
+ * "1.5% back in Plus Points", plus two SUPPRESSED category rates (0.4% and 0.2%)
+ * that pay LESS than the base. Free for life; no caveat.
+ *
+ * The suppressed rates are the whole point of this case. This test used to assert
+ * that all 16,500/mo routed to the 1.5% base, on the reasoning that "the bonus rates
+ * never beat it". That was the allocator escaping a penalty bucket: ENBD decides
+ * which merchant category a purchase falls into, so a supermarket swipe earns 0.4%
+ * whether or not 1.5% would be nicer. See penalty-bucket.test.ts.
+ *
+ * Hand math (PROFILE, AED/mo; percent rates so the AED value is invariant to the
+ * Plus Points valuation):
+ *   supermarkets_grocery_insurance_car_dealers -> groceries 5,000 + other 3,000
+ *                                              = 8,000 x 0.4% =  32.0/mo ->   384/yr
+ *   fuel_utilities_real_estate_education       -> fuel  1,000 x 0.2% =   2.0/mo ->    24/yr
+ *   base_rate 1.5%  -> dining 2,000 + travel 4,000 + international 1,500
+ *                                              = 7,500 x 1.5% = 112.5/mo -> 1,350/yr
+ *   gross = AED 1,758/yr; free for life, so net = 1,758.
  */
-describe("scoreCard — flat-rate points card (enbd_visa_flexi)", () => {
+describe("scoreCard - percent-quoted points card with suppressed categories (enbd_visa_flexi)", () => {
   const score = scoreCard(PROFILE, byId("enbd_visa_flexi"));
 
-  it("earns the 1.5% base rate on all spend (bonus rates never beat it)", () => {
-    // 16500 AED/mo at 1.5% back = 2970 AED value/yr (in Plus Points at 0.01 = 297000 pts).
+  it("pays the base rate only on spend the card does not suppress", () => {
     const base = score.breakdown.find((b) => b.cardCategory === "base_rate");
-    expect(base?.monthlySpendAed).toBe(16500);
-    expect(base?.annualValueAed.min).toBeCloseTo(2970, 6);
-    expect(score.breakdown).toHaveLength(1); // only the base rate wins
-    expect(score.grossAnnualValue.min).toBeCloseTo(2970, 6);
-    expect(score.netAnnualValue).toBeCloseTo(2970, 6); // free for life
+    expect(base?.monthlySpendAed).toBe(7500); // dining + travel + international
+    expect(base?.annualValueAed.min).toBeCloseTo(1350, 6);
+    expect(base?.spendCategories).not.toContain("groceries");
+  });
+
+  it("holds groceries, other and fuel at their suppressed rates", () => {
+    const supermarkets = score.breakdown.find(
+      (b) => b.cardCategory === "supermarkets_grocery_insurance_car_dealers",
+    );
+    const fuel = score.breakdown.find((b) => b.cardCategory === "fuel_utilities_real_estate_education");
+    expect(supermarkets?.monthlySpendAed).toBe(8000);
+    expect(supermarkets?.annualValueAed.min).toBeCloseTo(384, 6);
+    expect(fuel?.monthlySpendAed).toBe(1000);
+    expect(fuel?.annualValueAed.min).toBeCloseTo(24, 6);
+  });
+
+  it("matches the hand-computed gross/net", () => {
+    expect(score.breakdown).toHaveLength(3);
+    expect(score.grossAnnualValue.min).toBeCloseTo(1758, 6);
+    expect(score.netAnnualValue).toBeCloseTo(1758, 6); // free for life
+  });
+
+  it("says plainly which spend is held at the reduced rate", () => {
+    expect(
+      score.flags.some((f) => /reduced rate, not its base rate/i.test(f.message)),
+    ).toBe(true);
   });
 
   it("no longer references a user-chosen category", () => {
@@ -344,7 +379,7 @@ describe("scoreCard — flat-rate points card (enbd_visa_flexi)", () => {
  * spend is a >100% return, which in this dataset always means a bad earn rate or
  * valuation — never a real card. It must be FLAGGED, not crashed, not dropped.
  */
-describe("scoreCard — implausibility guardrail", () => {
+describe("scoreCard - implausibility guardrail", () => {
   // why a synthetic card (2026-07): the real cards now quote most points bonuses as
   // PERCENTS, and a percent's AED value is invariant to the per-point valuation, so
   // the old "value the currency absurdly" trick no longer inflates the total. A
@@ -390,7 +425,7 @@ describe("scoreCard — implausibility guardrail", () => {
  * a synthetic card carrying `excluded_from_scoring` — the behaviour must still hold
  * for when a future card needs benching.
  */
-describe("scoreCard — benched card (synthetic excluded_from_scoring)", () => {
+describe("scoreCard - benched card (synthetic excluded_from_scoring)", () => {
   const benchedCard: Card = {
     id: "synthetic_benched",
     name: "Synthetic Benched",
@@ -404,7 +439,7 @@ describe("scoreCard — benched card (synthetic excluded_from_scoring)", () => {
     benefits: [],
     source_url: "",
     excluded_from_scoring: true,
-    notes: "synthetic — customizable structure can't be scored",
+    notes: "synthetic - customizable structure can't be scored",
   };
   const score = scoreCard(PROFILE, benchedCard);
 
@@ -414,7 +449,7 @@ describe("scoreCard — benched card (synthetic excluded_from_scoring)", () => {
     expect(score.grossAnnualValue).toEqual({ min: 0, max: 0 });
     expect(score.breakdown).toHaveLength(0);
     expect(score.uncertain).toBe(true);
-    expect(score.flags.some((f) => /Excluded from scoring — pending data verification/.test(f.message))).toBe(true);
+    expect(score.flags.some((f) => /Excluded from scoring - pending data verification/.test(f.message))).toBe(true);
   });
 
   it("leaves every real card scored normally (none benched in current data)", () => {
@@ -423,7 +458,7 @@ describe("scoreCard — benched card (synthetic excluded_from_scoring)", () => {
 });
 
 /** Every card must score without throwing (smoke test across all 51). */
-describe("scoreCard — runs on all cards", () => {
+describe("scoreCard - runs on all cards", () => {
   it("produces a finite ranking number for every card", () => {
     for (const card of cards) {
       const score = scoreCard(PROFILE, card);

@@ -30,7 +30,7 @@ afterEach(() => {
   else process.env.GEMINI_API_KEY = ORIGINAL_KEY;
 });
 
-describe("POST /api/rafiq — validation", () => {
+describe("POST /api/rafiq - validation", () => {
   it("400s on a non-JSON body", async () => {
     const res = await POST(new Request("http://localhost/api/rafiq", { method: "POST", body: "{nope" }));
     expect(res.status).toBe(400);
@@ -49,7 +49,7 @@ describe("POST /api/rafiq — validation", () => {
   });
 });
 
-describe("POST /api/rafiq — degrades gracefully with no API key", () => {
+describe("POST /api/rafiq - degrades gracefully with no API key", () => {
   it("returns 200 and degraded=true when GEMINI_API_KEY is missing", async () => {
     const body: RafiqRequest = { message: "which card for groceries?" };
     const res = await POST(postReq(body));

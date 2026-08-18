@@ -78,7 +78,7 @@ function mkCard(
  * Spend 5,000/mo groceries (threshold MET) — identical in both modes:
  *   5% x 5,000 x 12 = AED 3,000/yr.
  */
-describe("gate_mode — forfeiture vs degradation below the minimum spend", () => {
+describe("gate_mode - forfeiture vs degradation below the minimum spend", () => {
   const shape = {
     categories: [{ category: "groceries", rate: "5%" }],
     base_rate: "1% on all spend",
@@ -108,7 +108,7 @@ describe("gate_mode — forfeiture vs degradation below the minimum spend", () =
     expect(scoreCard(spending, forfeiting).flags.some((f) => /FORFEIT/i.test(f.message))).toBe(false);
   });
 
-  it("absent gate_mode keeps the old behaviour — every existing card is unaffected", () => {
+  it("absent gate_mode keeps the old behaviour - every existing card is unaffected", () => {
     // The default card has no gate_mode field at all.
     expect(degrading.rewards.gate_mode).toBeUndefined();
     expect(scoreCard({ groceries: 3000 }, degrading).grossAnnualValue.min).toBeCloseTo(360, 6);
@@ -149,7 +149,7 @@ describe("gate_mode — forfeiture vs degradation below the minimum spend", () =
  * its four category monthly caps (300 + 300 + 400 + 100) — a figure that only
  * makes sense per month.
  */
-describe("overall_cap — enforced on every capped card", () => {
+describe("overall_cap - enforced on every capped card", () => {
   it("caps a synthetic card's total at overall_cap x 12", () => {
     // 10% on groceries AND dining, no category caps, overall cap AED 200/mo.
     // Uncapped: 10% x (3,000 + 3,000) x 12 = AED 7,200/yr.
@@ -213,7 +213,7 @@ describe("overall_cap — enforced on every capped card", () => {
 // 3. excluded_spend — segment-level zero-earn.
 // ===========================================================================
 
-describe("excluded_spend — spend in an excluded segment earns nothing", () => {
+describe("excluded_spend - spend in an excluded segment earns nothing", () => {
   it("zeroes a category even when a bonus rate explicitly covers it", () => {
     // 5% on international, but international is excluded -> earns nothing at all.
     const card = mkCard("excluder", {

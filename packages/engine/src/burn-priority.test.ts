@@ -4,7 +4,7 @@ import type { PointsInventory } from "./points-inventory";
 
 const ASOF = "2026-07-15";
 
-describe("burnPriority — expiry boundaries", () => {
+describe("burnPriority - expiry boundaries", () => {
   it("classifies 89 days as urgent and 91 days as soon", () => {
     const inv: PointsInventory = [
       { currency: "Skywards Miles", balance: 1000, expiryDate: "2026-10-12" }, // asOf + 89 days
@@ -28,7 +28,7 @@ describe("burnPriority — expiry boundaries", () => {
   });
 });
 
-describe("burnPriority — honest handling of missing expiry", () => {
+describe("burnPriority - honest handling of missing expiry", () => {
   it("no explicit date and no known default => 'expiry unknown', no false urgency", () => {
     // FAB Rewards has no program-expiry default and no date here.
     const inv: PointsInventory = [{ currency: "FAB Rewards", balance: 1000 }];
@@ -58,7 +58,7 @@ describe("burnPriority — honest handling of missing expiry", () => {
   });
 });
 
-describe("burnPriority — devaluation warning", () => {
+describe("burnPriority - devaluation warning", () => {
   it("flags the upcoming Skywards premium devaluation when asOf precedes it", () => {
     const inv: PointsInventory = [{ currency: "Skywards Miles", balance: 1000 }];
     const item = burnPriority(inv, "2026-03-01").items[0]!;
@@ -73,7 +73,7 @@ describe("burnPriority — devaluation warning", () => {
   });
 });
 
-describe("burnPriority — ordering", () => {
+describe("burnPriority - ordering", () => {
   it("urgency dominates value-at-risk", () => {
     const inv: PointsInventory = [
       { currency: "Skywards Miles", balance: 10000, expiryDate: "2027-07-15" }, // later, VAR 550
@@ -93,7 +93,7 @@ describe("burnPriority — ordering", () => {
     expect(plan.items.map((i) => i.currency)).toEqual(["Skywards Miles", "Smiles Points"]);
   });
 
-  it("ties broken by versatility — the least-flexible currency burns first", () => {
+  it("ties broken by versatility - the least-flexible currency burns first", () => {
     // Both urgency unknown (no dates), both value-at-risk = 75 AED.
     // LuLu supports 1 class (voucher); Smiles supports 3 (voucher/external_bill/
     // partner_spend) -> LuLu is the more trapped currency, so it burns first.
@@ -109,7 +109,7 @@ describe("burnPriority — ordering", () => {
   });
 });
 
-describe("burnPriority — unknown currency", () => {
+describe("burnPriority - unknown currency", () => {
   it("does not crash and flags the placeholder value-at-risk", () => {
     const inv: PointsInventory = [{ currency: "Zorp Coins", balance: 1000 }];
     const plan = burnPriority(inv, ASOF);

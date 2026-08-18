@@ -203,7 +203,7 @@ function normalizeCurrencyLabel(s: string): string {
  *
  * Matched on whole words rather than by equality because the rate strings and the
  * `rewards.currency` field are written by different hands and don't always agree on
- * the issuer prefix — dib_shams_infinite says "5% back as Wala'a Rewards" while its
+ * the issuer prefix - dib_shams_infinite says "5% back as Wala'a Rewards" while its
  * currency field reads "DIB Wala'a Rewards". Requiring an exact match would leave
  * that pair flagged for a difference in labelling, not in substance.
  */
@@ -250,32 +250,28 @@ export function normalizeRate(raw: string, ctx: RateContext = {}): NormalizedRat
     const ceiling = Number(upTo[1]) / 100;
     const capModeled =
       (ctx.monthlyCap ?? null) !== null || (ctx.annualCap ?? null) !== null;
-    // why BOTH branches emit a 0..X range, and neither returns the ceiling as a
-    // certain value:
-    //
-    // The old fork returned `value: ceiling, confidence: "high"` whenever the card
-    // carried a cap field, on the reasoning that the cap — not a discounted rate —
-    // expresses the constraint. Read one card at a time that reasoning is sound: a
-    // "Up to 10%, max AED 300/mo" category really can pay 10% up to the cap.
-    //
-    // It is unsound under SELECTION. optimizePortfolio scores all ~53 cards on this
-    // rate and keeps the best three. Taking every ceiling at face value means the
-    // winner is chosen by whichever card advertises the most optimistic headline,
-    // so the optimum is a maximum-of-maxima: an estimator biased upward by exactly
-    // the spread of the ceilings, and biased MORE the more cards are considered.
-    // Measured over a weighted UAE population this inflated the median optimal
-    // return to ~9.6% of annual spend, roughly 3x anything real cards pay.
-    //
-    // The bias is in the SELECTION, not in the per-card arithmetic — so the fix
-    // belongs here, at the point where an unqualified ceiling becomes a certainty,
-    // rather than in the optimizer. Emitting 0..X makes the uncertainty explicit:
-    // the scorer routes on the midpoint and reports a min/max band, so a card whose
-    // advertised ceiling is unverified can no longer beat a card with a known flat
-    // rate purely on the strength of its marketing. This is CLAUDE.md's rule that
-    // flagged rates propagate as ranges rather than silent point estimates.
-    //
-    // The cap context is still consulted — not to change the tier, but to say WHY
-    // the rate is uncertain, so the review list distinguishes the two cases.
+    /*
+      A ceiling is a ceiling, capped or not — bound it 0..X either way.
+
+      This USED to fork on `capModeled` and return the ceiling as a certain,
+      high-confidence rate, reasoning that the cap (not a discounted rate)
+      expressed the constraint. That is defensible for one card and wrong in
+      aggregate, which is how it was found: `optimizePortfolio` selects the best
+      3 cards BY that rate, so scoring every card at its advertised maximum makes
+      the chosen portfolio a maximum-of-maxima. The gap study read a median
+      optimal return of 9.4% of total annual spend; no UAE portfolio returns that.
+      The bias lived in the selection step, so no per-card check could see it.
+
+      The cap has NOT stopped doing its job — it still bounds the AED outcome
+      downstream via the cap machinery, independently of this rate's confidence.
+      What changes is that we no longer assert the user earns the ceiling rate up
+      to that cap. `capModeled` is retained only to distinguish the two notes,
+      because "capped ceiling" and "uncapped ceiling" are different review tasks:
+      the first needs the tier table, the second needs a cap.
+
+      Cost: most "Up to X%" cards become tier 3 and score as a range, widening
+      portfolio results. That width is real and was previously hidden.
+    */
     return {
       raw,
       value: null,
@@ -283,7 +279,7 @@ export function normalizeRate(raw: string, ctx: RateContext = {}): NormalizedRat
       confidence: "unknown",
       range: { min: 0, max: ceiling },
       note: capModeled
-        ? "Ceiling only; the cap bounds the payout but the rate itself is conditional (tiered/promotional), so it is scored as a range, not the headline"
+        ? "Ceiling only; a cap bounds the AED outcome but the earned RATE still depends on an unmodeled tier/condition"
         : "Ceiling only; actual rate depends on an unmodeled choice/condition",
     };
   }
@@ -400,7 +396,7 @@ export function normalizeRate(raw: string, ctx: RateContext = {}): NormalizedRat
     unit: null,
     confidence: "unknown",
     range: { min: 0, max: null },
-    note: "Unrecognized rate pattern — needs manual review",
+    note: "Unrecognized rate pattern - needs manual review",
   };
 }
 

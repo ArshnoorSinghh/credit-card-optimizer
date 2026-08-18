@@ -123,7 +123,7 @@ function phraseFor(route: RedemptionCandidate, currency: string, cashCapable: bo
   const v = fmt(route.aedValue);
   // Cash-incapable currency redeemed for liquid value → the explicit caveat wording.
   if (!cashCapable && LIQUID_CLASSES.has(route.class)) {
-    return `pay AED ${v} of a utility bill / redeem as vouchers — no card-bill payment available`;
+    return `pay AED ${v} of a utility bill / redeem as vouchers - no card-bill payment available`;
   }
   switch (route.class) {
     case "card_bill":
@@ -250,7 +250,7 @@ export function recommendRedemptions(
     const cashCapable = isCashCapable(currency, table);
     const isUnknown = !table[currency];
     if (isUnknown) {
-      planFlags.push(`unknown currency "${currency}" — valued at a flagged placeholder; verify before trusting`);
+      planFlags.push(`unknown currency "${currency}" - valued at a flagged placeholder; verify before trusting`);
     }
 
     const { candidates, conversionConsidered } = candidatesFor(currency, balance, goal, table, conversions, opts);
@@ -260,7 +260,7 @@ export function recommendRedemptions(
     const alternatives = candidates.slice(1);
     const flags: string[] = best ? [...best.flags] : [];
     if (!best) flags.push(`no redemption available for "${currency}" toward ${GOAL_LABEL[goal]}`);
-    if (isUnknown) flags.push(`"${currency}" is not in the researched set — placeholder valuation`);
+    if (isUnknown) flags.push(`"${currency}" is not in the researched set - placeholder valuation`);
     // Item 3: if we evaluated a conversion but chose a direct route, say why.
     if (best && !best.viaConversion && conversionConsidered) flags.push(CONVERSION_FINDING);
 

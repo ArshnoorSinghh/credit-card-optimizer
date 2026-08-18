@@ -14,7 +14,9 @@ import { SpendSlider } from "@/components/spend-slider";
 import { PortfolioResults } from "@/components/portfolio-results";
 import { IntentPicker, type Intent } from "@/components/entry/intent-picker";
 import { HeldCardsPicker } from "@/components/entry/held-cards-picker";
+import { MerchantSharePicker } from "@/components/entry/merchant-share-picker";
 import { BaselineBanner } from "@/components/entry/baseline-banner";
+import { toMerchantShares, type ShareAnswers } from "@/lib/merchant-shares";
 import { CATEGORIES, DEFAULT_SPEND, runOptimize, totalSpend } from "@/lib/optimizer";
 import { runBaseline } from "@/lib/baseline";
 import { useProfileStore } from "@/lib/profile-store";
@@ -46,6 +48,7 @@ export default function OnboardingPage() {
   const [cardIds, setCardIds] = useState<string[]>([]);
   const [spend, setSpend] = useState<Record<SpendCategory, number>>({ ...DEFAULT_SPEND });
   const [salary, setSalary] = useState(20000);
+  const [shareAnswers, setShareAnswers] = useState<ShareAnswers>({});
   const [seeded, setSeeded] = useState(false);
 
   // Seed the form from any saved state once, after the store hydrates.
@@ -54,6 +57,7 @@ export default function OnboardingPage() {
     setCardIds(state.cardIds);
     setSpend(state.spending);
     setSalary(state.profile.monthlySalaryAed);
+    setShareAnswers(state.merchantShares as ShareAnswers);
     setSeeded(true);
   }, [ready, seeded, state]);
 
@@ -62,22 +66,35 @@ export default function OnboardingPage() {
     [salary],
   );
 
+  // The user's co-brand answers, in the engine's units. Unanswered merchants stay
+  // absent, which is what keeps their cards held back rather than guessed at.
+  const merchantShares = useMemo(() => toMerchantShares(shareAnswers), [shareAnswers]);
+
   // The current wallet's value — recomputes live as held cards / spend change.
+  // Scored under the SAME merchant shares as the reveal, so the delta between them
+  // is a real comparison rather than two different models.
   const baseline = useMemo(
-    () => runBaseline(cardIds, spend, profile),
-    [cardIds, spend, profile],
+    () => runBaseline(cardIds, spend, profile, merchantShares),
+    [cardIds, spend, profile, merchantShares],
   );
 
   // The optimizer's recommendation — only needed once we reach the reveal.
   const result = useMemo(
-    () => (stage === "reveal" ? runOptimize(spend, profile) : null),
-    [stage, spend, profile],
+    () => (stage === "reveal" ? runOptimize(spend, profile, merchantShares) : null),
+    [stage, spend, profile, merchantShares],
   );
 
   function persist() {
     // Primary bank = the bank of the first card the user picked (display only).
     const bank = cardIds.length ? cardById(cardIds[0]!)?.bank ?? null : null;
-    save({ cardIds, spending: spend, profile, bank, onboarded: true });
+    save({
+      cardIds,
+      spending: spend,
+      profile,
+      bank,
+      merchantShares: shareAnswers,
+      onboarded: true,
+    });
   }
 
   function pickIntent(next: Intent) {
@@ -182,8 +199,24 @@ export default function OnboardingPage() {
                 </Card>
               </div>
 
+              {/* Where that spend happens. Several UAE cards pay their headline
+                  rate at ONE retailer only. With no answer the engine has to credit
+                  the whole category to that retailer, which overstates those cards —
+                  this is the input that replaces the assumption with a fact. */}
+              <div className="mt-8">
+                <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-faint">
+                  Where you shop
+                </h2>
+                <p className="mb-3 text-sm text-muted">
+                  Some cards only pay their best rate at one retailer. Tell us roughly how
+                  much of your spending goes there, so we score those cards on what you
+                  actually spend rather than on the best case.
+                </p>
+                <MerchantSharePicker answers={shareAnswers} onChange={setShareAnswers} />
+              </div>
+
               {/* Salary */}
-              <div className="mt-6">
+              <div className="mt-8">
                 <label className="mb-2 block text-sm text-muted">Monthly salary (AED)</label>
                 <input
                   type="number"

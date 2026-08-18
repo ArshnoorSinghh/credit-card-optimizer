@@ -92,7 +92,7 @@ export async function getCurrentUser(): Promise<AppUser | null> {
     // "signed out" would hide a real invariant break behind a plausible-looking
     // 401. Fils authenticates with email+password, so a Clerk user with no email
     // should be impossible — if it happens, we want a loud failure.
-    throw new Error(`Clerk user ${user.id} has no email address — cannot sync to Postgres.`);
+    throw new Error(`Clerk user ${user.id} has no email address - cannot sync to Postgres.`);
   }
 
   return upsertUser({ clerkUserId: user.id, email });

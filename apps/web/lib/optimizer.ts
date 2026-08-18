@@ -2,6 +2,7 @@ import {
   optimizePortfolio,
   SPEND_CATEGORIES,
   type Card,
+  type MerchantShares,
   type PortfolioResult,
   type SpendCategory,
   type SpendingProfile,
@@ -64,9 +65,13 @@ export const CATEGORY_META: Record<SpendCategory, { label: string; hint: string;
 export function runOptimize(
   spending: SpendingProfile,
   profile: UserProfile = DEFAULT_PROFILE,
+  merchantShares?: MerchantShares,
 ): PortfolioResult | null {
   try {
-    return optimizePortfolio(spending, profile, ALL_CARDS);
+    // merchantShares carries the user's answers about co-brand retailers. Omitted or
+    // empty, the engine keeps its old behaviour: assume the whole category lands at
+    // the merchant, flag it, and hold the card back from the recommendation.
+    return optimizePortfolio(spending, profile, ALL_CARDS, undefined, { merchantShares });
   } catch (err) {
     console.error("Optimizer failed:", err);
     return null;
@@ -82,10 +87,11 @@ export function runOptimizeOver(
   spending: SpendingProfile,
   profile: UserProfile,
   cards: Card[],
+  merchantShares?: MerchantShares,
 ): PortfolioResult | null {
   if (cards.length === 0) return null;
   try {
-    return optimizePortfolio(spending, profile, cards);
+    return optimizePortfolio(spending, profile, cards, undefined, { merchantShares });
   } catch (err) {
     console.error("Optimizer (owned cards) failed:", err);
     return null;

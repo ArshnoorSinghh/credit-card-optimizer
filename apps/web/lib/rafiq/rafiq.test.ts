@@ -134,7 +134,7 @@ describe("factual fidelity: comparison numbers equal the scorer", () => {
     }
   });
 
-  it("comparison WITHOUT a spending profile refuses to assume — asks for it", async () => {
+  it("comparison WITHOUT a spending profile refuses to assume - asks for it", async () => {
     // Model tries to compare; dispatch reports needsSpending; model asks (round 2).
     const client = fakeClient([
       modelCall("compare_cards", { cards: [CARDS[0]!.id, CARDS[1]!.id] }),

@@ -64,8 +64,31 @@ export type {
 } from "./score-card";
 
 // Merchant -> spend-category mapping (UAE-specific, extendable data table).
-export { MERCHANT_MAP, resolveMerchant } from "./merchant-map";
+export { MERCHANT_MAP, resolveMerchant, normalizeMerchantName } from "./merchant-map";
 export type { MerchantEntry, ResolvedMerchant } from "./merchant-map";
+
+// Merchant share: what fraction of a category's spend lands at one retailer. The
+// input that lets co-brand cards be scored instead of excluded.
+export { sanitizeMerchantShares, shareFor } from "./merchant-share";
+export type {
+  MerchantShares,
+  ResolvedMerchantShares,
+  MerchantShareIssue,
+} from "./merchant-share";
+export { merchantShareQuestions } from "./merchant-share-questions";
+export type { MerchantShareQuestion } from "./merchant-share-questions";
+
+// Study filters: the universe predicates the gap study measures with, shared so the
+// study and its diagnostic cannot drift, and regression-tested for liveness.
+export {
+  RATE_DEFECT_CLAUSES,
+  isRateDefect,
+  isSoundScore,
+  rateDefectsIn,
+  hasDoNotPublishCaveat,
+  IMPLAUSIBLE_RETURN_PCT,
+} from "./study-filters";
+export type { RateDefectClause } from "./study-filters";
 
 // "Which card should I use?" — deterministic lookup over the scorer. No AI.
 export { askWhichCard, bestCardForCategory, bestCardOverall } from "./which-card";
@@ -174,3 +197,53 @@ export type {
   ProgramExpiryDefault,
   Devaluation,
 } from "./burn-priority";
+
+// Devaluations: the dated table plus its freshness check. Exported from its own
+// module (not just via the burn engine) because "has anyone swept this lately" is a
+// question about the DATA, and the calendar surfaces the answer as a flag.
+export {
+  DEVALUATIONS_REVIEWED_ON,
+  DEVALUATION_REVIEW_MAX_AGE_MONTHS,
+  devaluationReviewAgeMonths,
+  devaluationReviewIsStale,
+  upcomingDevaluations,
+} from "./devaluations";
+
+// Cap thresholds: "after AED X of groceries this month, switch to your other card".
+// Deliberately NOT on the calendar — dating a cap crossing needs a uniform-spend
+// assumption, while the threshold form is exact for any spending pattern.
+export { capThresholds } from "./cap-thresholds";
+export type {
+  CapThreshold,
+  CapThresholdReport,
+  UnstatedThreshold,
+  SwitchTarget,
+} from "./cap-thresholds";
+export { optionSpendThresholds } from "./score-card";
+export type { SpendThreshold } from "./score-card";
+
+// Deadline calendar: expiry + devaluations + fee renewals on one timeline. Composes
+// the engines above and computes no deadline of its own; `undated` carries the ones
+// that cannot be dated, so an empty calendar never reads as "nothing is coming up".
+export { deadlineCalendar } from "./deadline-calendar";
+export type {
+  DeadlineKind,
+  DeadlineCertainty,
+  DeadlineEvent,
+  UndatedDeadline,
+  DeadlineCalendar,
+  HeldCard,
+  CalendarInput,
+  CalendarOptions,
+} from "./deadline-calendar";
+
+// Statement check: the only thing here that compares a prediction to something that
+// actually happened. Everything else in this engine is modelled.
+export { checkStatement, summariseStatementChecks } from "./statement-check";
+export type {
+  Statement,
+  StatementLine,
+  StatementCheck,
+  StatementSummary,
+  UnitRange,
+} from "./statement-check";
