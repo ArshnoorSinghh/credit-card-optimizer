@@ -21,7 +21,21 @@ import { DEFAULT_PROFILE, DEFAULT_SPEND } from "@/lib/optimizer";
 
 // v2: added the held-card list. Bumped so a stale v1 blob doesn't hydrate the new
 // field as undefined — a missing key just falls back to defaults instead.
-const KEY = "fils.profile.v2";
+// v3: added pointsHoldings + cardOpenedOn, the two inputs the deadline calendar
+// needs before it can date anything. Same reason for the bump.
+const KEY = "fils.profile.v3";
+
+/**
+ * One points balance the user says they hold. Mirrors the engine's `PointsHolding`
+ * rather than importing it, because this is a STORAGE shape: it has to survive a
+ * JSON round-trip through sessionStorage, so `expiryDate` is a plain ISO string.
+ */
+export interface StoredHolding {
+  currency: string;
+  balance: number;
+  /** ISO YYYY-MM-DD. Absent means the user has not told us — never a guess. */
+  expiryDate?: string;
+}
 
 export interface StoredProfile {
   spending: Record<SpendCategory, number>;
@@ -43,6 +57,29 @@ export interface StoredProfile {
    * it properly needs a Prisma migration.
    */
   merchantShares: Record<string, string>;
+  /**
+   * The points balances the user says they hold. Feeds both the points screen and
+   * the deadline calendar, which is why it lives here rather than in a component:
+   * the calendar used to render hardcoded sample data because there was nowhere to
+   * read the real thing from.
+   *
+   * LOCAL ONLY, same as merchantShares — see the note there. An empty list means the
+   * user has told us nothing, which is different from holding nothing, and the
+   * calendar says so rather than showing an empty timeline.
+   */
+  pointsHoldings: StoredHolding[];
+  /**
+   * ISO YYYY-MM-DD the user OPENED each held card with the bank, keyed by card id.
+   *
+   * why this cannot be derived: `SavedCard.createdAt` records when the card was added
+   * to Fils, not when it was opened with the bank, and substituting one for the other
+   * is exactly the "plausible number standing in for an unknown one" error this
+   * codebase keeps catching. A card absent from this map produces an `undated`
+   * fee-renewal entry carrying the question that would fix it.
+   *
+   * LOCAL ONLY, same as merchantShares.
+   */
+  cardOpenedOn: Record<string, string>;
   /** True once the user has set a real spending profile (not just the defaults). */
   onboarded: boolean;
 }
@@ -53,8 +90,57 @@ const DEFAULTS: StoredProfile = {
   bank: null,
   cardIds: [],
   merchantShares: {},
+  pointsHoldings: [],
+  cardOpenedOn: {},
   onboarded: false,
 };
+
+/**
+ * ISO YYYY-MM-DD, and a real day — not just four digits and two hyphens.
+ *
+ * why the round-trip and not a bare `Date.parse`: parsing ACCEPTS a day that does not
+ * exist and silently rolls it forward. "2024-02-31" parses happily and comes back as
+ * 2 March, so a typo would have become a confident date on the calendar, off by the
+ * overflow and with nothing to show it had been changed. Comparing the formatted date
+ * back to the input is what rejects it.
+ */
+export function isIsoDate(v: unknown): v is string {
+  if (typeof v !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+  const d = new Date(v + "T00:00:00Z");
+  if (Number.isNaN(d.getTime())) return false;
+  return d.toISOString().slice(0, 10) === v;
+}
+
+/**
+ * Narrow whatever came back out of sessionStorage into holdings we can hand the
+ * engine. Anything malformed is DROPPED rather than repaired: a balance we cannot
+ * trust would drive a value-at-risk figure, and a bad expiry would put a fabricated
+ * date on a calendar.
+ */
+export function parseHoldings(raw: unknown): StoredHolding[] {
+  if (!Array.isArray(raw)) return [];
+  const out: StoredHolding[] = [];
+  for (const item of raw) {
+    if (typeof item !== "object" || item === null) continue;
+    const h = item as Record<string, unknown>;
+    if (typeof h.currency !== "string" || h.currency === "") continue;
+    if (typeof h.balance !== "number" || !Number.isFinite(h.balance) || h.balance < 0) continue;
+    const holding: StoredHolding = { currency: h.currency, balance: h.balance };
+    if (isIsoDate(h.expiryDate)) holding.expiryDate = h.expiryDate;
+    out.push(holding);
+  }
+  return out;
+}
+
+/** Same rule for the anniversary map: keep only entries that are real ISO dates. */
+export function parseOpenedOn(raw: unknown): Record<string, string> {
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return {};
+  const out: Record<string, string> = {};
+  for (const [cardId, v] of Object.entries(raw as Record<string, unknown>)) {
+    if (isIsoDate(v)) out[cardId] = v;
+  }
+  return out;
+}
 
 export function saveProfile(p: StoredProfile): void {
   if (typeof window === "undefined") return;
@@ -76,6 +162,8 @@ export function loadProfile(): StoredProfile {
         typeof parsed.merchantShares === "object" && parsed.merchantShares !== null
           ? (parsed.merchantShares as Record<string, string>)
           : {},
+      pointsHoldings: parseHoldings(parsed.pointsHoldings),
+      cardOpenedOn: parseOpenedOn(parsed.cardOpenedOn),
       onboarded: parsed.onboarded ?? false,
     };
   } catch {
@@ -138,10 +226,11 @@ export function adoptionPatch(p: StoredProfile): Record<string, unknown> {
 }
 
 /**
- * `local` carries the fields the server does not store yet. Right now that is only
- * `merchantShares` — without this merge, a signed-in user's answers would be wiped
- * by every hydration, silently returning their co-brand cards to the held-back
- * state they had just answered their way out of.
+ * `local` carries the fields the server does not store yet: `merchantShares`, plus
+ * the calendar's `pointsHoldings` and `cardOpenedOn`. Without this merge, a signed-in
+ * user's answers would be wiped by every hydration — silently returning their
+ * co-brand cards to the held-back state they had just answered their way out of, and
+ * emptying the calendar they had just filled in.
  */
 function serverToStored(s: ServerState, local: StoredProfile): StoredProfile {
   return {
@@ -153,6 +242,8 @@ function serverToStored(s: ServerState, local: StoredProfile): StoredProfile {
     bank: s.bank,
     cardIds: s.cardIds,
     merchantShares: local.merchantShares,
+    pointsHoldings: local.pointsHoldings,
+    cardOpenedOn: local.cardOpenedOn,
     onboarded: s.spending !== null,
   };
 }

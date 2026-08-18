@@ -251,11 +251,26 @@ Persistence, the anniversary question, email/push, and any scheduled job.
 
 Stated plainly so the demo is not mistaken for the feature:
 
-1. **Points holdings are not persisted.** The points page holds them in `useState` with
-   `DEFAULT_HOLDINGS` demo data. Expiry deadlines cannot survive a reload until a
-   `PointsHolding` model exists. This is the single largest build item.
-2. **No card anniversary field.** Needs `SavedCard.openedOn DateTime?` plus the question
-   in the UI. Until then every fee-renewal entry is `undated`.
+1. **Points holdings are not persisted TO THE DATABASE.** *Partly closed 2026-08-18.*
+   They now live in the profile store (`pointsHoldings`), so the points screen and the
+   calendar read the same list and the calendar no longer renders `DEFAULT_HOLDINGS` at
+   a signed-in user. But the store keeps them in **sessionStorage**, the same position
+   `merchantShares` is in, so they survive navigation and not a new session. Finishing
+   this needs a `PointsHolding` model + a column on `/api/profile`. Still the single
+   largest build item.
+2. **No card anniversary field.** *Partly closed 2026-08-18.* The UI question now
+   exists: `/calendar` renders a date input per held card under "Fill in your calendar",
+   writing `cardOpenedOn` in the profile store, and a card with a date produces a real
+   `fee_renewal` event. Persistence is the same sessionStorage caveat as above; it still
+   needs `SavedCard.openedOn DateTime?`.
+
+   **Why this stopped at sessionStorage rather than doing the migration.** Vercel
+   *Preview* deployments run against the PRODUCTION database (CLAUDE.md > Databases), so
+   shipping Prisma-dependent code before the migration is applied to prod would 500
+   `/api/profile` for real users on the live preview. And there are no local `.env`
+   files, so the migration could be neither applied to DEV nor tested. The schema work
+   is deliberately deferred until a DEV connection exists and the prod migration can be
+   run as the reviewed operation CLAUDE.md requires.
 3. **No delivery mechanism.** There is no transactional email, no cron, no `vercel.json`.
    A calendar the user must remember to visit is not a retention feature — the retention
    claim depends on a scheduled digest that does not exist yet.

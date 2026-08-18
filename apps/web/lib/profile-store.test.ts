@@ -4,6 +4,8 @@ import {
   hasLocalWork,
   isUnwrittenServerState,
   DEFAULT_STORED_PROFILE,
+  parseHoldings,
+  parseOpenedOn,
   type StoredProfile,
 } from "./profile-store";
 
@@ -90,5 +92,77 @@ describe("adoptionPatch", () => {
   it("omits a null bank rather than persisting it", () => {
     const body = adoptionPatch(local({ onboarded: true, bank: null }));
     expect("bank" in body).toBe(false);
+  });
+});
+
+/*
+  The calendar's two inputs. Both come back out of sessionStorage as untyped JSON, so
+  the parsers are the boundary that decides what the deadline engine is allowed to
+  see. The rule they enforce: drop anything we cannot trust, never repair it. A
+  repaired balance drives a value-at-risk figure and a repaired date lands on a
+  calendar, which is the one thing this screen exists not to do.
+*/
+describe("parseHoldings", () => {
+  it("keeps a well-formed holding, with and without an expiry", () => {
+    expect(parseHoldings([{ currency: "Skywards Miles", balance: 60000 }])).toEqual([
+      { currency: "Skywards Miles", balance: 60000 },
+    ]);
+    expect(
+      parseHoldings([{ currency: "FAB Rewards", balance: 40000, expiryDate: "2027-01-18" }]),
+    ).toEqual([{ currency: "FAB Rewards", balance: 40000, expiryDate: "2027-01-18" }]);
+  });
+
+  it("drops a malformed expiry but keeps the balance", () => {
+    // The balance is still true; only the date is unusable. Dropping the whole
+    // holding would silently lose points the user told us about.
+    const out = parseHoldings([{ currency: "X", balance: 100, expiryDate: "not-a-date" }]);
+    expect(out).toEqual([{ currency: "X", balance: 100 }]);
+    expect(out[0]).not.toHaveProperty("expiryDate");
+  });
+
+  it("rejects a date that matches the shape but is not a real day", () => {
+    expect(parseHoldings([{ currency: "X", balance: 1, expiryDate: "2026-13-45" }])).toEqual([
+      { currency: "X", balance: 1 },
+    ]);
+  });
+
+  it("drops entries with an untrustworthy balance", () => {
+    expect(parseHoldings([{ currency: "X", balance: -5 }])).toEqual([]);
+    expect(parseHoldings([{ currency: "X", balance: Number.NaN }])).toEqual([]);
+    expect(parseHoldings([{ currency: "X", balance: "60000" }])).toEqual([]);
+    expect(parseHoldings([{ currency: "", balance: 10 }])).toEqual([]);
+  });
+
+  it("survives junk instead of a list", () => {
+    expect(parseHoldings(undefined)).toEqual([]);
+    expect(parseHoldings("nope")).toEqual([]);
+    expect(parseHoldings([null, 7, "x"])).toEqual([]);
+  });
+});
+
+describe("parseOpenedOn", () => {
+  it("keeps real ISO dates keyed by card id", () => {
+    expect(parseOpenedOn({ fab_cashback: "2024-09-12" })).toEqual({ fab_cashback: "2024-09-12" });
+  });
+
+  it("drops anything that is not a real date", () => {
+    // An empty string is the one that matters: it is what an emptied date input
+    // sends, and storing it would leave a card looking answered while its deadline
+    // stayed undated.
+    expect(parseOpenedOn({ a: "", b: "12/09/2024", c: "2024-02-31", d: 20240912 })).toEqual({});
+  });
+
+  it("survives junk instead of a map", () => {
+    expect(parseOpenedOn(null)).toEqual({});
+    expect(parseOpenedOn(["2024-09-12"])).toEqual({});
+  });
+});
+
+describe("the calendar inputs start empty", () => {
+  it("defaults to no holdings and no opening dates", () => {
+    // Both must default to "we have not been told", never to a sample or a guess -
+    // the calendar branches on emptiness to decide what it may claim.
+    expect(DEFAULT_STORED_PROFILE.pointsHoldings).toEqual([]);
+    expect(DEFAULT_STORED_PROFILE.cardOpenedOn).toEqual({});
   });
 });

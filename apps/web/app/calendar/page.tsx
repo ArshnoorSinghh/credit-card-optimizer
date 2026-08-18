@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -26,6 +26,7 @@ import {
   groupByMonth,
   relativeDays,
   runCalendar,
+  todayIso,
   shortDate,
   type DeadlineEvent,
 } from "@/lib/calendar";
@@ -40,9 +41,18 @@ import type { DeadlineKind } from "@fils/engine";
   rendered as first-class content rather than hidden — an empty calendar must never
   read as "nothing is coming up" when the truth is "nobody has told us yet".
 
-  DEMO LIMITS, stated on the screen itself: points holdings are not persisted yet, so
-  this reads the same demo inventory the points screen starts from, and no card
-  carries an opening date because there is no column for one. See CALENDAR_SPEC.md §6.
+  WHERE THE DATES COME FROM: the user's own holdings and card opening dates, held in
+  the profile store. "Fill in your calendar" below is how they get there - every input
+  writes one date the engine named, and an unanswered one stays undated rather than
+  being guessed.
+
+  LIMIT, stated on the screen itself: the profile store keeps these in sessionStorage,
+  because /api/profile has no column for either yet (the same position merchantShares
+  is in). They survive navigation between screens but not a new session. Persisting
+  them needs a Prisma migration - see CALENDAR_SPEC.md §6.
+
+  A guest who has entered nothing still sees the sample inventory, marked as such. A
+  signed-in user never does.
 */
 
 const KIND_META: Record<DeadlineKind, { label: string; icon: typeof Plane; tone: string }> = {
@@ -119,22 +129,72 @@ function EventRow({ event }: { event: DeadlineEvent }) {
 }
 
 export default function CalendarPage() {
-  const { state, ready } = useProfileStore();
+  const { state, ready, signedIn, save } = useProfileStore();
   /*
-    Holdings are not persisted (CALENDAR_SPEC.md §6), so the screen starts from the
-    same demo inventory the points page uses. Marked as demo in the UI rather than
-    passed off as the user's own — the points screen sets that precedent deliberately.
+    The user's OWN holdings when they have entered any, and only then. This screen
+    used to pass DEFAULT_HOLDINGS unconditionally, so every balance and every AED
+    at-risk figure on it belonged to a fixture rather than to the reader.
+
+    A guest who has entered nothing still sees the demo inventory, clearly marked, so
+    the page demonstrates something on arrival. A signed-in user never does: sample
+    balances under "your deadlines" read as their own, and the whole point of this
+    screen is that its dates can be trusted.
   */
-  const [usingDemoHoldings] = useState(true);
+  const usingDemoHoldings = state.pointsHoldings.length === 0 && !signedIn;
+  const holdings = usingDemoHoldings ? DEFAULT_HOLDINGS : state.pointsHoldings;
 
   const view = useMemo(() => {
     if (!ready) return null;
     return runCalendar({
-      holdings: DEFAULT_HOLDINGS,
+      holdings,
       cardIds: state.cardIds,
       spending: state.spending,
+      openedOn: state.cardOpenedOn,
     });
-  }, [ready, state.cardIds, state.spending]);
+  }, [ready, holdings, state.cardIds, state.spending, state.cardOpenedOn]);
+
+  /*
+    What the engine could not date, expressed as the app's own state so the inputs
+    below can write to it. Derived from OUR record rather than parsed back out of the
+    engine's `undated` prompts: those are prose for the reader, not identifiers, and
+    matching on them would break the moment the wording changed.
+  */
+  const cardsNeedingOpenedOn = useMemo(
+    () => (view ? view.heldCards.filter((h) => h.openedOn === undefined) : []),
+    [view],
+  );
+  // Only the user's real holdings are editable. Demo balances belong to a fixture,
+  // so offering to date them would invite answering a question about someone else's
+  // points and then seeing the answer vanish.
+  const holdingsNeedingExpiry = useMemo(
+    () => (usingDemoHoldings ? [] : state.pointsHoldings.filter((h) => h.expiryDate === undefined)),
+    [usingDemoHoldings, state.pointsHoldings],
+  );
+
+  /** Record (or clear) the date a card was opened with the bank. */
+  function setOpenedOn(cardId: string, value: string): void {
+    const next = { ...state.cardOpenedOn };
+    // Clearing the field must REMOVE the key, not store "". An empty string is not a
+    // date, and leaving one behind would mean the card never appears in this list
+    // again while still producing an undated deadline the reader cannot fix.
+    if (value === "") delete next[cardId];
+    else next[cardId] = value;
+    save({ cardOpenedOn: next });
+  }
+
+  /** Record (or clear) a points expiry the user has looked up. */
+  function setHoldingExpiry(currency: string, value: string): void {
+    save({
+      pointsHoldings: state.pointsHoldings.map((h) => {
+        if (h.currency !== currency) return h;
+        if (value === "") {
+          const { expiryDate: _dropped, ...rest } = h;
+          return rest;
+        }
+        return { ...h, expiryDate: value };
+      }),
+    });
+  }
 
   const groups = useMemo(() => (view ? groupByMonth(view.calendar.events) : []), [view]);
 
@@ -197,9 +257,10 @@ export default function CalendarPage() {
             {usingDemoHoldings && (
               <Reveal>
                 <p className="mt-5 rounded-[var(--radius-md)] border border-dashed border-line bg-surface-2/40 px-4 py-3 text-sm text-muted">
-                  <span className="font-medium text-fg">Sample holdings.</span> Points balances
-                  aren&apos;t saved to your account yet, so this timeline uses the same example
-                  inventory as the points screen. Your cards and spending are your own.{" "}
+                  <span className="font-medium text-fg">Sample holdings.</span> You haven&apos;t
+                  told us what points you hold, so this timeline uses the same example inventory
+                  as the points screen. Add your own and every figure here becomes yours. Your
+                  cards and spending already are.{" "}
                   <Link href="/points" className="text-clay underline underline-offset-2">
                     Edit holdings on the points screen
                   </Link>
@@ -302,6 +363,63 @@ export default function CalendarPage() {
                     ))}
                   </div>
                 </Stagger>
+              </section>
+            )}
+
+            {/*
+              ── Turning the questions into answers ────────────────────────
+              The list above states what we cannot date. This is where the reader
+              fixes it. Every input writes one date the engine asked for by name, and
+              nothing here computes or defaults anything: an empty field stays empty
+              and its deadline stays undated.
+            */}
+            {(cardsNeedingOpenedOn.length > 0 || holdingsNeedingExpiry.length > 0) && (
+              <section className="mt-14">
+                <div className="flex items-center gap-2">
+                  <CircleHelp className="h-5 w-5 text-clay" aria-hidden />
+                  <h2 className="font-display text-2xl font-semibold">Fill in your calendar</h2>
+                </div>
+                <p className="mt-2 max-w-2xl text-muted">
+                  Each date you add here turns one of the deadlines above into a real one, with
+                  the amount at stake. We never guess these.
+                </p>
+                <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                  {cardsNeedingOpenedOn.map((held) => (
+                    <Card key={held.card.id} className="p-5">
+                      <p className="text-base font-semibold text-fg">{held.card.name}</p>
+                      <p className="mt-1.5 text-sm text-muted">
+                        When did you open this card with the bank? That sets the renewal date its
+                        annual fee falls on.
+                      </p>
+                      <input
+                        type="date"
+                        value={state.cardOpenedOn[held.card.id] ?? ""}
+                        max={todayIso()}
+                        onChange={(e) => setOpenedOn(held.card.id, e.target.value)}
+                        aria-label={`Date you opened ${held.card.name}`}
+                        className="mt-3 w-full rounded-[var(--radius-md)] border border-line bg-surface-2 px-2 py-1.5 text-sm text-fg outline-none focus:border-line-strong"
+                      />
+                    </Card>
+                  ))}
+                  {holdingsNeedingExpiry.map((h) => (
+                    <Card key={h.currency} className="p-5">
+                      <p className="text-base font-semibold text-fg">
+                        {h.balance.toLocaleString("en-US")} {h.currency}
+                      </p>
+                      <p className="mt-1.5 text-sm text-muted">
+                        When do these expire? If you only know when you earned them, your bank&apos;s
+                        statement will show the expiry.
+                      </p>
+                      <input
+                        type="date"
+                        value={h.expiryDate ?? ""}
+                        onChange={(e) => setHoldingExpiry(h.currency, e.target.value)}
+                        aria-label={`Expiry date for ${h.currency}`}
+                        className="mt-3 w-full rounded-[var(--radius-md)] border border-line bg-surface-2 px-2 py-1.5 text-sm text-fg outline-none focus:border-line-strong"
+                      />
+                    </Card>
+                  ))}
+                </div>
               </section>
             )}
 

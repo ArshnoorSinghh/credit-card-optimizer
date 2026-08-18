@@ -82,17 +82,43 @@ export default function PointsPage() {
   // holdings" with no marking, it reads as their own balances, and the burn
   // warnings it drives are advice about points nobody holds. Signed in, the list
   // starts empty and the panel asks them to add what they hold.
-  const { signedIn, ready } = useProfileStore();
+  const { state, signedIn, ready, save } = useProfileStore();
   const [rows, setRows] = useState<Row[]>(
     DEFAULT_HOLDINGS.map((h, i) => ({ ...h, id: i + 1 })),
   );
-  const [cleared, setCleared] = useState(false);
+  // Hydration runs once. Until it has, the persist effect below must not fire, or
+  // the initial sample rows would be written over whatever the user actually saved.
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    if (!ready || cleared || !signedIn) return;
-    setRows([]);
-    setCleared(true);
-  }, [ready, signedIn, cleared]);
+    if (!ready || hydrated) return;
+    const saved = state.pointsHoldings;
+    if (saved.length > 0) {
+      // What the user told us, on any previous screen or visit this session.
+      setRows(saved.map((h, i) => ({ ...h, id: i + 1 })));
+      nextId = saved.length + 1;
+    } else if (signedIn) {
+      // Sample data must never reach a signed-in user: rendered under "Your
+      // holdings" it reads as their own balances, and the burn warnings it drives
+      // are advice about points nobody holds.
+      setRows([]);
+    }
+    setHydrated(true);
+  }, [ready, hydrated, signedIn, state.pointsHoldings]);
+
+  // Persist the user's OWN edits so the deadline calendar reads the same holdings
+  // this screen shows. Without this the calendar had nowhere to read them from and
+  // fell back to sample data.
+  //
+  // why `touched` and not just `hydrated`: a guest arrives looking at DEFAULT_HOLDINGS.
+  // Persisting those would promote sample balances into the user's saved state, and
+  // the calendar would then present 60,000 Skywards nobody owns as a dated deadline
+  // worth AED 2,220. Only a real add or remove counts.
+  const [touched, setTouched] = useState(false);
+  useEffect(() => {
+    if (!hydrated || !touched) return;
+    save({ pointsHoldings: rows.map(({ id: _id, ...h }) => h) });
+  }, [rows, hydrated, touched, save]);
 
   const [goal, setGoal] = useState<RedemptionGoal>("max_value");
   const [premiumCabin, setPremiumCabin] = useState(false);
@@ -115,12 +141,14 @@ export default function PointsPage() {
     const holding: PointsHolding = { currency: draftCur, balance: draftBal };
     if (draftExpiry) holding.expiryDate = draftExpiry;
     setRows((r) => [...r, { ...holding, id: nextId++ }]);
+    setTouched(true);
     setDraftExpiry("");
     toast(`Added ${draftCur}`);
   }
 
   function removeRow(row: Row) {
     setRows((rs) => rs.filter((x) => x.id !== row.id));
+    setTouched(true);
     toast(`Removed ${row.currency}`, "info");
   }
 
