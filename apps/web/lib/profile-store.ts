@@ -63,8 +63,9 @@ export interface StoredProfile {
    * the calendar used to render hardcoded sample data because there was nowhere to
    * read the real thing from.
    *
-   * LOCAL ONLY, same as merchantShares — see the note there. An empty list means the
-   * user has told us nothing, which is different from holding nothing, and the
+   * PERSISTED for signed-in users (the `points_holdings` table, via /api/profile);
+   * sessionStorage remains the guest backend and the local cache. An empty list means
+   * the user has told us nothing, which is different from holding nothing, and the
    * calendar says so rather than showing an empty timeline.
    */
   pointsHoldings: StoredHolding[];
@@ -77,7 +78,7 @@ export interface StoredProfile {
    * codebase keeps catching. A card absent from this map produces an `undated`
    * fee-renewal entry carrying the question that would fix it.
    *
-   * LOCAL ONLY, same as merchantShares.
+   * PERSISTED for signed-in users, on `saved_cards.opened_on`.
    */
   cardOpenedOn: Record<string, string>;
   /** True once the user has set a real spending profile (not just the defaults). */
@@ -190,20 +191,43 @@ interface ServerState {
   spending: Record<string, number> | null;
   salaryAed: number | null;
   bank: string | null;
+  /** Present since the points-holdings migration; optional so a stale cached response
+   *  from an older deploy hydrates as "nothing saved" instead of crashing the parse. */
+  pointsHoldings?: StoredHolding[];
+  cardOpenedOn?: Record<string, string>;
 }
 
 /**
  * True when the account has never persisted anything — i.e. a brand-new sign-up.
  * Distinguishing this from "saved, but empty" is the whole point: only a fresh
  * account may have its state replaced by whatever the guest built locally.
+ *
+ * why holdings and opening dates are checked too, now that they persist: a user who
+ * entered only their points balances and never touched spending or the wallet HAS
+ * written to their account. Without these two clauses that account still looks
+ * unwritten, and a stale guest blob in the same browser would be allowed to overwrite
+ * the balances they had saved.
  */
 export function isUnwrittenServerState(s: ServerState): boolean {
-  return s.spending === null && s.cardIds.length === 0 && s.salaryAed === null && s.bank === null;
+  return (
+    s.spending === null &&
+    s.cardIds.length === 0 &&
+    s.salaryAed === null &&
+    s.bank === null &&
+    (s.pointsHoldings ?? []).length === 0 &&
+    Object.keys(s.cardOpenedOn ?? {}).length === 0
+  );
 }
 
-/** True when the local (guest) profile holds work worth carrying into the account. */
+/**
+ * True when the local (guest) profile holds work worth carrying into the account.
+ *
+ * Holdings count: a guest can arrive at the points screen, type real balances, and sign
+ * up without ever completing onboarding or picking a card. That is real work, and before
+ * the balances were persisted there was nothing to carry.
+ */
 export function hasLocalWork(p: StoredProfile): boolean {
-  return p.onboarded || p.cardIds.length > 0;
+  return p.onboarded || p.cardIds.length > 0 || p.pointsHoldings.length > 0;
 }
 
 /**
@@ -222,15 +246,26 @@ export function adoptionPatch(p: StoredProfile): Record<string, unknown> {
   }
   if (p.cardIds.length > 0) body.cardIds = p.cardIds;
   if (p.bank) body.bank = p.bank;
+  // The calendar's two inputs travel into the new account as well, so a guest who filled
+  // in their balances and opening dates does not sign up and find the calendar empty.
+  if (p.pointsHoldings.length > 0) body.pointsHoldings = p.pointsHoldings;
+  if (Object.keys(p.cardOpenedOn).length > 0) body.cardOpenedOn = p.cardOpenedOn;
   return body;
 }
 
 /**
- * `local` carries the fields the server does not store yet: `merchantShares`, plus
- * the calendar's `pointsHoldings` and `cardOpenedOn`. Without this merge, a signed-in
- * user's answers would be wiped by every hydration — silently returning their
- * co-brand cards to the held-back state they had just answered their way out of, and
- * emptying the calendar they had just filled in.
+ * `local` carries the one field the server still does not store: `merchantShares`.
+ * Without that merge, a signed-in user's co-brand answers would be wiped by every
+ * hydration, silently returning those cards to the held-back state they had just
+ * answered their way out of.
+ *
+ * `pointsHoldings` and `cardOpenedOn` are NO LONGER merged from local — they have
+ * columns now, so the server is authoritative for them. Keeping the local merge would
+ * be actively wrong: a holding deleted on another device would be resurrected from this
+ * browser's stale cache on every load, and deleting one would be impossible.
+ *
+ * The `??` fallbacks cover only the transitional case of a cached response from a deploy
+ * that predates the migration; they are not a "keep whatever was local" path.
  */
 function serverToStored(s: ServerState, local: StoredProfile): StoredProfile {
   return {
@@ -242,8 +277,11 @@ function serverToStored(s: ServerState, local: StoredProfile): StoredProfile {
     bank: s.bank,
     cardIds: s.cardIds,
     merchantShares: local.merchantShares,
-    pointsHoldings: local.pointsHoldings,
-    cardOpenedOn: local.cardOpenedOn,
+    // Re-parsed rather than trusted: this crossed the network as JSON, and the same
+    // rules that drop a malformed balance or a rolled-forward date out of sessionStorage
+    // apply to anything a response body claims.
+    pointsHoldings: parseHoldings(s.pointsHoldings ?? []),
+    cardOpenedOn: parseOpenedOn(s.cardOpenedOn ?? {}),
     onboarded: s.spending !== null,
   };
 }
@@ -334,6 +372,10 @@ export function useProfileStore(): ProfileStore {
           // REPLACED, not merged: clearing an answer removes its key, and a merge
           // would resurrect it. The picker always sends the complete answer set.
           merchantShares: patch.merchantShares ?? prev.merchantShares,
+          // Same rule, same reason: the calendar sends the complete map when a date is
+          // cleared, and the points screen sends the complete list when a row is deleted.
+          cardOpenedOn: patch.cardOpenedOn ?? prev.cardOpenedOn,
+          pointsHoldings: patch.pointsHoldings ?? prev.pointsHoldings,
         };
         saveProfile(next);
 
@@ -346,6 +388,8 @@ export function useProfileStore(): ProfileStore {
             if (patch.profile) body.salaryAed = next.profile.monthlySalaryAed;
             if (patch.bank !== undefined) body.bank = next.bank;
             if (patch.cardIds !== undefined) body.cardIds = next.cardIds;
+            if (patch.pointsHoldings !== undefined) body.pointsHoldings = next.pointsHoldings;
+            if (patch.cardOpenedOn !== undefined) body.cardOpenedOn = next.cardOpenedOn;
             if (Object.keys(body).length === 0) return;
             void fetch("/api/profile", {
               method: "PUT",

@@ -73,6 +73,10 @@ model User {
   /// "which users hold card X" stays a query.
   savedCards SavedCard[]
 
+  /// The points balances the user says they hold. Feeds the points screen and the
+  /// deadline calendar. Relational for the same reason as savedCards.
+  pointsHoldings PointsHolding[]
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -91,11 +95,71 @@ model SavedCard {
   cardId    String   @map("card_id")
   createdAt DateTime @default(now()) @map("created_at")
 
+  /// The date the user OPENED this card WITH THE BANK. Drives the annual-fee renewal
+  /// entry on the deadline calendar, which dates the charge from this anniversary.
+  ///
+  /// NULLABLE, and it must STAY nullable. "We don't know when you opened it" is a real
+  /// state, not missing data: the calendar renders it as a question ("When did you open
+  /// your ADCB TouchPoints?") rather than as a dated event, and answering it is the
+  /// highest-intent prompt in the product.
+  ///
+  /// why this must NEVER fall back to `createdAt`: that column records when the card was
+  /// added to FILS, which is a different fact entirely — someone can add a five-year-old
+  /// card today. Substituting one for the other would put a confident wrong date on a fee
+  /// the user is about to be charged, which is the same class of error as scoring a
+  /// marketing "up to 5%" ceiling as a certain rate.
+  ///
+  /// @db.Date (not the default timestamp): this is a calendar day the user typed, with no
+  /// time and no timezone. Storing it as a timestamp would let a UTC offset shift the
+  /// anniversary across a day boundary on read.
+  openedOn DateTime? @map("opened_on") @db.Date
+
   /// A user holds a given card at most once.
   @@unique([userId, cardId])
   @@index([userId])
   @@index([cardId])
   @@map("saved_cards")
+}
+
+/// One points/miles balance a user says they hold, e.g. 60,000 Skywards Miles.
+///
+/// Relational rather than a JSON blob on User, following the SavedCard precedent: the
+/// app reads and writes these per-currency, and real rows keep "how many users hold
+/// Skywards" a query. Deliberately NOT FK'd to any card — a user can hold a currency
+/// long after closing the card that earned it, and a card-data reseed must never
+/// cascade-delete someone's balance.
+model PointsHolding {
+  id     String @id @default(cuid())
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// The reward currency as the engine names it, e.g. "Skywards Miles". A plain string,
+  /// not an enum: the currency set comes from cards.json and changes with the card data,
+  /// so a DB enum would need a migration every time a new program appears.
+  currency String
+
+  /// Float, not Int: conversions and partial balances are not always whole numbers, and
+  /// this column mirrors what the user typed rather than performing arithmetic on it.
+  balance Float
+
+  /// When these points expire, IF the user told us. NULL is the common and correct case.
+  ///
+  /// why nullable and never defaulted: `burn-priority.ts` refuses to invent an expiry,
+  /// and the calendar turns an unknown expiry into a question instead of a date. A
+  /// default here would hand the whole engine a fabricated deadline it is built to avoid.
+  ///
+  /// @db.Date for the same reason as SavedCard.openedOn: a typed calendar day, no time.
+  expiryDate DateTime? @map("expiry_date") @db.Date
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  /// One balance per currency per user. The client sends a complete set and the write
+  /// converges on it, so a second row for the same currency would be a duplicate, not a
+  /// second holding.
+  @@unique([userId, currency])
+  @@index([userId])
+  @@map("points_holdings")
 }
 
 /// How a card denominates rewards. Mirrors the engine's `RewardType` union exactly;
@@ -179,6 +243,16 @@ model Card {
   /// Nullable (not defaulted false) so a card that omits the field in cards.json
   /// round-trips back out omitted, rather than gaining a phantom `false`.
   excludedFromScoring Boolean? @map("excluded_from_scoring")
+  /// The issuer has stopped accepting applications. Nullable for the same
+  /// round-trip reason as excludedFromScoring.
+  ///
+  /// why this is not cosmetic: the engine's `isRecommendable` (packages/engine/src/card.ts)
+  /// reads this flag to score a closed card for existing holders while NEVER recommending
+  /// it to anyone new. Before this column existed the flag was dropped on the way into
+  /// the database, so cards loaded FROM the DB — which is every card the deployed site
+  /// scores — came back looking open, and the two closed cards in cards.json were
+  /// recommendable to people who cannot apply for them.
+  closedToNewApplicants Boolean? @map("closed_to_new_applicants")
   /// Known data-quality caveat surfaced as a loud flag by the scorer.
   dataCaveat          String?  @map("data_caveat")
 

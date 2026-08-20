@@ -136,6 +136,7 @@ function toEngineCard(row: CardRowWithCategories): Card {
   // JSON (asserted by the round-trip test).
   if (row.notes !== null) card.notes = row.notes;
   if (row.excludedFromScoring !== null) card.excluded_from_scoring = row.excludedFromScoring;
+  if (row.closedToNewApplicants !== null) card.closed_to_new_applicants = row.closedToNewApplicants;
   if (row.dataCaveat !== null) card.data_caveat = row.dataCaveat;
   // Rows arrive ordered by `position`. An empty list means the card has no
   // exclusions, which in cards.json is the field being absent entirely.
@@ -184,4 +185,5 @@ export {
   type UserSyncInput,
   type AppUser,
   type SavedState,
+  type SavedHolding,
 } from "./users";

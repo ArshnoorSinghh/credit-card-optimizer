@@ -136,6 +136,10 @@ describe("saved wallet + spending — the dashboard persistence requirement", ()
       spending: { groceries: 2500, dining: 1800 },
       salaryAed: 25000,
       bank: "ADCB",
+      // Nothing was saved for either, and both come back EMPTY rather than absent.
+      // "The user has told us nothing" is the state the calendar renders as a question.
+      pointsHoldings: [],
+      cardOpenedOn: {},
     });
   });
 
@@ -171,6 +175,118 @@ describe("saved wallet + spending — the dashboard persistence requirement", ()
     await saveSavedState(user.id, { cardIds: ["card_a", "card_b"] });
     await deleteUserByClerkId(clerkId("cascade"));
     const orphans = await getPrisma().savedCard.count({ where: { userId: user.id } });
+    expect(orphans).toBe(0);
+  });
+});
+
+describe("points holdings + card anniversaries — what the deadline calendar reads", () => {
+  it("round-trips holdings, keeping an absent expiry absent", async () => {
+    const user = await upsertUser({ clerkUserId: clerkId("hold"), email: "h@example.com" });
+    await saveSavedState(user.id, {
+      pointsHoldings: [
+        { currency: "Skywards Miles", balance: 60000, expiryDate: "2027-03-01" },
+        // No expiry: the user has not told us, and that must survive the round trip
+        // as ABSENT. A null or a default date here would hand the calendar a deadline
+        // the user never stated.
+        { currency: "ADCB TouchPoints", balance: 12500 },
+      ],
+    });
+
+    const state = await getSavedState(user.id);
+    expect(state?.pointsHoldings).toEqual([
+      // Ordered by currency, not insertion.
+      { currency: "ADCB TouchPoints", balance: 12500 },
+      { currency: "Skywards Miles", balance: 60000, expiryDate: "2027-03-01" },
+    ]);
+    expect(state?.pointsHoldings[0]).not.toHaveProperty("expiryDate");
+  });
+
+  it("stores the expiry as the day that was typed, with no timezone drift", async () => {
+    // A @db.Date read back through a UTC-negative offset is the classic place a date
+    // slips a day. The day out must equal the day in, exactly.
+    const user = await upsertUser({ clerkUserId: clerkId("tz"), email: "tz@example.com" });
+    await saveSavedState(user.id, {
+      pointsHoldings: [{ currency: "Etihad Guest Miles", balance: 1, expiryDate: "2027-01-01" }],
+    });
+    expect((await getSavedState(user.id))?.pointsHoldings[0]?.expiryDate).toBe("2027-01-01");
+  });
+
+  it("replaces the whole holding set, so a deleted balance stays deleted", async () => {
+    const user = await upsertUser({ clerkUserId: clerkId("holdrep"), email: "hr@example.com" });
+    await saveSavedState(user.id, {
+      pointsHoldings: [
+        { currency: "Skywards Miles", balance: 60000 },
+        { currency: "ADCB TouchPoints", balance: 100 },
+      ],
+    });
+    await saveSavedState(user.id, { pointsHoldings: [{ currency: "Skywards Miles", balance: 5 }] });
+
+    const state = await getSavedState(user.id);
+    expect(state?.pointsHoldings).toEqual([{ currency: "Skywards Miles", balance: 5 }]);
+  });
+
+  it("round-trips a card opening date, and omits cards that have none", async () => {
+    const user = await upsertUser({ clerkUserId: clerkId("open"), email: "o@example.com" });
+    await saveSavedState(user.id, {
+      cardIds: ["card_a", "card_b"],
+      cardOpenedOn: { card_a: "2024-09-12" },
+    });
+
+    const state = await getSavedState(user.id);
+    // card_b is held but undated, and is simply ABSENT from the map — the calendar
+    // turns that absence into "When did you open your card_b?".
+    expect(state?.cardOpenedOn).toEqual({ card_a: "2024-09-12" });
+  });
+
+  /*
+    The regression this whole preservation branch exists for.
+
+    `openedOn` lives on the SavedCard row, and saving cardIds deletes and recreates
+    every one of those rows. Without carrying the dates across that rewrite, adding a
+    single card on the wallet screen would silently empty the user's calendar of every
+    fee renewal they had dated — a data loss with no error and no visible cause.
+  */
+  it("preserves opening dates when the wallet is rewritten without them", async () => {
+    const user = await upsertUser({ clerkUserId: clerkId("preserve"), email: "p@example.com" });
+    await saveSavedState(user.id, {
+      cardIds: ["card_a", "card_b"],
+      cardOpenedOn: { card_a: "2024-09-12", card_b: "2023-01-31" },
+    });
+
+    // A wallet-only save: the user added a third card and said nothing about dates.
+    await saveSavedState(user.id, { cardIds: ["card_a", "card_b", "card_c"] });
+
+    const state = await getSavedState(user.id);
+    expect(state?.cardOpenedOn).toEqual({ card_a: "2024-09-12", card_b: "2023-01-31" });
+  });
+
+  it("drops the date of a card the user no longer holds", async () => {
+    const user = await upsertUser({ clerkUserId: clerkId("drop"), email: "d@example.com" });
+    await saveSavedState(user.id, {
+      cardIds: ["card_a", "card_b"],
+      cardOpenedOn: { card_a: "2024-09-12", card_b: "2023-01-31" },
+    });
+    await saveSavedState(user.id, { cardIds: ["card_a"] });
+
+    const state = await getSavedState(user.id);
+    expect(state?.cardOpenedOn).toEqual({ card_a: "2024-09-12" });
+  });
+
+  it("clears a date the user removed, when the map is sent without it", async () => {
+    const user = await upsertUser({ clerkUserId: clerkId("clear"), email: "cl@example.com" });
+    await saveSavedState(user.id, { cardIds: ["card_a"], cardOpenedOn: { card_a: "2024-09-12" } });
+    // The client sends the complete map, so an omitted card means "cleared", not
+    // "unchanged". Otherwise a date could be entered but never taken back.
+    await saveSavedState(user.id, { cardOpenedOn: {} });
+
+    expect((await getSavedState(user.id))?.cardOpenedOn).toEqual({});
+  });
+
+  it("cascades: deleting the user removes their points holdings", async () => {
+    const user = await upsertUser({ clerkUserId: clerkId("hcascade"), email: "hc@example.com" });
+    await saveSavedState(user.id, { pointsHoldings: [{ currency: "Skywards Miles", balance: 1 }] });
+    await deleteUserByClerkId(clerkId("hcascade"));
+    const orphans = await getPrisma().pointsHolding.count({ where: { userId: user.id } });
     expect(orphans).toBe(0);
   });
 });

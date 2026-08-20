@@ -77,13 +77,57 @@ export async function deleteUserByClerkId(clerkUserId: string): Promise<void> {
 
 // ── Saved profile: the user's wallet + spending, persisted across sessions ─────────
 
+/**
+ * One points balance as the app exchanges it. `expiryDate` is an ISO YYYY-MM-DD
+ * STRING, not a Date: this type crosses a JSON boundary in both directions
+ * (/api/profile -> the browser's profile store), and a Date would arrive back as
+ * whatever JSON.parse made of it. The mapping to/from Prisma's DateTime happens in
+ * this file, which is the only place that knows the column is a date.
+ */
+export type SavedHolding = {
+  currency: string;
+  balance: number;
+  /** ISO YYYY-MM-DD. Absent means the user has not told us — never a guess. */
+  expiryDate?: string;
+};
+
 /** The user's persisted preferences. `spending`/`salaryAed` are null until set. */
 export type SavedState = {
   cardIds: string[];
   spending: Record<string, number> | null;
   salaryAed: number | null;
   bank: string | null;
+  /**
+   * The points balances the user says they hold. An empty list means "told us nothing",
+   * which the calendar reports as a question rather than as an empty timeline.
+   */
+  pointsHoldings: SavedHolding[];
+  /**
+   * ISO YYYY-MM-DD the user opened each held card WITH THE BANK, keyed by card id.
+   * A card absent from this map is unknown, and stays unknown — see the comment on
+   * `SavedCard.openedOn` for why this must never fall back to when it was added to Fils.
+   */
+  cardOpenedOn: Record<string, string>;
 };
+
+/** A Prisma @db.Date column as the ISO day it represents. UTC, so no offset can shift it. */
+function toIsoDay(d: Date | null): string | undefined {
+  if (d === null) return undefined;
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * An ISO day as the UTC midnight Prisma writes to a @db.Date column.
+ *
+ * why the explicit "T00:00:00Z": `new Date("2026-09-12")` is already UTC midnight, but
+ * `new Date("2026-09-12T00:00:00")` is LOCAL midnight, and the two differ by a day for
+ * any negative-offset environment. Being explicit means the stored day is the typed day
+ * regardless of where the server runs. Validation of the string itself happens in the
+ * route, before it ever reaches here.
+ */
+function fromIsoDay(iso: string): Date {
+  return new Date(iso + "T00:00:00Z");
+}
 
 /**
  * Read a user's saved wallet + spending profile by our INTERNAL user id (the caller
@@ -97,16 +141,41 @@ export async function getSavedState(userId: string): Promise<SavedState | null> 
       savedSpending: true,
       savedSalaryAed: true,
       savedBank: true,
-      savedCards: { select: { cardId: true }, orderBy: { createdAt: "asc" } },
+      savedCards: { select: { cardId: true, openedOn: true }, orderBy: { createdAt: "asc" } },
+      // Ordered by currency (not insertion) so the points screen renders the same list
+      // every time — createdAt ties are possible when a whole set is written at once.
+      pointsHoldings: {
+        select: { currency: true, balance: true, expiryDate: true },
+        orderBy: { currency: "asc" },
+      },
     },
   });
   if (!row) return null;
+
+  // Only cards with a known opening date appear in the map. An absent key is the
+  // "unknown" the calendar turns into a question; a null would have to be filtered
+  // again by every reader.
+  const cardOpenedOn: Record<string, string> = {};
+  for (const c of row.savedCards) {
+    const iso = toIsoDay(c.openedOn);
+    if (iso !== undefined) cardOpenedOn[c.cardId] = iso;
+  }
+
   return {
     cardIds: row.savedCards.map((c) => c.cardId),
     // The column is JSON; the app is the only writer and always writes an object.
     spending: (row.savedSpending as Record<string, number> | null) ?? null,
     salaryAed: row.savedSalaryAed,
     bank: row.savedBank,
+    pointsHoldings: row.pointsHoldings.map((h) => {
+      const holding: SavedHolding = { currency: h.currency, balance: h.balance };
+      const iso = toIsoDay(h.expiryDate);
+      // Set the key only when known, so the JSON the client receives distinguishes
+      // "no expiry date" from "expiry date is null".
+      if (iso !== undefined) holding.expiryDate = iso;
+      return holding;
+    }),
+    cardOpenedOn,
   };
 }
 
@@ -115,7 +184,16 @@ export async function getSavedState(userId: string): Promise<SavedState | null> 
  * written, so the dashboard can save spending without touching the wallet and vice
  * versa. Card ids, when given, REPLACE the whole set inside a transaction (the same
  * delete-then-recreate pattern the card seed uses) so the stored wallet always
- * converges exactly on what the client sent.
+ * converges exactly on what the client sent. `pointsHoldings` replaces the same way and
+ * for the same reason.
+ *
+ * ── One trap the delete-then-recreate pattern sets, and how this avoids it ─────────
+ * `openedOn` lives ON the SavedCard row, so recreating the wallet would DESTROY every
+ * anniversary the user had entered — saving an unrelated card toggle would silently
+ * empty their calendar. So when cards are rewritten, the existing opening dates are read
+ * first and carried onto the new rows, with anything in `patch.cardOpenedOn` layered on
+ * top. Points holdings have no such problem: every field of one is user-supplied and
+ * arrives together.
  */
 export async function saveSavedState(
   userId: string,
@@ -135,6 +213,16 @@ export async function saveSavedState(
   // Dedupe defensively; the unique (userId, cardId) constraint would reject dupes.
   const ids = writeCards ? [...new Set(patch.cardIds)] : [];
 
+  const writeOpenedOn = patch.cardOpenedOn !== undefined;
+  const openedOnPatch = patch.cardOpenedOn ?? {};
+
+  const writeHoldings = patch.pointsHoldings !== undefined;
+  // Last entry wins on a duplicate currency; the unique (userId, currency) constraint
+  // would otherwise reject the whole batch. Same defensive dedupe as the card ids.
+  const holdings = writeHoldings
+    ? [...new Map((patch.pointsHoldings ?? []).map((h) => [h.currency, h])).values()]
+    : [];
+
   // Interactive form with generous timeouts: Neon's serverless endpoint can go cold
   // between requests, and the array form's fixed 2s maxWait surfaces as an
   // intermittent P2028 there (same reason the seed uses this form).
@@ -143,10 +231,65 @@ export async function saveSavedState(
       if (Object.keys(userData).length > 0) {
         await tx.user.update({ where: { id: userId }, data: userData });
       }
+
       if (writeCards) {
+        // Read the dates BEFORE the delete, so rewriting the wallet preserves them.
+        const existing = await tx.savedCard.findMany({
+          where: { userId },
+          select: { cardId: true, openedOn: true },
+        });
+        const kept = new Map(existing.map((c) => [c.cardId, c.openedOn]));
+
         await tx.savedCard.deleteMany({ where: { userId } });
         if (ids.length > 0) {
-          await tx.savedCard.createMany({ data: ids.map((cardId) => ({ userId, cardId })) });
+          await tx.savedCard.createMany({
+            data: ids.map((cardId) => {
+              // An explicit date in this patch wins; otherwise carry forward what the
+              // user had already told us. `writeOpenedOn` makes the map authoritative,
+              // so a card the client omitted goes back to unknown rather than keeping a
+              // date the user just cleared.
+              const patched = openedOnPatch[cardId];
+              const openedOn =
+                patched !== undefined
+                  ? fromIsoDay(patched)
+                  : writeOpenedOn
+                    ? null
+                    : (kept.get(cardId) ?? null);
+              return { userId, cardId, openedOn };
+            }),
+          });
+        }
+      } else if (writeOpenedOn) {
+        // Cards are untouched, so update the dates in place. The map is authoritative:
+        // a held card missing from it has had its date cleared.
+        const existing = await tx.savedCard.findMany({
+          where: { userId },
+          select: { id: true, cardId: true, openedOn: true },
+        });
+        for (const card of existing) {
+          const patched = openedOnPatch[card.cardId];
+          const next = patched !== undefined ? fromIsoDay(patched) : null;
+          // Skip the write when nothing changed, so a save that only touched spending
+          // does not churn every wallet row.
+          const current = card.openedOn === null ? null : card.openedOn.getTime();
+          if (current === (next === null ? null : next.getTime())) continue;
+          await tx.savedCard.update({ where: { id: card.id }, data: { openedOn: next } });
+        }
+      }
+
+      if (writeHoldings) {
+        await tx.pointsHolding.deleteMany({ where: { userId } });
+        if (holdings.length > 0) {
+          await tx.pointsHolding.createMany({
+            data: holdings.map((h) => ({
+              userId,
+              currency: h.currency,
+              balance: h.balance,
+              // Absent stays absent. The engine treats an unknown expiry as a question,
+              // so there is nothing to default this to.
+              expiryDate: h.expiryDate === undefined ? null : fromIsoDay(h.expiryDate),
+            })),
+          });
         }
       }
     },

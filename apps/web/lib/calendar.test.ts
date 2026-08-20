@@ -74,6 +74,33 @@ describe("runCalendar", () => {
     expect(view.calendar.events.some((e) => e.kind === "fee_renewal")).toBe(true);
   });
 
+  it("carries the fee AND the re-score onto the renewal row", () => {
+    /*
+      CALENDAR_SPEC 3c designs this row as "renews on 12 Sep - AED 525. On your spending
+      it now earns AED 380/yr. Review." The engine composes that from `computeFees` and
+      `scoreCard`, but only when `spending` reaches it — and this wrapper is the one
+      place that hand-off can silently break. Dropping `spending` here would not fail
+      any engine test: the row would still render, still be dated, still show the fee,
+      and would quietly lose the half that makes it worth more than a reminder.
+
+      A card with a real annual fee is named rather than searched for, so this throws
+      loudly if the dataset changes instead of degrading into a test of nothing.
+    */
+    const view = runCalendar({
+      holdings,
+      cardIds: ["adcb_traveller"],
+      spending,
+      openedOn: { adcb_traveller: "2023-09-12" },
+    });
+    const renewal = view.calendar.events.find((e) => e.kind === "fee_renewal");
+    expect(renewal).toBeDefined();
+    // The fee, on the event itself.
+    expect(renewal!.valueAtRiskAed).toBeGreaterThan(0);
+    // The re-score, in the action. Both sides of the decision, no verdict.
+    expect(renewal!.action).toMatch(/earns AED/);
+    expect(renewal!.action).toMatch(/costs AED/);
+  });
+
   it("produces thresholds for the cards it was given", () => {
     const view = runCalendar({ holdings, cardIds: ["fab_cashback"], spending });
     expect(view.thresholds.thresholds.length).toBeGreaterThan(0);
