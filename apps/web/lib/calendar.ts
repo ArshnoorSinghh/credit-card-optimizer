@@ -42,10 +42,10 @@ export interface CalendarViewInput {
   /**
    * ISO date each card was OPENED WITH THE BANK, keyed by card id.
    *
-   * Not persisted anywhere yet — there is no column for it (see CALENDAR_SPEC.md
-   * §6). A card missing from this map produces an `undated` fee-renewal entry with
-   * the question that would fix it, which is exactly what should happen. It must
-   * never fall back to when the card was added to Fils.
+   * Persisted on `saved_cards.opened_on` for signed-in users. A card missing from this
+   * map produces an `undated` fee-renewal entry with the question that would fix it,
+   * which is exactly what should happen. It must never fall back to when the card was
+   * added to Fils.
    */
   openedOn?: Record<string, string>;
 }

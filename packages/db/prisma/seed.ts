@@ -74,6 +74,7 @@ async function main(): Promise<void> {
         sourceUrl: card.source_url,
         notes: card.notes ?? null,
         excludedFromScoring: card.excluded_from_scoring ?? null,
+        closedToNewApplicants: card.closed_to_new_applicants ?? null,
         dataCaveat: card.data_caveat ?? null,
       };
 

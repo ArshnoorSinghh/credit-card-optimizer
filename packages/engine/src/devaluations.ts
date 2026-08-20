@@ -42,6 +42,15 @@ export interface Devaluation {
   /** Which redemption classes lose value. */
   affects: RedemptionClass[];
   note: string;
+  /**
+   * Where this was read. Optional on the TYPE only so the field can be added without
+   * a flag day; in practice every entry carries one, because an undated, unsourced
+   * devaluation is a rumour and rumours do not belong in this table.
+   *
+   * Provenance, not logic: nothing reads this to compute anything. It exists so the
+   * next sweep can re-check a claim instead of re-deriving it.
+   */
+  source?: string;
 }
 
 /**
@@ -51,7 +60,46 @@ export interface Devaluation {
  * nothing is exactly as valuable as one that finds something, and is the only way
  * "no upcoming devaluations" can be distinguished from "nobody has looked".
  */
-export const DEVALUATIONS_REVIEWED_ON = "2026-08-16";
+export const DEVALUATIONS_REVIEWED_ON = "2026-08-20";
+
+/*
+  ── Sweep log ────────────────────────────────────────────────────────────────────
+  Kept in the file rather than in a commit message so the next person can see what was
+  ALREADY CHECKED and found empty, instead of repeating the search. "Nobody has looked"
+  and "somebody looked and there was nothing" are the two states this module exists to
+  tell apart, and a date alone only proves the first.
+
+  2026-08-20 — swept every currency in cards.json. NOTHING ADDED, and the table is
+  unchanged. What was checked and why nothing qualified:
+
+    - Emirates Skywards Miles: the ~15% premium-cabin devaluation below took effect
+      2026-05-20 as recorded. No further change is announced. Several 2026 stories are
+      about TRANSFER PARTNERS cutting their ratios into Skywards (Amex UK to 2:1,
+      Capital One to 4:3), which is a devaluation of those partners' currencies, not of
+      Skywards itself, and none of those partner programs are in cards.json.
+    - Etihad Guest Miles: the harsh chart change was March 2023, long past. The dated
+      2026 item is Amex US ending transfers on 2026-06-30 — again a transfer route
+      closing, not the miles losing redemption value, and also already past.
+    - Marriott Bonvoy Points: award costs drifted up roughly 5-10% across 2026, but
+      Marriott has published no award chart since 2022 and announced no dated change.
+      A dynamic-pricing drift has no effective date, so there is no deadline to put in
+      front of a user and NOTHING GOES IN THE TABLE. This is exactly the case the
+      "announced, not rumoured" rule is for: the value change is real, and it is still
+      not a devaluation event.
+    - The UAE bank programs (ADCB TouchPoints, FAB Rewards, Emirates NBD Plus Points,
+      DIB Wala'a, Mashreq, CBD, RAKBANK, HSBC, Citi, Standard Chartered and the
+      co-brand currencies): no issuer has announced a dated devaluation. These programs
+      do not publish award charts or change notices the way airline programs do, which
+      means absence of news here is genuinely weaker evidence than it is for Skywards.
+      Worth saying plainly rather than recording silence as a clean bill of health.
+
+  ONE THING FOR A HUMAN, deliberately not acted on: secondary UAE comparison sites now
+  describe ADCB TouchPoints redeeming near AED 0.004/point against the AED 0.01 this
+  repo has used. If true that is a large valuation error, but it is (a) unsourced to
+  ADCB itself, and (b) a VALUATION question, not a dated devaluation — so it belongs in
+  valuations.ts after somebody confirms it against ADCB, and it is not something to
+  quietly change here. Flagged in the handoff report.
+*/
 
 /** How long a review stays fresh before the table should be swept again. */
 export const DEVALUATION_REVIEW_MAX_AGE_MONTHS = 6;
@@ -69,6 +117,10 @@ export const DEVALUATIONS: Devaluation[] = [
     // looking arbitrary to the next reader. Consumers filter by date, so a past
     // devaluation raises no warning — see `upcomingDevaluations`.
     note: "~15% premium-cabin devaluation - burn premium (business/first) redemptions before this date",
+    // Confirmed still accurate in the 2026-08-20 sweep: the increase applied to Classic
+    // and Upgrade Rewards on this date, and Economy Saver was left alone - which is why
+    // `affects` stays narrowed to flight_premium rather than all flight redemptions.
+    source: "https://onemileatatime.com/news/emirates-skywards-devaluing-miles/",
   },
 ];
 

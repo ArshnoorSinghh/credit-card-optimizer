@@ -70,7 +70,16 @@ describe("GET /api/profile", () => {
   it("returns an empty state when the user has saved nothing yet", async () => {
     getSavedStateMock.mockResolvedValue(null);
     const json = await (await GET()).json();
-    expect(json).toEqual({ cardIds: [], spending: null, salaryAed: null, bank: null });
+    // The two calendar fields come back EMPTY, not absent: "you have told us nothing"
+    // is the state the calendar renders as a question rather than a blank timeline.
+    expect(json).toEqual({
+      cardIds: [],
+      spending: null,
+      salaryAed: null,
+      bank: null,
+      pointsHoldings: [],
+      cardOpenedOn: {},
+    });
   });
 });
 
@@ -106,5 +115,63 @@ describe("PUT /api/profile", () => {
     const res = await PUT(putReq({ spending: null, bank: null }));
     expect(res.status).toBe(200);
     expect(saveSavedStateMock).toHaveBeenCalledWith("usr_1", { spending: null, bank: null });
+  });
+
+  it("persists points holdings, keeping an absent expiry absent", async () => {
+    getSavedStateMock.mockResolvedValue({ cardIds: [], spending: null, salaryAed: null, bank: null });
+    const res = await PUT(
+      putReq({
+        pointsHoldings: [
+          { currency: "Skywards Miles", balance: 60000, expiryDate: "2027-03-01" },
+          { currency: "FAB Rewards", balance: 4000 },
+        ],
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(saveSavedStateMock).toHaveBeenCalledWith("usr_1", {
+      pointsHoldings: [
+        { currency: "Skywards Miles", balance: 60000, expiryDate: "2027-03-01" },
+        { currency: "FAB Rewards", balance: 4000 },
+      ],
+    });
+  });
+
+  it("400s on a negative or non-finite balance, without touching the DB", async () => {
+    expect((await PUT(putReq({ pointsHoldings: [{ currency: "X", balance: -1 }] }))).status).toBe(400);
+    // JSON has no NaN literal, so the realistic bad value from a client is a string.
+    expect((await PUT(putReq({ pointsHoldings: [{ currency: "X", balance: "lots" }] }))).status).toBe(400);
+    expect(saveSavedStateMock).not.toHaveBeenCalled();
+  });
+
+  /*
+    The date trap this validation exists for.
+
+    `Date.parse("2024-02-31")` SUCCEEDS and silently rolls forward to 2 March. A bare
+    parse check would accept a typo and store a confident date two days from where the
+    user meant, which then renders as a real deadline on the calendar with nothing
+    showing it had moved. Only the round-trip catches it.
+  */
+  it("400s on a date that parses but is not a real day", async () => {
+    expect((await PUT(putReq({ cardOpenedOn: { [KNOWN_ID]: "2024-02-31" } }))).status).toBe(400);
+    expect(
+      (await PUT(putReq({ pointsHoldings: [{ currency: "X", balance: 1, expiryDate: "2024-02-31" }] })))
+        .status,
+    ).toBe(400);
+    // Rejected for shape as well as for existence.
+    expect((await PUT(putReq({ cardOpenedOn: { [KNOWN_ID]: "12/09/2024" } }))).status).toBe(400);
+    expect(saveSavedStateMock).not.toHaveBeenCalled();
+  });
+
+  it("persists opening dates and drops ones for unknown cards", async () => {
+    getSavedStateMock.mockResolvedValue({ cardIds: [], spending: null, salaryAed: null, bank: null });
+    const res = await PUT(
+      putReq({ cardOpenedOn: { [KNOWN_ID]: "2024-09-12", not_a_real_card: "2024-09-12" } }),
+    );
+    expect(res.status).toBe(200);
+    // Same rule as cardIds: an unrecognised id is dropped, not a 400, so a stale
+    // client cannot fail the user's whole save.
+    expect(saveSavedStateMock).toHaveBeenCalledWith("usr_1", {
+      cardOpenedOn: { [KNOWN_ID]: "2024-09-12" },
+    });
   });
 });

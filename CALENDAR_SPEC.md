@@ -251,29 +251,49 @@ Persistence, the anniversary question, email/push, and any scheduled job.
 
 Stated plainly so the demo is not mistaken for the feature:
 
-1. **Points holdings are not persisted TO THE DATABASE.** *Partly closed 2026-08-18.*
-   They now live in the profile store (`pointsHoldings`), so the points screen and the
-   calendar read the same list and the calendar no longer renders `DEFAULT_HOLDINGS` at
-   a signed-in user. But the store keeps them in **sessionStorage**, the same position
-   `merchantShares` is in, so they survive navigation and not a new session. Finishing
-   this needs a `PointsHolding` model + a column on `/api/profile`. Still the single
-   largest build item.
-2. **No card anniversary field.** *Partly closed 2026-08-18.* The UI question now
-   exists: `/calendar` renders a date input per held card under "Fill in your calendar",
-   writing `cardOpenedOn` in the profile store, and a card with a date produces a real
-   `fee_renewal` event. Persistence is the same sessionStorage caveat as above; it still
-   needs `SavedCard.openedOn DateTime?`.
+1. **Points holdings are not persisted TO THE DATABASE.** ~~Partly closed 2026-08-18.~~
+   **CLOSED 2026-08-20.** There is now a `PointsHolding` model (`points_holdings`:
+   currency, balance, nullable `expiryDate @db.Date`, unique on `(userId, currency)`),
+   carried through `SavedState`, `/api/profile` GET and PUT, and the profile store's
+   debounced write. A signed-in user's balances survive a new session and a second
+   device. Guests keep the sessionStorage backend, and a guest's holdings are carried
+   into a fresh account by `adoptionPatch`.
+2. **No card anniversary field.** ~~Partly closed 2026-08-18.~~ **CLOSED 2026-08-20.**
+   `SavedCard.openedOn DateTime? @db.Date` exists and is nullable on purpose: unknown is
+   a real state that the calendar renders as a question, and it must never fall back to
+   `createdAt` (when the card was added to Fils, which is a different fact).
 
-   **Why this stopped at sessionStorage rather than doing the migration.** Vercel
-   *Preview* deployments run against the PRODUCTION database (CLAUDE.md > Databases), so
-   shipping Prisma-dependent code before the migration is applied to prod would 500
-   `/api/profile` for real users on the live preview. And there are no local `.env`
-   files, so the migration could be neither applied to DEV nor tested. The schema work
-   is deliberately deferred until a DEV connection exists and the prod migration can be
-   run as the reviewed operation CLAUDE.md requires.
+   One trap worth recording, because it is invisible: saving `cardIds` deletes and
+   recreates every `saved_cards` row, so writing the wallet would have destroyed every
+   anniversary the user had entered. `saveSavedState` reads the dates before the delete
+   and carries them across. Regression-locked by "preserves opening dates when the
+   wallet is rewritten without them" in `packages/db/src/users.test.ts`.
+
+   **On the deploy order.** Vercel *Preview* deployments run against the PRODUCTION
+   database (CLAUDE.md > Databases), so the migration must be applied to prod BEFORE the
+   schema-dependent code merges to a branch Vercel deploys, or `/api/profile` 500s for
+   real users on the live preview. Both migrations are purely additive (one nullable
+   column plus one new table, and one more nullable column), so applying them ahead of
+   the code is safe: the running deploy does not read what it does not know about.
 3. **No delivery mechanism.** There is no transactional email, no cron, no `vercel.json`.
    A calendar the user must remember to visit is not a retention feature — the retention
    claim depends on a scheduled digest that does not exist yet.
 
-Item 3 is the honest limit on the pitch claim. The defensible version is *"the deadline
-maths is built and tested; delivery is the next build"*, not *"we have retention"*.
+Item 3 is STILL OPEN and is the honest limit on the pitch claim. The defensible version
+remains *"the deadline maths is built and tested; delivery is the next build"*, not *"we
+have retention"*. Closing items 1 and 2 does not change that.
+
+### Also closed 2026-08-20
+
+- **The devaluation table was swept** (`DEVALUATIONS_REVIEWED_ON` = 2026-08-20). Nothing
+  was added, and that is the finding, not a shortfall: no program in `cards.json` has an
+  announced, dated devaluation ahead of today. Marriott Bonvoy's 2026 award costs drifted
+  up 5-10%, but under dynamic pricing with no published chart and no effective date, so
+  there is no deadline to show a user and it is deliberately NOT in the table. The sweep
+  log in `packages/engine/src/devaluations.ts` records what was checked, so the next
+  sweep does not repeat it.
+- **§3c's fee-renewal re-score** was already built and tested in the engine
+  (`renewalEvent` composes `computeFees` + `scoreCard`); what was missing was an
+  end-to-end assertion that `spending` actually reaches it through the web wrapper,
+  since dropping it there would still produce a dated row carrying only the fee. Now
+  covered in `apps/web/lib/calendar.test.ts`.

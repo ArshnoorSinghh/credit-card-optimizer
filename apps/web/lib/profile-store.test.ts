@@ -46,6 +46,34 @@ describe("isUnwrittenServerState", () => {
     expect(
       isUnwrittenServerState({ cardIds: [], spending: null, salaryAed: null, bank: "ADCB" }),
     ).toBe(false);
+    // The two calendar fields persist now, so each of them is also proof the account
+    // has been written to. Someone can save their points balances and nothing else.
+    expect(
+      isUnwrittenServerState({
+        cardIds: [],
+        spending: null,
+        salaryAed: null,
+        bank: null,
+        pointsHoldings: [{ currency: "Skywards Miles", balance: 60000 }],
+      }),
+    ).toBe(false);
+    expect(
+      isUnwrittenServerState({
+        cardIds: [],
+        spending: null,
+        salaryAed: null,
+        bank: null,
+        cardOpenedOn: { fab_cashback: "2024-09-12" },
+      }),
+    ).toBe(false);
+  });
+
+  it("is still true when the new fields are absent, as an older response would have them", () => {
+    // A cached response from a deploy that predates the migration has neither key.
+    // That must read as "unwritten", not crash the check.
+    expect(
+      isUnwrittenServerState({ cardIds: [], spending: null, salaryAed: null, bank: null }),
+    ).toBe(true);
   });
 });
 
@@ -60,6 +88,15 @@ describe("hasLocalWork", () => {
 
   it("is true when the guest only picked held cards", () => {
     expect(hasLocalWork(local({ cardIds: ["adcb-365"] }))).toBe(true);
+  });
+
+  it("is true when the guest only entered points balances", () => {
+    // A guest can go straight to /points, type real balances, and sign up without
+    // touching onboarding or the wallet. Before holdings persisted there was nothing
+    // to carry; now that is real work and losing it would be the same wipe the whole
+    // adoption path exists to prevent.
+    expect(hasLocalWork(local({ pointsHoldings: [{ currency: "Skywards Miles", balance: 60000 }] })))
+      .toBe(true);
   });
 });
 
@@ -92,6 +129,27 @@ describe("adoptionPatch", () => {
   it("omits a null bank rather than persisting it", () => {
     const body = adoptionPatch(local({ onboarded: true, bank: null }));
     expect("bank" in body).toBe(false);
+  });
+
+  it("carries a guest's holdings and opening dates into the new account", () => {
+    // Without this, someone who filled in their balances and anniversaries as a guest
+    // would sign up and find the calendar they had just filled in empty again.
+    const body = adoptionPatch(
+      local({
+        pointsHoldings: [{ currency: "Skywards Miles", balance: 60000, expiryDate: "2027-03-01" }],
+        cardOpenedOn: { fab_cashback: "2024-09-12" },
+      }),
+    );
+    expect(body.pointsHoldings).toEqual([
+      { currency: "Skywards Miles", balance: 60000, expiryDate: "2027-03-01" },
+    ]);
+    expect(body.cardOpenedOn).toEqual({ fab_cashback: "2024-09-12" });
+  });
+
+  it("omits both when the guest answered neither, so no empty keys are posted", () => {
+    const body = adoptionPatch(local({ onboarded: true }));
+    expect("pointsHoldings" in body).toBe(false);
+    expect("cardOpenedOn" in body).toBe(false);
   });
 });
 
